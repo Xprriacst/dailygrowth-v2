@@ -1,0 +1,56 @@
+[build]
+  # Commande de build pour Netlify
+  command = "if [ -d \"flutter\" ]; then cd flutter && git pull && cd ..; else git clone https://github.com/flutter/flutter.git; fi; flutter/bin/flutter config --enable-web && flutter/bin/flutter build web --release --dart-define-from-file=env.json && echo '/*    /index.html   200' > build/web/_redirects"
+  
+  # Répertoire de publication
+  publish = "build/web"
+
+# Configuration des redirections pour SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Redirections pour les assets statiques
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/icons/*"
+  to = "/icons/:splat"
+  status = 200
+
+# Variables d'environnement (à configurer dans l'interface Netlify)
+[build.environment]
+  # Ces variables doivent être définies dans l'interface Netlify
+  # SUPABASE_URL = "votre_url_supabase"
+  # SUPABASE_ANON_KEY = "votre_clé_anon"
+  # OPENAI_API_KEY = "votre_clé_openai"
+
+# Headers de sécurité pour l'application web
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Headers pour les assets statiques (cache)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers pour les fichiers JS/CSS
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
