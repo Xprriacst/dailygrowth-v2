@@ -33,7 +33,7 @@ class QuoteService {
           .from('daily_quotes')
           .select()
           .eq('user_id', userId)
-          .eq('date', today)
+          .eq('date_assigned', today)
           .maybeSingle();
 
       if (existingQuote != null) {
