@@ -411,33 +411,7 @@ class AuthService {
     }
   }
 
-  // Update password (for reset password flow)
-  Future<void> updatePassword(String newPassword) async {
-    try {
-      final response = await _client.auth.updateUser(
-        UserAttributes(password: newPassword),
-      );
-      
-      if (response.user == null) {
-        throw Exception('Failed to update password');
-      }
-      
-      debugPrint('✅ Password updated successfully');
-    } catch (error) {
-      debugPrint('❌ Update password error: $error');
-      String errorMessage = 'Erreur de mise à jour du mot de passe: ';
-      
-      if (error.toString().contains('Password should be at least')) {
-        errorMessage += 'Le mot de passe doit contenir au moins 6 caractères.';
-      } else if (error.toString().contains('Unable to validate email address')) {
-        errorMessage += 'Session expirée. Veuillez demander un nouveau lien de réinitialisation.';
-      } else {
-        errorMessage += error.toString();
-      }
-      
-      throw Exception(errorMessage);
-    }
-  }
+
 
   // Clean up resources
   void dispose() {

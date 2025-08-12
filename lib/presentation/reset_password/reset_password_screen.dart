@@ -59,7 +59,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _authService.updatePassword(_passwordController.text);
+      await _authService.updatePassword(newPassword: _passwordController.text);
       
       Fluttertoast.showToast(
         msg: "Mot de passe mis à jour avec succès !",

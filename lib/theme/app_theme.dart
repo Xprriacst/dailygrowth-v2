@@ -434,4 +434,33 @@ class AppTheme {
             color: textDisabled,
             letterSpacing: 0.5));
   }
+
+  // Static properties for backward compatibility
+  static Color get backgroundColor => backgroundLight;
+  static Color get primaryColor => primaryLight;
+  
+  static TextStyle get headingStyle => GoogleFonts.inter(
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    color: onBackgroundLight,
+  );
+  
+  static TextStyle get bodyStyle => GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    color: onBackgroundLight,
+  );
+  
+  static TextStyle get buttonTextStyle => GoogleFonts.inter(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: onPrimaryLight,
+  );
+  
+  static TextStyle get linkStyle => GoogleFonts.inter(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: primaryLight,
+    decoration: TextDecoration.underline,
+  );
 }
