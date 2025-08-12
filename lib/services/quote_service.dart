@@ -81,7 +81,7 @@ class QuoteService {
               'quote_text': quoteData['quote'],
               'quote_author': quoteData['author'],
               'life_domain': lifeDomain,
-              'date': today,
+              'date_assigned': today,
               'is_ai_generated': _openAIService.isApiKeyConfigured,
             })
             .select()
@@ -94,7 +94,7 @@ class QuoteService {
           'quote_text': quoteData['quote'],
           'quote_author': quoteData['author'],
           'life_domain': lifeDomain,
-          'date': today,
+          'date_assigned': today,
           'is_ai_generated': _openAIService.isApiKeyConfigured,
         };
       }
@@ -107,7 +107,7 @@ class QuoteService {
         'quote_text': fallbackQuote['quote'],
         'quote_author': fallbackQuote['author'],
         'life_domain': lifeDomain,
-        'date': today,
+        'date_assigned': today,
         'is_ai_generated': false,
       };
     }
@@ -204,7 +204,7 @@ class QuoteService {
             'quote_text': quoteText,
             'quote_author': author,
             'life_domain': lifeDomain,
-            'date': today,
+            'date_assigned': today,
             'is_ai_generated': false,
           })
           .select()

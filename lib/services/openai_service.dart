@@ -150,6 +150,24 @@ Le défi doit être:
     }
   }
 
+  /// Clean JSON response from markdown formatting
+  String _cleanJsonResponse(String rawResponse) {
+    String cleaned = rawResponse.trim();
+    
+    // Remove markdown code blocks
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replaceFirst('```json', '').trim();
+    }
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replaceFirst('```', '').trim();
+    }
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3).trim();
+    }
+    
+    return cleaned;
+  }
+
   /// Generate personalized motivational message
   Future<String> generatePersonalizedMessage({
     required String userName,
