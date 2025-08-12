@@ -1,6 +1,6 @@
 [build]
   # Commande de build pour Netlify
-  command = "if [ -d \"flutter\" ]; then cd flutter && git pull && cd ..; else git clone https://github.com/flutter/flutter.git; fi; flutter/bin/flutter config --enable-web && flutter/bin/flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && echo '/*    /index.html   200' > build/web/_redirects"
+  command = "if [ -d \"flutter\" ]; then cd flutter && git pull && cd ..; else git clone https://github.com/flutter/flutter.git; fi; flutter/bin/flutter config --enable-web && flutter/bin/flutter create . --platforms web && flutter/bin/flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && echo '/*    /index.html   200' > build/web/_redirects"
   
   # Répertoire de publication
   publish = "build/web"
