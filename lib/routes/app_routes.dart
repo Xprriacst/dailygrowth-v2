@@ -10,6 +10,7 @@ import '../presentation/splash_screen/splash_screen.dart';
 import '../presentation/user_profile/user_profile.dart';
 import '../presentation/admin_panel/admin_panel.dart';
 import '../presentation/openai_test/openai_test_screen.dart';
+import '../presentation/reset_password/reset_password_screen.dart';
 
 class AppRoutes {
   // Route constants
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String progressTracking = '/progress-tracking';
   static const String adminPanel = '/admin-panel';
   static const String openaiTestScreen = '/openai-test';
+  static const String resetPassword = '/reset-password';
 
   // Route map
   static Map<String, WidgetBuilder> get routes => {
@@ -36,6 +38,7 @@ class AppRoutes {
         progressTracking: (context) => const ProgressTracking(),
         adminPanel: (context) => const AdminPanel(),
         openaiTestScreen: (context) => const OpenAITestScreen(),
+        resetPassword: (context) => const ResetPasswordScreen(),
       };
 
   // Initial route

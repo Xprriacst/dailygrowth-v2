@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
-import './services/auth_service.dart';
-import './services/supabase_service.dart';
-import 'core/app_export.dart';
+import 'services/supabase_service.dart';
+import 'services/auth_service.dart';
+import 'theme/app_theme.dart';
+import 'routes/app_routes.dart';
+import 'presentation/reset_password/reset_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,6 +72,22 @@ class _MyAppState extends State<MyApp> {
         },
         initialRoute: AppRoutes.initialRoute,
         routes: AppRoutes.routes,
+        onGenerateRoute: (settings) {
+          // Handle deep links with parameters
+          if (settings.name?.startsWith('/reset-password') == true) {
+            final uri = Uri.parse(settings.name!);
+            final token = uri.queryParameters['token'];
+            final type = uri.queryParameters['type'];
+            
+            return MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(
+                token: token,
+                type: type,
+              ),
+            );
+          }
+          return null;
+        },
       );
     });
   }
