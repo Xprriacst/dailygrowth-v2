@@ -79,10 +79,10 @@ class QuoteService {
             .insert({
               'user_id': userId,
               'quote_text': quoteData['quote'],
-              'quote_author': quoteData['author'],
+              'author': quoteData['author'],
               'life_domain': lifeDomain,
               'date_assigned': today,
-              'is_ai_generated': _openAIService.isApiKeyConfigured,
+
             })
             .select()
             .single();
@@ -92,10 +92,9 @@ class QuoteService {
         // Return fallback quote without saving if DB fails
         return {
           'quote_text': quoteData['quote'],
-          'quote_author': quoteData['author'],
+          'author': quoteData['author'],
           'life_domain': lifeDomain,
           'date_assigned': today,
-          'is_ai_generated': _openAIService.isApiKeyConfigured,
         };
       }
     } catch (error) {
@@ -105,10 +104,9 @@ class QuoteService {
 
       return {
         'quote_text': fallbackQuote['quote'],
-        'quote_author': fallbackQuote['author'],
+        'author': fallbackQuote['author'],
         'life_domain': lifeDomain,
         'date_assigned': today,
-        'is_ai_generated': false,
       };
     }
   }
@@ -202,10 +200,10 @@ class QuoteService {
           .insert({
             'user_id': userId,
             'quote_text': quoteText,
-            'quote_author': author,
+            'author': author,
             'life_domain': lifeDomain,
             'date_assigned': today,
-            'is_ai_generated': false,
+
           })
           .select()
           .single();
