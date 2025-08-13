@@ -286,6 +286,24 @@ class AuthService {
     }
   }
 
+  // Resend email confirmation
+  Future<void> resendConfirmation(String email) async {
+    try {
+      debugPrint('Resending confirmation email to: $email');
+
+      await _client.auth.resend(
+        type: OtpType.signup,
+        email: email,
+        emailRedirectTo: kIsWeb ? null : 'io.supabase.dailygrowth://confirm/',
+      );
+
+      debugPrint('Confirmation email resent successfully');
+    } catch (error) {
+      debugPrint('Resend confirmation error: $error');
+      throw Exception('Erreur de renvoi de confirmation: $error');
+    }
+  }
+
   // Update password
   Future<UserResponse> updatePassword({required String newPassword}) async {
     try {

@@ -134,10 +134,89 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Check if email is confirmed
         if (response.user!.emailConfirmedAt == null) {
-          setState(() {
-            _generalError =
-                'Veuillez confirmer votre email avant de vous connecter. Vérifiez votre boîte de réception.';
-          });
+          // Show detailed email confirmation dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Email non confirmé'),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Votre compte existe mais votre email n\'est pas encore confirmé.',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    SizedBox(height: 16),
+                    Text('📧 Vérifiez votre boîte mail à l\'adresse :'),
+                    SizedBox(height: 8),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        email,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Text('Cliquez sur le lien de confirmation dans l\'email, puis réessayez de vous connecter.'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Si vous ne trouvez pas l\'email, vérifiez vos spams ou demandez un nouveau lien.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Compris'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      // Renvoyer l'email de confirmation
+                      try {
+                        await _authService.resendConfirmation(email);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Email de confirmation renvoyé'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erreur lors de l\'envoi'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    child: Text('Renvoyer l\'email'),
+                  ),
+                ],
+              );
+            },
+          );
           return;
         }
 
@@ -257,19 +336,87 @@ class _LoginScreenState extends State<LoginScreen> {
               try {
                 await _authService.resetPassword(_emailController.text.trim());
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Email de réinitialisation envoyé'),
-                    backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                  ),
+                
+                // Afficher une boîte de dialogue avec instructions claires
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Row(
+                        children: [
+                          Icon(Icons.email, color: AppTheme.lightTheme.colorScheme.primary),
+                          SizedBox(width: 8),
+                          Text('Email envoyé !'),
+                        ],
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Un email de réinitialisation a été envoyé à :',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          SizedBox(height: 8),
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _emailController.text.trim(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.lightTheme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text('📧 Vérifiez votre boîte mail et suivez les instructions pour créer un nouveau mot de passe.'),
+                          SizedBox(height: 8),
+                          Text(
+                            'Note: L\'email peut prendre quelques minutes à arriver. Vérifiez aussi vos spams.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('Compris'),
+                        ),
+                      ],
+                    );
+                  },
                 );
               } catch (e) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Email de réinitialisation envoyé (demo)'),
-                    backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                  ),
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Row(
+                        children: [
+                          Icon(Icons.error, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Erreur'),
+                        ],
+                      ),
+                      content: Text('Impossible d\'envoyer l\'email de réinitialisation. Vérifiez votre adresse email et réessayez.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
                 );
               }
             },

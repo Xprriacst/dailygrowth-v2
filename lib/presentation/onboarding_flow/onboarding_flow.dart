@@ -188,17 +188,72 @@ class _OnboardingFlowState extends State<OnboardingFlow>
 
           // Check if registration was successful
           if (response.user != null) {
-            // Wait for user profile to be created by trigger
-            await Future.delayed(const Duration(milliseconds: 1000));
-
-            // User registration successful
-            debugPrint('User registration successful');
-
-            // Save onboarding completion
-            await _saveOnboardingPreferences();
-
-            // Navigate to home dashboard
-            _navigateToHomeDashboard();
+            // Show email confirmation dialog
+            if (mounted) {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Row(
+                      children: [
+                        Icon(Icons.mark_email_unread, color: Colors.orange),
+                        SizedBox(width: 8),
+                        Text('Confirmez votre email'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Votre compte a été créé avec succès !',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        SizedBox(height: 16),
+                        Text('📧 Un email de confirmation a été envoyé à :'),
+                        SizedBox(height: 8),
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _emailController.text.trim(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Text('⚠️ Vous devez confirmer votre email avant de pouvoir vous connecter.'),
+                        SizedBox(height: 8),
+                        Text(
+                          'Vérifiez votre boîte mail (et les spams) puis cliquez sur le lien de confirmation.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Rediriger vers l'écran de connexion
+                          Navigator.of(context).pushReplacementNamed('/login-screen');
+                        },
+                        child: Text('Aller à la connexion'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
             return;
           } else {
             throw Exception('User creation failed');
