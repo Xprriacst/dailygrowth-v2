@@ -54,6 +54,19 @@ class AuthService {
       },
       onError: (error) {
         debugPrint('❌ Auth state stream error: $error');
+        
+        // Handle specific PKCE/localStorage errors
+        if (error.toString().contains('Code verifier could not be found')) {
+          debugPrint('🔧 Detected PKCE localStorage issue - attempting fix...');
+          // Clear auth state and suggest manual browser storage clear
+          clearAuthState().then((_) {
+            debugPrint('💡 Please clear browser storage manually:');
+            debugPrint('   1. Open console (F12)');
+            debugPrint('   2. Run: localStorage.clear(); sessionStorage.clear();');
+            debugPrint('   3. Refresh page and try again');
+          });
+        }
+        
         _authStateController.add(false);
       },
     );
@@ -442,6 +455,25 @@ class AuthService {
   }
 
 
+
+  // Clear authentication state and local storage
+  Future<void> clearAuthState() async {
+    try {
+      debugPrint('🧹 Clearing authentication state and local storage...');
+      
+      // Sign out if authenticated
+      if (isAuthenticated) {
+        await signOut();
+      }
+      
+      // Clear any remaining session data
+      await _client.auth.signOut();
+      
+      debugPrint('✅ Authentication state cleared successfully');
+    } catch (e) {
+      debugPrint('❌ Error clearing auth state: $e');
+    }
+  }
 
   // Clean up resources
   void dispose() {
