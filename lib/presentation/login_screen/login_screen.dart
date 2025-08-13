@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
@@ -230,29 +231,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Direct navigation after successful login
         debugPrint('User authenticated successfully');
+        debugPrint('🔍 Starting navigation logic...');
         
-        // Check if user has completed onboarding
+        // Wait a moment for user to be available and check if user has completed onboarding
         try {
-          final currentUser = _authService.currentUser;
+          debugPrint('🔍 Waiting for user to be available...');
+          
+          // Wait up to 3 seconds for currentUser to be available
+          User? currentUser;
+          for (int i = 0; i < 30; i++) {
+            currentUser = _authService.currentUser;
+            if (currentUser != null) break;
+            await Future.delayed(Duration(milliseconds: 100));
+          }
+          
+          debugPrint('🔍 Current user after wait: ${currentUser?.email ?? 'null'}');
+          
           if (currentUser != null) {
+            debugPrint('🔍 Fetching user profile for ID: ${currentUser.id}');
             final userProfile = await _userService.getUserProfile(currentUser.id);
+            debugPrint('🔍 User profile fetched: ${userProfile != null ? 'found' : 'null'}');
+            
             final selectedDomains = userProfile?['selected_life_domains'] as List?;
             final hasCompletedOnboarding = selectedDomains != null && selectedDomains.isNotEmpty;
+            debugPrint('🔍 Selected domains: $selectedDomains');
+            debugPrint('🔍 Has completed onboarding: $hasCompletedOnboarding');
             
             if (hasCompletedOnboarding) {
               debugPrint('🎯 Navigating to dashboard after login');
-              Navigator.pushReplacementNamed(context, '/home-dashboard');
+              Navigator.pushNamedAndRemoveUntil(context, '/home-dashboard', (route) => false);
             } else {
               debugPrint('🎯 Navigating to onboarding after login');
-              Navigator.pushReplacementNamed(context, '/onboarding-flow');
+              Navigator.pushNamedAndRemoveUntil(context, '/onboarding-flow', (route) => false);
             }
           } else {
             debugPrint('⚠️ No current user found, defaulting to dashboard');
-            Navigator.pushReplacementNamed(context, '/home-dashboard');
+            Navigator.pushNamedAndRemoveUntil(context, '/home-dashboard', (route) => false);
           }
         } catch (e) {
-          debugPrint('⚠️ Error checking onboarding status, defaulting to dashboard: $e');
-          Navigator.pushReplacementNamed(context, '/home-dashboard');
+          debugPrint('❌ Error in navigation logic: $e');
+          debugPrint('❌ Stack trace: ${StackTrace.current}');
+          debugPrint('⚠️ Defaulting to dashboard navigation');
+          Navigator.pushNamedAndRemoveUntil(context, '/home-dashboard', (route) => false);
         }
         return;
       } else {

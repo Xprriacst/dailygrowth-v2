@@ -21,6 +21,11 @@ class UserService {
   // Get user profile
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
+      // Ensure service is initialized
+      if (!_isInitialized) {
+        await initialize();
+      }
+      
       final response = await _client
           .from('user_profiles')
           .select()
