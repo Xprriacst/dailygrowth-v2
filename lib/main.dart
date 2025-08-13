@@ -10,6 +10,12 @@ import 'presentation/reset_password/reset_password_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set up global error handling for uncaught exceptions
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('❌ Flutter Error: ${details.exception}');
+    debugPrint('Stack trace: ${details.stack}');
+  };
+
   try {
     // Initialize Supabase first
     await SupabaseService();
@@ -43,16 +49,25 @@ class _MyAppState extends State<MyApp> {
 
   void _setupDeepLinkHandling() {
     // Listen for auth state changes including deep link authentication
-    _authService.authStateChanges.listen((data) {
-      debugPrint('Auth state changed: ${data.event}');
+    _authService.authStateChanges.listen(
+      (data) {
+        try {
+          debugPrint('Auth state changed: ${data.event}');
 
-      if (data.event == 'signedIn' || data.event == 'tokenRefreshed') {
-        debugPrint('User signed in successfully via deep link or normal flow');
-        // Navigation will be handled by individual screens or AuthGuard
-      } else if (data.event == 'signedOut') {
-        debugPrint('User signed out');
-      }
-    });
+          if (data.event == 'signedIn' || data.event == 'tokenRefreshed') {
+            debugPrint('User signed in successfully via deep link or normal flow');
+            // Navigation will be handled by individual screens or AuthGuard
+          } else if (data.event == 'signedOut') {
+            debugPrint('User signed out');
+          }
+        } catch (e) {
+          debugPrint('❌ Error handling auth state change: $e');
+        }
+      },
+      onError: (error) {
+        debugPrint('❌ Auth state listener error: $error');
+      },
+    );
   }
 
   @override

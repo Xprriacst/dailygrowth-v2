@@ -29,22 +29,34 @@ class AuthService {
   }
 
   void _setupAuthStateMonitoring() {
-    _authSubscription = _client.auth.onAuthStateChange.listen((event) {
-      final isAuthenticated =
-          event.session != null && event.session?.user != null;
-      _authStateController.add(isAuthenticated);
+    _authSubscription = _client.auth.onAuthStateChange.listen(
+      (event) {
+        try {
+          final isAuthenticated =
+              event.session != null && event.session?.user != null;
+          _authStateController.add(isAuthenticated);
 
-      if (event.event == AuthChangeEvent.signedOut ||
-          event.event == AuthChangeEvent.tokenRefreshed) {
-        debugPrint('Auth state changed: ${event.event}');
-      }
+          if (event.event == AuthChangeEvent.signedOut ||
+              event.event == AuthChangeEvent.tokenRefreshed) {
+            debugPrint('Auth state changed: ${event.event}');
+          }
 
-      // Handle session expiry
-      if (event.event == AuthChangeEvent.tokenRefreshed &&
-          event.session == null) {
-        debugPrint('Session expired - user needs to re-authenticate');
-      }
-    });
+          // Handle session expiry
+          if (event.event == AuthChangeEvent.tokenRefreshed &&
+              event.session == null) {
+            debugPrint('Session expired - user needs to re-authenticate');
+          }
+        } catch (e) {
+          debugPrint('❌ Error in auth state monitoring: $e');
+          // Ensure we don't break the auth flow on errors
+          _authStateController.add(false);
+        }
+      },
+      onError: (error) {
+        debugPrint('❌ Auth state stream error: $error');
+        _authStateController.add(false);
+      },
+    );
   }
 
   // Check if user is currently authenticated with enhanced validation
