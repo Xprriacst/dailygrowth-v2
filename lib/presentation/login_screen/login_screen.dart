@@ -4,6 +4,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
 import './widgets/app_logo.dart';
 import './widgets/custom_text_field.dart';
 import './widgets/social_login_button.dart';
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
+  final _userService = UserService();
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
@@ -106,6 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    // Prevent multiple simultaneous login attempts
+    if (_isLoading) {
+      debugPrint('⚠️ Login already in progress, ignoring duplicate request');
+      return;
+    }
+
     // Always validate inputs first, but allow login with valid format
     _validateInputs();
 
@@ -220,8 +228,32 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Navigation will be handled by auth state listener
+        // Direct navigation after successful login
         debugPrint('User authenticated successfully');
+        
+        // Check if user has completed onboarding
+        try {
+          final currentUser = _authService.currentUser;
+          if (currentUser != null) {
+            final userProfile = await _userService.getUserProfile(currentUser.id);
+            final selectedDomains = userProfile?['selected_life_domains'] as List?;
+            final hasCompletedOnboarding = selectedDomains != null && selectedDomains.isNotEmpty;
+            
+            if (hasCompletedOnboarding) {
+              debugPrint('🎯 Navigating to dashboard after login');
+              Navigator.pushReplacementNamed(context, '/home-dashboard');
+            } else {
+              debugPrint('🎯 Navigating to onboarding after login');
+              Navigator.pushReplacementNamed(context, '/onboarding-flow');
+            }
+          } else {
+            debugPrint('⚠️ No current user found, defaulting to dashboard');
+            Navigator.pushReplacementNamed(context, '/home-dashboard');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error checking onboarding status, defaulting to dashboard: $e');
+          Navigator.pushReplacementNamed(context, '/home-dashboard');
+        }
         return;
       } else {
         throw Exception('Aucune réponse utilisateur reçue');
