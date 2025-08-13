@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/app_config.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -13,21 +14,18 @@ class SupabaseService {
 
   SupabaseService._internal() : _initFuture = _initializeSupabase();
 
-  static const String supabaseUrl =
-      String.fromEnvironment('SUPABASE_URL', defaultValue: '');
-  static const String supabaseAnonKey =
-      String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
-
   // Internal initialization logic
   static Future<void> _initializeSupabase() async {
-    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-      throw Exception(
-          'SUPABASE_URL and SUPABASE_ANON_KEY must be defined using --dart-define.');
-    }
+    // Validate configuration before initialization
+    AppConfig.validateConfig();
+    
+    print('🔧 Initializing Supabase...');
+    print('📍 URL: ${AppConfig.supabaseUrl}');
+    print('🔑 Key: ${AppConfig.supabaseAnonKey.substring(0, 10)}...');
 
     await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
+      url: AppConfig.supabaseUrl,
+      anonKey: AppConfig.supabaseAnonKey,
     );
 
     _instance._client = Supabase.instance.client;
