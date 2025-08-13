@@ -128,7 +128,8 @@ Le défi doit être:
 
       // Parse the JSON response
       try {
-        final jsonResponse = jsonDecode(completion.text.trim());
+        final cleanedText = _cleanJsonResponse(completion.text);
+        final jsonResponse = jsonDecode(cleanedText);
 
         final result = {
           'title': (jsonResponse['title'] ?? 'Défi de croissance') as String,
@@ -277,7 +278,8 @@ Si aucune citation authentique ne correspond parfaitement au domaine, adapte une
 
       // Parse the JSON response
       try {
-        final jsonResponse = jsonDecode(completion.text.trim());
+        final cleanedText = _cleanJsonResponse(completion.text);
+        final jsonResponse = jsonDecode(cleanedText);
 
         final result = {
           'quote': (jsonResponse['quote'] ??

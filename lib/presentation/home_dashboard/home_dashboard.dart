@@ -218,31 +218,51 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   Future<void> _loadRecentAchievements() async {
     try {
-      final achievements = await _userService.getUserAchievements(_userId);
+      if (_userId == null) {
+        debugPrint('⚠️ User ID is null, skipping achievements load');
+        setState(() {
+          _recentAchievements = [];
+        });
+        return;
+      }
+
+      final achievements = await _userService.getUserAchievements(_userId!);
 
       setState(() {
         _recentAchievements = achievements
             .take(3) // Show only 3 most recent
             .map((achievement) => {
                   'id': achievement['id'],
-                  'title': achievement['achievement_name'],
-                  'description': achievement['description'],
-                  'icon': achievement['icon_name'],
+                  'title': achievement['achievement_name'] ?? 'Achievement',
+                  'description': achievement['description'] ?? 'Description',
+                  'icon': achievement['icon_name'] ?? 'star',
                   'date': _formatDate(achievement['unlocked_at']),
                 })
             .toList();
       });
     } catch (e) {
       debugPrint('Failed to load achievements: $e');
+      setState(() {
+        _recentAchievements = [];
+      });
     }
   }
 
   Future<void> _loadWeeklyProgress() async {
     try {
-      final weeklyProgress = await _progressService.getWeeklyProgress(_userId);
+      if (_userId == null) {
+        debugPrint('⚠️ User ID is null, skipping weekly progress load');
+        setState(() {
+          _weeklyData = [];
+          _weeklyCompletionRate = 0.0;
+        });
+        return;
+      }
+
+      final weeklyProgress = await _progressService.getWeeklyProgress(_userId!);
 
       final completedDays =
-          weeklyProgress.where((day) => day['completed'] as bool).length;
+          weeklyProgress.where((day) => day['completed'] as bool? ?? false).length;
       final totalDays = weeklyProgress.length;
 
       setState(() {
