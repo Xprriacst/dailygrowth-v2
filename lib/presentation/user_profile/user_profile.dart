@@ -163,7 +163,10 @@ class _UserProfileState extends State<UserProfile> {
           backgroundColor: AppTheme.lightTheme.colorScheme.surface,
           elevation: 0,
           leading: IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              // Navigate back to dashboard instead of using pop to avoid navigation errors
+              Navigator.pushNamedAndRemoveUntil(context, '/home-dashboard', (route) => false);
+            },
             icon: CustomIconWidget(
               iconName: 'arrow_back',
               color: AppTheme.lightTheme.colorScheme.onSurface,

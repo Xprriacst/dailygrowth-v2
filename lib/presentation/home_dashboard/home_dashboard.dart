@@ -379,6 +379,92 @@ class _HomeDashboardState extends State<HomeDashboard> {
                                   weeklyData: _weeklyData,
                                   weeklyCompletionRate: _weeklyCompletionRate),
 
+                              SizedBox(height: 3.h),
+
+                              // Micro-Challenges Access Button
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 4.w),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppTheme.lightTheme.colorScheme.primary,
+                                        AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.8),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        Navigator.pushNamed(context, AppRoutes.challengeSelection);
+                                      },
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Padding(
+                                        padding: EdgeInsets.all(4.w),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.all(3.w),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.psychology,
+                                                color: Colors.white,
+                                                size: 6.w,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Micro-Défis Personnalisés',
+                                                    style: TextStyle(
+                                                      fontSize: 16.sp,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 0.5.h),
+                                                  Text(
+                                                    'Générez 15 défis sur mesure avec l\'IA',
+                                                    style: TextStyle(
+                                                      fontSize: 13.sp,
+                                                      color: Colors.white.withValues(alpha: 0.9),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              color: Colors.white,
+                                              size: 4.w,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
                               SizedBox(
                                   height: 10.h), // Space for bottom navigation
                             ])))),

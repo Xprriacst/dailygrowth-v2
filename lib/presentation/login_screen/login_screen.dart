@@ -43,13 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _initializeAuth();
-    _prefillDemoCredentials();
+    
+    // Add listeners to update button state when text changes
+    _emailController.addListener(_updateButtonState);
+    _passwordController.addListener(_updateButtonState);
+    // Note: Demo credentials removed for production
   }
 
-  void _prefillDemoCredentials() {
-    // Pre-fill with demo credentials for testing
-    _emailController.text = 'expertiaen5min@gmail.com';
-    _passwordController.text = 'password123';
+  void _updateButtonState() {
+    setState(() {
+      // This will trigger a rebuild and update the button state
+    });
   }
 
   Future<void> _initializeAuth() async {
