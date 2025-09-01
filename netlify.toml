@@ -27,7 +27,6 @@
   # Ces variables doivent être définies dans l'interface Netlify
   # SUPABASE_URL = "votre_url_supabase"
   # SUPABASE_ANON_KEY = "votre_clé_anon"
-  # OPENAI_API_KEY = "votre_clé_openai"
 
 # Headers de sécurité pour l'application web
 [[headers]]

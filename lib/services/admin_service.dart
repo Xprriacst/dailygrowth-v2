@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import './supabase_service.dart';
-import './openai_service.dart';
 
 class AdminService {
   static final AdminService _instance = AdminService._internal();
@@ -9,7 +8,6 @@ class AdminService {
   AdminService._internal();
 
   late final SupabaseClient _client;
-  final OpenAIService _openAIService = OpenAIService();
   bool _isInitialized = false;
 
   Future<void> initialize() async {
@@ -289,32 +287,21 @@ class AdminService {
     required String lifeDomain,
   }) async {
     try {
-      if (!_openAIService.isApiKeyConfigured) {
-        return {
-          'suggestion':
-              'Configuration de l\'API OpenAI requise pour les suggestions AI',
-          'improvement': 'Veuillez configurer votre clé API OpenAI'
-        };
-      }
+      // AI suggestions disabled - using static suggestions
+      return {
+        'suggestion': 'Suggestions AI désactivées - utilisation de suggestions statiques',
+        'improvement': 'Fonctionnalité basée sur les micro-défis n8n'
+      };
 
       if (contentType == 'challenge') {
-        final challenge = await _openAIService.generateDailyChallenge(
-          lifeDomain: lifeDomain,
-          difficulty: 'medium',
-        );
-
         return {
-          'suggestion': challenge['title'] ?? '',
-          'improvement': challenge['description'] ?? '',
+          'suggestion': 'Défi personnalisé via workflow n8n',
+          'improvement': 'Utilisez l\'écran de sélection des micro-défis',
         };
       } else if (contentType == 'quote') {
-        final quote = await _openAIService.generateInspirationalQuote(
-          lifeDomain: lifeDomain,
-        );
-
         return {
-          'suggestion': quote['quote'] ?? '',
-          'improvement': 'Auteur: ${quote['author'] ?? 'Anonyme'}',
+          'suggestion': 'Citation inspirante générée localement',
+          'improvement': 'Système de fallback activé',
         };
       }
 

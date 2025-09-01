@@ -5,7 +5,6 @@ import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
 import '../../services/auth_service.dart';
-import '../../services/openai_service.dart';
 import '../../services/user_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   final _authService = AuthService();
   final _userService = UserService();
-  final _openAIService = OpenAIService();
 
   bool _isInitializing = true;
   bool _hasError = false;
@@ -197,61 +195,21 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _prepareAIServicesWithErrorHandling() async {
     try {
       setState(() {
-        _initializationStatus = 'Validation OpenAI API...';
+        _initializationStatus = 'Services prêts...';
       });
 
-      // Test OpenAI API key validity with actual API call
-      if (_openAIService.isApiKeyConfigured) {
-        try {
-          // Use actual API call instead of mock validation
-          final testChallenge = await _openAIService
-              .generateDailyChallenge(
-                lifeDomain: 'developpement',
-                difficulty: 'easy',
-              )
-              .timeout(const Duration(seconds: 10)); // Add timeout
-
-          // Verify we got real content, not fallback
-          if (testChallenge['title']?.isNotEmpty == true &&
-              testChallenge['description']?.isNotEmpty == true &&
-              !testChallenge['title']!.contains('Moment de gratitude')) {
-            // Not fallback content
-            setState(() {
-              _openAIStatus = true;
-              _initializationStatus = 'OpenAI API: Connecté et fonctionnel ✓';
-            });
-            debugPrint(
-                '✅ OpenAI API validation: SUCCESS - Real content generated');
-          } else {
-            // Fallback content returned, API key issue
-            setState(() {
-              _openAIStatus = false;
-              _initializationStatus =
-                  'OpenAI API: Mode dégradé (contenu par défaut)';
-            });
-            debugPrint(
-                '⚠️ OpenAI API validation: FALLBACK - Using default content');
-          }
-        } catch (e) {
-          setState(() {
-            _openAIStatus = false;
-            _initializationStatus = 'OpenAI API: Erreur de connexion';
-          });
-          debugPrint('❌ OpenAI API validation failed: $e');
-        }
-      } else {
-        setState(() {
-          _openAIStatus = false;
-          _initializationStatus = 'OpenAI API: Clé manquante (mode dégradé)';
-        });
-        debugPrint('⚠️ OpenAI API key not configured - using fallback content');
-      }
+      // AI services disabled - using n8n workflow and fallback content
+      setState(() {
+        _openAIStatus = true;
+        _initializationStatus = 'Services n8n: Opérationnels ✓';
+      });
+      debugPrint('✅ n8n workflow services ready');
     } catch (e) {
       setState(() {
         _openAIStatus = false;
-        _initializationStatus = 'OpenAI API: Erreur de validation';
+        _initializationStatus = 'Services: Erreur d\'initialisation';
       });
-      debugPrint('❌ OpenAI service preparation error: $e');
+      debugPrint('❌ Service preparation error: $e');
     }
 
     await Future.delayed(const Duration(milliseconds: 600));
@@ -296,14 +254,14 @@ class _SplashScreenState extends State<SplashScreen>
     _initializeApp();
   }
 
-  void _navigateToOpenAITest() {
+  void _navigateToMicroChallenges() {
     try {
-      Navigator.pushNamed(context, '/openai-test');
+      Navigator.pushNamed(context, '/challenge-selection');
     } catch (e) {
-      debugPrint('❌ Error navigating to OpenAI test: $e');
+      debugPrint('❌ Error navigating to micro-challenges: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Erreur lors de l\'ouverture du test API')),
+            content: Text('Erreur lors de l\'ouverture des micro-défis')),
       );
     }
   }
@@ -488,8 +446,8 @@ class _SplashScreenState extends State<SplashScreen>
           SizedBox(width: 2.w),
           Text(
             _openAIStatus
-                ? 'OpenAI API: Opérationnel'
-                : 'OpenAI API: Mode Dégradé',
+                ? 'Services n8n: Opérationnels'
+                : 'Services: Mode Dégradé',
             style: GoogleFonts.inter(
               fontSize: 11.sp,
               fontWeight: FontWeight.w500,
@@ -504,14 +462,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildTestButton() {
     return TextButton.icon(
-      onPressed: _navigateToOpenAITest,
+      onPressed: _navigateToMicroChallenges,
       icon: CustomIconWidget(
-        iconName: 'settings',
+        iconName: 'psychology',
         color: Colors.white.withAlpha(179),
         size: 4.w,
       ),
       label: Text(
-        'Tester API OpenAI',
+        'Micro-défis n8n',
         style: GoogleFonts.inter(
           fontSize: 12.sp,
           fontWeight: FontWeight.w500,

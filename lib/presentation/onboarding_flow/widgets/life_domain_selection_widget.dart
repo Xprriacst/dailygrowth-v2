@@ -88,7 +88,7 @@ class _LifeDomainSelectionWidgetState extends State<LifeDomainSelectionWidget>
       debugPrint('🎯 Generating challenges for: ${problematique.description}');
       debugPrint('📊 User completed challenges: $nombreDefisReleves');
 
-      final result = await _n8nService.generateMicroChallengesWithFallback(
+      final result = await _n8nService.generateSingleMicroChallengeWithFallback(
         problematique: problematique.description,
         nombreDefisReleves: nombreDefisReleves,
         userId: userProfile?['id'],

@@ -442,13 +442,14 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   List<String> _getSelectedDomains() {
-    final domains = _userData?["selected_life_domains"];
-    if (domains == null) return [];
-
-    if (domains is List) {
-      return domains.cast<String>();
+    // Only use selected_problematiques for display
+    final problematiques = _userData?["selected_problematiques"];
+    if (problematiques != null && problematiques is List && problematiques.isNotEmpty) {
+      return problematiques.cast<String>();
     }
-    return [];
+    
+    // Return error message if no problematiques found
+    return ["Erreur: Aucune problématique sélectionnée"];
   }
 
   void _handleBottomNavTap(int index) async {

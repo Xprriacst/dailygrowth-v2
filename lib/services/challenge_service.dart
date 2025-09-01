@@ -2,7 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 import './supabase_service.dart';
-import './openai_service.dart';
+import './n8n_challenge_service.dart';
+import './user_service.dart';
 
 class ChallengeService {
   static final ChallengeService _instance = ChallengeService._internal();
@@ -10,7 +11,6 @@ class ChallengeService {
   ChallengeService._internal();
 
   late final SupabaseClient _client;
-  final OpenAIService _openAIService = OpenAIService();
   bool _isInitialized = false;
 
   Future<void> initialize() async {
@@ -37,27 +37,77 @@ class ChallengeService {
     }
   }
 
-  // Generate and create today's challenge using AI
+  // Force regenerate today's challenge using micro-challenges
+  Future<Map<String, dynamic>> forceRegenerateTodayChallenge({
+    required String userId,
+    required String lifeDomain,
+  }) async {
+    try {
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      
+      // Delete existing challenge for today
+      await _client
+          .from('daily_challenges')
+          .delete()
+          .eq('user_id', userId)
+          .eq('date_assigned', today);
+      
+      debugPrint('🔄 Deleted existing challenge for today');
+      
+      // Generate new challenge
+      return await generateTodayChallenge(
+        userId: userId,
+        lifeDomain: lifeDomain,
+        difficulty: 'medium',
+      );
+    } catch (error) {
+      debugPrint('Error force regenerating challenge: $error');
+      throw Exception('Erreur lors de la régénération du défi: $error');
+    }
+  }
+
+  // Get next unused micro-challenge for daily challenge
+  Future<Map<String, dynamic>?> getNextMicroChallenge(String userId) async {
+    try {
+      final response = await _client
+          .from('user_micro_challenges')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_used_as_daily', false)
+          .order('numero', ascending: true)
+          .limit(1)
+          .maybeSingle();
+      return response;
+    } catch (error) {
+      debugPrint('Error getting next micro challenge: $error');
+      return null;
+    }
+  }
+
+  // Generate and create today's challenge using direct n8n generation
   Future<Map<String, dynamic>> generateTodayChallenge({
     required String userId,
     required String lifeDomain,
     String difficulty = 'medium',
   }) async {
     try {
+      // Générer directement un nouveau défi via n8n (pas de vérification de stock)
+      debugPrint('🎯 Generating today\'s challenge via n8n');
+      final newChallenge = await _generateNewMicroChallengeViaAI(userId, lifeDomain);
+      
       Map<String, String> challengeData;
-
-      // Try to generate with OpenAI first
-      if (_openAIService.isApiKeyConfigured) {
-        try {
-          challengeData = await _openAIService.generateDailyChallenge(
-            lifeDomain: _translateLifeDomain(lifeDomain),
-            difficulty: difficulty,
-          );
-        } catch (e) {
-          debugPrint('OpenAI generation failed, using fallback: $e');
-          challengeData = _getFallbackChallenge(lifeDomain, difficulty);
-        }
+      String? microChallengeId;
+      
+      if (newChallenge != null) {
+        challengeData = {
+          'title': newChallenge['nom'] as String,
+          'description': newChallenge['mission'] as String,
+        };
+        microChallengeId = newChallenge['id'] as String;
+        debugPrint('✅ Generated new challenge via n8n: ${challengeData['title']}');
       } else {
+        // Fallback vers la génération locale
+        debugPrint('⚠️ n8n generation failed, using local fallback');
         challengeData = _getFallbackChallenge(lifeDomain, difficulty);
       }
 
@@ -78,10 +128,32 @@ class ChallengeService {
           .select()
           .single();
 
+      // Marquer le micro-défi comme utilisé si applicable
+      if (microChallengeId != null) {
+        await _markMicroChallengeAsUsed(microChallengeId);
+      }
+
       return response;
     } catch (error) {
       debugPrint('Error generating challenge: $error');
       throw Exception('Erreur lors de la génération du défi: $error');
+    }
+  }
+
+  // Mark micro-challenge as used for daily challenge
+  Future<void> _markMicroChallengeAsUsed(String microChallengeId) async {
+    try {
+      await _client
+          .from('user_micro_challenges')
+          .update({
+            'is_used_as_daily': true,
+            'used_as_daily_date': DateTime.now().toIso8601String().split('T')[0],
+          })
+          .eq('id', microChallengeId);
+      
+      debugPrint('✅ Marked micro-challenge as used: $microChallengeId');
+    } catch (error) {
+      debugPrint('❌ Error marking micro-challenge as used: $error');
     }
   }
 
@@ -363,19 +435,74 @@ class ChallengeService {
     required int streakCount,
   }) async {
     try {
-      if (_openAIService.isApiKeyConfigured) {
-        return await _openAIService.generatePersonalizedMessage(
-          userName: 'Champion',
-          streakCount: streakCount,
-          lifeDomain: challengeTitle,
-          messageType: 'encouragement',
-        );
-      } else {
-        return _getFallbackMotivationalMessage(streakCount);
-      }
+      return _getFallbackMotivationalMessage(streakCount);
     } catch (e) {
       debugPrint('Error generating motivational message: $e');
       return _getFallbackMotivationalMessage(streakCount);
+    }
+  }
+
+  // Generate new micro-challenge via n8n when no unused challenges available
+  Future<Map<String, dynamic>?> _generateNewMicroChallengeViaAI(String userId, String lifeDomain) async {
+    try {
+      final n8nService = N8nChallengeService();
+      final userService = UserService();
+      
+      // Get user profile to determine problematique
+      final userProfile = await userService.getUserProfile(userId);
+      if (userProfile == null) {
+        debugPrint('❌ No user profile found for challenge generation');
+        return null;
+      }
+      
+      // Get number of completed challenges
+      final completedChallenges = await _client
+          .from('daily_challenges')
+          .select()
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+          .count();
+      
+      final nombreDefisReleves = completedChallenges.count ?? 0;
+      
+      // Get user's exact problematique text
+      String problematique = lifeDomain;
+      if (userProfile['selected_problematiques'] != null) {
+        final problematiques = List<String>.from(userProfile['selected_problematiques']);
+        if (problematiques.isNotEmpty) {
+          problematique = problematiques.first; // Use exact problematique text
+        }
+      } else if (userProfile['selected_life_domains'] != null) {
+        // Fallback to domain if no specific problematique
+        final domains = List<String>.from(userProfile['selected_life_domains']);
+        if (domains.isNotEmpty) {
+          problematique = domains.first;
+        }
+      }
+      
+      debugPrint('🎯 Generating new challenge for: $problematique (completed: $nombreDefisReleves)');
+      
+      // Generate single challenge via n8n
+      final result = await n8nService.generateSingleMicroChallengeWithFallback(
+        problematique: problematique,
+        nombreDefisReleves: nombreDefisReleves,
+        userId: userId,
+      );
+      
+      // Get the generated challenge from database
+      final generatedChallenge = await _client
+          .from('user_micro_challenges')
+          .select()
+          .eq('user_id', userId)
+          .eq('numero', nombreDefisReleves + 1)
+          .order('created_at', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      
+      return generatedChallenge;
+    } catch (error) {
+      debugPrint('❌ Error generating new micro-challenge via AI: $error');
+      return null;
     }
   }
 

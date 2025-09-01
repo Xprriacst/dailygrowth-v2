@@ -82,7 +82,7 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
       debugPrint('🎯 Generating challenges for: ${problematique.description}');
       debugPrint('📊 User completed challenges: $nombreDefisReleves');
 
-      final result = await _n8nService.generateMicroChallengesWithFallback(
+      final result = await _n8nService.generateSingleMicroChallengeWithFallback(
         problematique: problematique.description,
         nombreDefisReleves: nombreDefisReleves,
         userId: userProfile?['id'],
@@ -333,22 +333,10 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                     SizedBox(height: 4.h),
 
                     // Actions
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _resetSelection,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Choisir un autre objectif'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-                              foregroundColor: AppTheme.lightTheme.colorScheme.onSurface,
-                              padding: EdgeInsets.symmetric(vertical: 2.h),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
+                        SizedBox(
+                          width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () {
                               Navigator.pushReplacementNamed(context, AppRoutes.homeDashboard);
@@ -358,6 +346,20 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.lightTheme.colorScheme.primary,
                               foregroundColor: AppTheme.lightTheme.colorScheme.onPrimary,
+                              padding: EdgeInsets.symmetric(vertical: 2.h),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _resetSelection,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Choisir un autre objectif'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+                              foregroundColor: AppTheme.lightTheme.colorScheme.onSurface,
                               padding: EdgeInsets.symmetric(vertical: 2.h),
                             ),
                           ),

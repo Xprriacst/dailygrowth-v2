@@ -5,7 +5,6 @@ import 'package:cron/cron.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import './supabase_service.dart';
-import './openai_service.dart';
 import './challenge_service.dart';
 import './quote_service.dart';
 import './user_service.dart';
@@ -20,7 +19,6 @@ class NotificationService {
   bool _isInitialized = false;
 
   // Services
-  final OpenAIService _openAIService = OpenAIService();
   final ChallengeService _challengeService = ChallengeService();
   final QuoteService _quoteService = QuoteService();
   final UserService _userService = UserService();
@@ -225,24 +223,14 @@ class NotificationService {
   Future<void> _generateDailyChallengeForUser(
       String userId, String lifeDomain) async {
     try {
-      if (_openAIService.isApiKeyConfigured) {
-        final generatedChallenge = await _openAIService.generateDailyChallenge(
-            lifeDomain: _getLifeDomainName(lifeDomain));
-
-        await _challengeService.createChallenge(
-            userId: userId,
-            title: generatedChallenge['title']!,
-            description: generatedChallenge['description']!,
-            lifeDomain: lifeDomain);
-      } else {
-        // Fallback challenge
-        await _challengeService.createChallenge(
-            userId: userId,
-            title: 'Moment de réflexion',
-            description:
-                'Prenez 10 minutes pour réfléchir à vos objectifs et notez une action concrète à réaliser aujourd\'hui.',
-            lifeDomain: lifeDomain);
-      }
+      // Use challenge service fallback directly
+      await _challengeService.createChallenge(
+          userId: userId,
+          title: 'Moment de réflexion',
+          description:
+              'Prenez 10 minutes pour réfléchir à vos objectifs et notez une action concrète à réaliser aujourd\'hui.',
+          lifeDomain: lifeDomain);
+      debugPrint('✅ Daily challenge generated for user $userId');
     } catch (e) {
       debugPrint('Failed to generate challenge for user $userId: $e');
     }
@@ -251,27 +239,12 @@ class NotificationService {
   Future<void> _generateDailyQuoteForUser(
       String userId, String lifeDomain) async {
     try {
-      if (_openAIService.isApiKeyConfigured) {
-        final generatedQuote = await _openAIService.generateInspirationalQuote(
-            lifeDomain: _getLifeDomainName(lifeDomain));
+      // Use quote service fallback directly
+      final generatedQuote = await _quoteService.generateTodaysQuote(
+          userId: userId, lifeDomain: lifeDomain);
 
-        await _quoteService.createQuote(
-            userId: userId,
-            quoteText: generatedQuote['quote']!,
-            author: generatedQuote['author']!,
-            lifeDomain: lifeDomain);
-      } else {
-        // Fallback quote
-        final fallbackQuotes = _getFallbackQuotes();
-        final randomQuote =
-            fallbackQuotes[lifeDomain] ?? fallbackQuotes['developpement']!;
-
-        await _quoteService.createQuote(
-            userId: userId,
-            quoteText: randomQuote['quote']!,
-            author: randomQuote['author']!,
-            lifeDomain: lifeDomain);
-      }
+      // Quote is already saved by the service
+      debugPrint('✅ Daily quote generated for user $userId');
     } catch (e) {
       debugPrint('Failed to generate quote for user $userId: $e');
     }

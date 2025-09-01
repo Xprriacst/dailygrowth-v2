@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 import './supabase_service.dart';
-import './openai_service.dart';
 
 class QuoteService {
   static final QuoteService _instance = QuoteService._internal();
@@ -10,7 +9,6 @@ class QuoteService {
   QuoteService._internal();
 
   late final SupabaseClient _client;
-  final _openAIService = OpenAIService();
   bool _isInitialized = false;
 
   Future<void> initialize() async {
@@ -40,7 +38,7 @@ class QuoteService {
         return existingQuote;
       }
 
-      // Generate new quote using OpenAI if none exists
+      // Generate new quote using fallback if none exists
       return await generateTodaysQuote(
           userId: userId, lifeDomain: lifeDomain ?? 'developpement');
     } catch (error) {
@@ -48,7 +46,7 @@ class QuoteService {
     }
   }
 
-  // Generate new quote using OpenAI
+  // Generate new quote using fallback
   Future<Map<String, dynamic>> generateTodaysQuote({
     required String userId,
     required String lifeDomain,
@@ -56,19 +54,8 @@ class QuoteService {
     try {
       Map<String, String> quoteData;
 
-      // Try to generate with OpenAI first
-      if (_openAIService.isApiKeyConfigured) {
-        try {
-          quoteData = await _openAIService.generateInspirationalQuote(
-            lifeDomain: _translateLifeDomain(lifeDomain),
-          );
-        } catch (e) {
-          debugPrint('OpenAI generation failed, using fallback: $e');
-          quoteData = _getFallbackQuote(lifeDomain);
-        }
-      } else {
-        quoteData = _getFallbackQuote(lifeDomain);
-      }
+      // Use fallback quotes directly
+      quoteData = _getFallbackQuote(lifeDomain);
 
       final today = DateTime.now().toIso8601String().split('T')[0];
 

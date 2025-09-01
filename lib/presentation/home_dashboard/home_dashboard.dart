@@ -7,7 +7,6 @@ import '../../utils/auth_guard.dart';
 
 import '../../core/app_export.dart';
 import '../../theme/app_theme.dart';
-import '../../services/openai_service.dart';
 import '../../services/challenge_service.dart';
 import '../../services/quote_service.dart';
 import '../../services/user_service.dart';
@@ -59,7 +58,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
   double _weeklyCompletionRate = 0.0;
 
   // Service instances
-  final OpenAIService _openAIService = OpenAIService();
   final ChallengeService _challengeService = ChallengeService();
   final QuoteService _quoteService = QuoteService();
   final UserService _userService = UserService();
@@ -135,11 +133,11 @@ class _HomeDashboardState extends State<HomeDashboard> {
 
   Future<void> _loadTodayChallenge() async {
     try {
-      // First try to get existing challenge
-      final existingChallenge =
-          await _challengeService.getTodayChallenge(_userId);
-
+      // First try to get existing challenge for today
+      final existingChallenge = await _challengeService.getTodayChallenge(_userId);
+      
       if (existingChallenge != null) {
+        // Use existing challenge for today
         setState(() {
           _dailyChallenge = {
             'id': existingChallenge['id'],
@@ -148,33 +146,52 @@ class _HomeDashboardState extends State<HomeDashboard> {
           };
           _isChallengeCompleted = existingChallenge['status'] == 'completed';
         });
-      } else {
-        // Generate new challenge using ChallengeService (now with AI integration)
-        final userProfile = await _userService.getUserProfile(_userId);
-        final selectedDomains =
-            userProfile?['selected_life_domains'] as List<dynamic>? ??
-                ['sante'];
-        final primaryDomain =
-            selectedDomains.isNotEmpty ? selectedDomains.first : 'sante';
-
-        // Use the updated ChallengeService method
-        final newChallenge = await _challengeService.generateTodayChallenge(
-          userId: _userId,
-          lifeDomain: primaryDomain,
-          difficulty: 'medium',
-        );
-
-        setState(() {
-          _dailyChallenge = {
-            'id': newChallenge['id'],
-            'title': newChallenge['title'],
-            'description': newChallenge['description'],
-          };
-          _isChallengeCompleted = false;
-        });
+        debugPrint('✅ Loaded existing challenge: ${existingChallenge['title']}');
+        return;
       }
+
+      // No existing challenge, generate new one
+      final userProfile = await _userService.getUserProfile(_userId);
+      final selectedDomains =
+          userProfile?['selected_life_domains'] as List<dynamic>? ??
+              ['sante'];
+      final primaryDomain =
+          selectedDomains.isNotEmpty ? selectedDomains.first : 'sante';
+
+      // Generate new challenge (not force regenerate)
+      final newChallenge = await _challengeService.generateTodayChallenge(
+        userId: _userId,
+        lifeDomain: primaryDomain,
+      );
+
+      setState(() {
+        _dailyChallenge = {
+          'id': newChallenge['id'],
+          'title': newChallenge['title'],
+          'description': newChallenge['description'],
+        };
+        _isChallengeCompleted = newChallenge['status'] == 'completed';
+      });
+      
+      debugPrint('✅ Challenge loaded: ${newChallenge['title']}');
     } catch (e) {
       debugPrint('Failed to load today\'s challenge: $e');
+      // Fallback to existing challenge if regeneration fails
+      try {
+        final existingChallenge = await _challengeService.getTodayChallenge(_userId);
+        if (existingChallenge != null) {
+          setState(() {
+            _dailyChallenge = {
+              'id': existingChallenge['id'],
+              'title': existingChallenge['title'],
+              'description': existingChallenge['description'],
+            };
+            _isChallengeCompleted = existingChallenge['status'] == 'completed';
+          });
+        }
+      } catch (fallbackError) {
+        debugPrint('Fallback challenge loading also failed: $fallbackError');
+      }
     }
   }
 

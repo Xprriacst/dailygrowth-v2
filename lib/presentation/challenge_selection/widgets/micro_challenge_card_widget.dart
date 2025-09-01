@@ -131,7 +131,9 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                   child: Row(
                     children: [
                       // Numéro du défi
-                      AnimatedContainer(
+                      Flexible(
+                        flex: 0,
+                        child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         width: 12.w,
                         height: 12.w,
@@ -168,6 +170,7 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                                   ),
                                 ),
                         ),
+                        ),
                       ),
 
                       SizedBox(width: 4.w),
@@ -191,7 +194,7 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                               ),
                             ),
                             SizedBox(height: 0.5.h),
-                            Row(
+                            Wrap(
                               children: [
                                 Icon(
                                   Icons.access_time,

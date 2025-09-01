@@ -87,16 +87,20 @@ class _ProgressTrackingState extends State<ProgressTracking>
       // Load all progress data
       await _loadAllProgressData();
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       debugPrint('Failed to initialize progress tracking: $e');
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 
@@ -119,24 +123,27 @@ class _ProgressTrackingState extends State<ProgressTracking>
             .timeout(Duration(seconds: 10)),
       ], eagerError: true);
 
-      setState(() {
-        _userStats = results[0] as Map<String, dynamic>? ?? {};
-        _monthlyProgress = results[1] as Map<String, dynamic>? ?? {};
-        _yearlyProgress = results[2] as Map<String, dynamic>? ?? {};
-        _domainProgress = results[3] as Map<String, dynamic>? ?? {};
-        _userBadges = results[4] as List<Map<String, dynamic>>? ?? [];
+      if (mounted) {
+        setState(() {
+          _userStats = results[0] as Map<String, dynamic>? ?? {};
+          _monthlyProgress = results[1] as Map<String, dynamic>? ?? {};
+          _yearlyProgress = results[2] as Map<String, dynamic>? ?? {};
+          _domainProgress = results[3] as Map<String, dynamic>? ?? {};
+          _userBadges = results[4] as List<Map<String, dynamic>>? ?? [];
 
-        // Calculate user level
-        final totalPoints = _userStats['total_points'] ?? 0;
-        _userLevel = _gamificationService.calculateUserLevel(totalPoints);
-      });
+          // Calculate user level
+          final totalPoints = _userStats['total_points'] ?? 0;
+          _userLevel = _gamificationService.calculateUserLevel(totalPoints);
+        });
+      }
     } catch (e) {
       debugPrint('Failed to load progress data: $e');
       // Set empty/default values instead of throwing
-      setState(() {
-        _userStats = {
-          'total_points': 0,
-          'current_streak': 0,
+      if (mounted) {
+        setState(() {
+          _userStats = {
+            'total_points': 0,
+            'current_streak': 0,
           'completed_challenges': 0
         };
         _monthlyProgress = {
@@ -156,7 +163,8 @@ class _ProgressTrackingState extends State<ProgressTracking>
           'level_name': 'Débutant',
           'progress_percentage': 0.0
         };
-      });
+        });
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
 class N8nChallengeService {
@@ -7,46 +8,39 @@ class N8nChallengeService {
   factory N8nChallengeService() => _instance;
   N8nChallengeService._internal();
 
-  late final Dio _dio;
-  static const String webhookUrl = 'https://polaris-ia.app.n8n.cloud/webhook/ui-defis-final';
+  static const String webhookUrl = 'https://polaris-ia.app.n8n.cloud/webhook/e4b66ea3-6195-4b11-89fe-85d05d23cae9';
 
-  void _initializeService() {
-    _dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 60), // Plus long pour l'IA
-        sendTimeout: const Duration(seconds: 30),
-      ),
-    );
+  Dio? _dio;
 
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          debugPrint('🚀 N8n Webhook Request: ${options.method} ${options.path}');
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          debugPrint('✅ N8n Webhook Response: ${response.statusCode}');
-          handler.next(response);
-        },
-        onError: (DioException error, handler) {
-          debugPrint('❌ N8n Webhook Error: ${error.response?.statusCode} - ${error.message}');
-          handler.next(error);
-        },
-      ),
-    );
+  Dio get _client {
+    if (_dio == null) {
+      _dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
 
-    debugPrint('✅ N8n Challenge Service initialized');
+      _dio!.interceptors.add(
+        LogInterceptor(
+          requestBody: kDebugMode,
+          responseBody: kDebugMode,
+          logPrint: (obj) => debugPrint(obj.toString()),
+        ),
+      );
+      
+      debugPrint('✅ N8n Challenge Service initialized');
+    }
+    return _dio!;
   }
 
-  /// Génère des micro-défis via le workflow n8n
-  Future<Map<String, dynamic>> generateMicroChallenges({
+  /// Génère UN SEUL micro-défi via le workflow n8n
+  Future<Map<String, dynamic>> generateSingleMicroChallenge({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
   }) async {
-    _initializeService();
-
     try {
       debugPrint('🎯 Generating challenges for: $problematique (défis relevés: $nombreDefisReleves)');
 
@@ -57,7 +51,7 @@ class N8nChallengeService {
         if (userId != null) 'user_id': userId,
       };
 
-      final response = await _dio.post(
+      final response = await _client.post(
         webhookUrl,
         data: requestData,
         options: Options(
@@ -91,30 +85,31 @@ class N8nChallengeService {
         responseData = response.data;
       }
 
-      // Validation de la structure
+      // Validation de la structure pour UN SEUL défi
       if (!responseData.containsKey('defis') || 
           responseData['defis'] is! List ||
-          (responseData['defis'] as List).isEmpty) {
+          (responseData['defis'] as List).length != 1) {
         throw N8nException(
           statusCode: 500,
-          message: 'Structure de réponse invalide: défis manquants',
+          message: 'Structure de réponse invalide: doit contenir exactement 1 défi',
         );
       }
 
       final defis = responseData['defis'] as List;
+      final defi = defis[0];
       
-      // Validation des défis
-      for (int i = 0; i < defis.length; i++) {
-        final defi = defis[i];
-        if (defi is! Map || 
-            !defi.containsKey('nom') || 
-            !defi.containsKey('mission') ||
-            !defi.containsKey('pourquoi')) {
-          debugPrint('⚠️ Défi $i incomplet: $defi');
-        }
+      // Validation du défi unique
+      if (defi is! Map || 
+          !defi.containsKey('nom') || 
+          !defi.containsKey('mission') ||
+          !defi.containsKey('pourquoi')) {
+        throw N8nException(
+          statusCode: 500,
+          message: 'Défi incomplet: manque nom, mission ou pourquoi',
+        );
       }
 
-      debugPrint('✅ Generated ${defis.length} challenges successfully');
+      debugPrint('✅ Generated single challenge successfully: ${defi['nom']}');
       return responseData;
 
     } on DioException catch (e) {
@@ -123,7 +118,7 @@ class N8nChallengeService {
       if (e.response?.statusCode == 429) {
         throw N8nException(
           statusCode: 429,
-          message: 'Quota OpenAI dépassé. Veuillez réessayer plus tard.',
+          message: 'Quota API dépassé. Veuillez réessayer plus tard.',
         );
       } else if (e.response?.statusCode == 404) {
         throw N8nException(
@@ -145,57 +140,150 @@ class N8nChallengeService {
     }
   }
 
-  /// Génère des défis avec fallback en cas d'erreur
-  Future<Map<String, dynamic>> generateMicroChallengesWithFallback({
+  /// Génère UN défi avec fallback en cas d'erreur
+  Future<Map<String, dynamic>> generateSingleMicroChallengeWithFallback({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
   }) async {
     try {
-      return await generateMicroChallenges(
+      // Essayer d'abord le webhook n8n
+      final result = await generateSingleMicroChallenge(
         problematique: problematique,
         nombreDefisReleves: nombreDefisReleves,
         userId: userId,
       );
+      
+      // Ajouter des métadonnées
+      result['source'] = 'n8n_webhook';
+      result['generated_at'] = DateTime.now().toIso8601String();
+      result['user_id'] = userId;
+      
+      // Sauvegarder le micro-défi en base de données si userId fourni
+      if (userId != null) {
+        await _saveSingleMicroChallengeToDatabase(result, userId, problematique, nombreDefisReleves);
+      }
+      
+      return result;
     } catch (e) {
-      debugPrint('⚠️ Fallback to local challenges due to: $e');
-      return _generateFallbackChallenges(problematique, nombreDefisReleves);
+      debugPrint('⚠️ N8n webhook failed, using local fallback: $e');
+      
+      // Fallback vers la génération locale
+      final fallbackResult = _generateLocalFallbackSingleChallenge(
+        problematique: problematique,
+        nombreDefisReleves: nombreDefisReleves,
+        userId: userId,
+      );
+      
+      // Sauvegarder le micro-défi fallback en base de données si userId fourni
+      if (userId != null) {
+        await _saveSingleMicroChallengeToDatabase(fallbackResult, userId, problematique, nombreDefisReleves);
+      }
+      
+      return fallbackResult;
     }
   }
 
-  /// Génère des défis de fallback locaux
-  Map<String, dynamic> _generateFallbackChallenges(String problematique, int nombreDefisReleves) {
+  /// Sauvegarde UN SEUL micro-défi en base de données
+  Future<void> _saveSingleMicroChallengeToDatabase(
+    Map<String, dynamic> challengeData,
+    String userId,
+    String problematique,
+    int nombreDefisReleves,
+  ) async {
+    try {
+      final client = Supabase.instance.client;
+      final defis = challengeData['defis'] as List;
+      final defi = defis[0]; // Un seul défi
+      
+      final microChallenge = {
+        'user_id': userId,
+        'problematique': problematique,
+        'numero': nombreDefisReleves + 1, // Numéro séquentiel basé sur les défis déjà relevés
+        'nom': defi['nom'] ?? 'Défi sans nom',
+        'mission': defi['mission'] ?? 'Mission non définie',
+        'pourquoi': defi['pourquoi'],
+        'bonus': defi['bonus'],
+        'duree_estimee': defi['duree_estimee'] ?? '15',
+        'niveau_detecte': challengeData['niveau_detecte'],
+        'source': challengeData['source'] ?? 'n8n_workflow',
+      };
+
+      await client.from('user_micro_challenges').insert(microChallenge);
+      
+      debugPrint('✅ Saved single micro-challenge to database: ${defi['nom']}');
+    } catch (e) {
+      debugPrint('❌ Error saving micro-challenge to database: $e');
+      // Ne pas faire échouer le processus principal si la sauvegarde échoue
+    }
+  }
+  /// Génère UN SEUL défi de fallback local
+  Map<String, dynamic> _generateLocalFallbackSingleChallenge({
+    required String problematique,
+    required int nombreDefisReleves,
+    String? userId,
+  }) {
     final niveau = nombreDefisReleves == 0 ? 'débutant' : 
                    nombreDefisReleves <= 5 ? 'intermédiaire' : 'avancé';
 
-    // Défis adaptés selon la problématique
-    List<Map<String, dynamic>> defis = [];
+    // Sélectionner un défi adapté selon la problématique et le niveau
+    Map<String, dynamic> defi;
     
     if (problematique.toLowerCase().contains('confiance')) {
-      defis = _getConfidenceChallenges();
+      defi = _getConfidenceChallengeForLevel(niveau, nombreDefisReleves);
     } else if (problematique.toLowerCase().contains('émotion') || 
                problematique.toLowerCase().contains('gestion')) {
-      defis = _getEmotionChallenges();
+      defi = _getEmotionChallengeForLevel(niveau, nombreDefisReleves);
     } else if (problematique.toLowerCase().contains('réseau') || 
                problematique.toLowerCase().contains('charismatique')) {
-      defis = _getNetworkingChallenges();
+      defi = _getNetworkingChallengeForLevel(niveau, nombreDefisReleves);
     } else {
-      defis = _getGenericChallenges();
+      defi = _getGenericChallengeForLevel(niveau, nombreDefisReleves);
     }
 
-    // Limiter à 15 défis et ajouter les numéros
-    final defisFinaux = defis.take(15).toList().asMap().entries.map((entry) {
-      final defi = Map<String, dynamic>.from(entry.value);
-      defi['numero'] = entry.key + 1;
-      return defi;
-    }).toList();
+    // Ajouter le numéro séquentiel
+    defi['numero'] = nombreDefisReleves + 1;
 
     return {
       'problematique': problematique,
       'niveau_detecte': niveau,
-      'defis': defisFinaux,
+      'defis': [defi], // Un seul défi dans un array
       'source': 'fallback_local',
     };
+  }
+
+  // Nouvelles méthodes pour générer un défi selon le niveau
+  Map<String, dynamic> _getConfidenceChallengeForLevel(String niveau, int nombreDefisReleves) {
+    final challenges = _getConfidenceChallenges();
+    final index = nombreDefisReleves % challenges.length;
+    
+    var challenge = Map<String, dynamic>.from(challenges[index]);
+    
+    // Adapter la difficulté selon le niveau
+    if (niveau == 'avancé') {
+      challenge['mission'] = challenge['mission'].toString().replaceAll('3 situations', '5 situations');
+      challenge['duree_estimee'] = (int.parse(challenge['duree_estimee']) * 1.5).round().toString();
+    }
+    
+    return challenge;
+  }
+
+  Map<String, dynamic> _getEmotionChallengeForLevel(String niveau, int nombreDefisReleves) {
+    final challenges = _getEmotionChallenges();
+    final index = nombreDefisReleves % challenges.length;
+    return Map<String, dynamic>.from(challenges[index]);
+  }
+
+  Map<String, dynamic> _getNetworkingChallengeForLevel(String niveau, int nombreDefisReleves) {
+    final challenges = _getNetworkingChallenges();
+    final index = nombreDefisReleves % challenges.length;
+    return Map<String, dynamic>.from(challenges[index]);
+  }
+
+  Map<String, dynamic> _getGenericChallengeForLevel(String niveau, int nombreDefisReleves) {
+    final challenges = _getGenericChallenges();
+    final index = nombreDefisReleves % challenges.length;
+    return Map<String, dynamic>.from(challenges[index]);
   }
 
   List<Map<String, dynamic>> _getConfidenceChallenges() {
