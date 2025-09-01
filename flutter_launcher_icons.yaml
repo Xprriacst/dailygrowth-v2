@@ -1,0 +1,21 @@
+flutter_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#ffffff"
+    theme_color: "#47C5FB"
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  
+  # Configuration spécifique pour PWA
+  web_config:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#ffffff"
+    theme_color: "#47C5FB"
+    
+  # Icônes adaptatives pour Android
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/app_icon.png"

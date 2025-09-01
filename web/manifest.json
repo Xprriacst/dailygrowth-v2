@@ -1,0 +1,44 @@
+{
+    "name": "DailyGrowth",
+    "short_name": "DailyGrowth",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#47C5FB",
+    "description": "Votre application de développement personnel quotidien",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "categories": [
+        "productivity",
+        "lifestyle",
+        "health"
+    ],
+    "screenshots": [],
+    "lang": "fr",
+    "scope": "./",
+    "id": "dailygrowth-pwa",
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

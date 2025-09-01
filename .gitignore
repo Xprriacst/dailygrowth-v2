@@ -33,7 +33,7 @@ pubspec.lock
 .pub-cache/
 .pub/
 /build/
-/web/
+# /web/
 
 # Symbolication related
 app.*.symbols
@@ -48,3 +48,6 @@ app.*.map.json
 
 # Environment variables (contains sensitive API keys)
 env.json
+
+# Local Netlify folder
+.netlify
