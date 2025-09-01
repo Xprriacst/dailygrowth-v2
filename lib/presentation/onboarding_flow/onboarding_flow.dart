@@ -5,7 +5,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
-import './widgets/life_domain_selection_widget.dart';
+import './widgets/improved_life_domain_selection_widget.dart';
 import './widgets/navigation_controls_widget.dart';
 import './widgets/onboarding_page_widget.dart';
 import './widgets/page_indicator_widget.dart';
@@ -434,7 +434,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                   );
                 } else {
                   // Life domain selection page
-                  return LifeDomainSelectionWidget(
+                  return ImprovedLifeDomainSelectionWidget(
                     selectedDomains: _selectedLifeDomains,
                     onDomainToggle: _onLifeDomainToggle,
                   );

@@ -6,8 +6,6 @@ import '../../../core/app_export.dart';
 import '../../../models/challenge_problematique.dart';
 import '../../../services/n8n_challenge_service.dart';
 import '../../../services/user_service.dart';
-import '../../challenge_selection/widgets/problematique_category_widget.dart';
-import '../../challenge_selection/widgets/micro_challenge_card_widget.dart';
 
 class LifeDomainSelectionWidget extends StatefulWidget {
   final List<String> selectedDomains;
@@ -29,13 +27,15 @@ class _LifeDomainSelectionWidgetState extends State<LifeDomainSelectionWidget>
   final N8nChallengeService _n8nService = N8nChallengeService();
   final UserService _userService = UserService();
   
-  ChallengeProblematique? _selectedProblematique;
+  List<ChallengeProblematique> _selectedProblematiques = [];
   Map<String, dynamic>? _generatedChallenges;
   bool _isGenerating = false;
   String? _errorMessage;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late AnimationController _selectionAnimationController;
+  late Animation<double> _selectionAnimation;
 
   @override
   void initState() {
@@ -47,11 +47,20 @@ class _LifeDomainSelectionWidgetState extends State<LifeDomainSelectionWidget>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+    
+    _selectionAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _selectionAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _selectionAnimationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _selectionAnimationController.dispose();
     super.dispose();
   }
 
