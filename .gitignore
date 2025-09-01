@@ -51,3 +51,4 @@ env.json
 
 # Local Netlify folder
 .netlify
+flutter/
