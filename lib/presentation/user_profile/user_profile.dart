@@ -104,6 +104,11 @@ class _UserProfileState extends State<UserProfile> {
           _userStats = results[1];
           _isLoading = false;
         });
+        
+        // Debug: Afficher les données récupérées
+        debugPrint('🔍 Données utilisateur récupérées:');
+        debugPrint('📋 selected_problematiques: ${_userData?["selected_problematiques"]}');
+        debugPrint('📋 selected_life_domains: ${_userData?["selected_life_domains"]}');
       }
     } catch (e) {
       if (mounted) {

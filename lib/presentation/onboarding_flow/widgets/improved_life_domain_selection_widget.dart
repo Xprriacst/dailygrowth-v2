@@ -221,11 +221,18 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
       final currentUser = Supabase.instance.client.auth.currentUser;
       
       if (currentUser != null) {
+        debugPrint('🔄 Tentative de sauvegarde Supabase pour user: ${currentUser.id}');
+        debugPrint('📝 Problématiques à sauvegarder: $selectedDescriptions');
+        
         await _userService.updateUserProfile(
           userId: currentUser.id,
           selectedProblematiques: selectedDescriptions,
         );
         debugPrint('✅ Problématiques synchronisées avec Supabase');
+        
+        // Vérification immédiate
+        final profile = await _userService.getUserProfile(currentUser.id);
+        debugPrint('🔍 Vérification post-sauvegarde: ${profile?["selected_problematiques"]}');
       } else {
         debugPrint('⚠️ Utilisateur non connecté, sauvegarde locale uniquement');
       }
