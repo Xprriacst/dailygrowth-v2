@@ -206,9 +206,32 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
       await prefs.setStringList('selected_problematiques_ids', selectedIds);
       await prefs.setStringList('selected_problematiques', selectedDescriptions);
       
-      debugPrint('✅ Problématiques sauvegardées: ${selectedDescriptions.join(", ")}');
+      // NOUVEAU: Sauvegarder aussi dans Supabase
+      await _saveToSupabase(selectedDescriptions);
+      
+      debugPrint('✅ Problématiques sauvegardées localement et dans Supabase: ${selectedDescriptions.join(", ")}');
     } catch (e) {
       debugPrint('❌ Erreur lors de la sauvegarde des problématiques: $e');
+    }
+  }
+
+  Future<void> _saveToSupabase(List<String> selectedDescriptions) async {
+    try {
+      await _userService.initialize();
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      
+      if (currentUser != null) {
+        await _userService.updateUserProfile(
+          userId: currentUser.id,
+          selectedProblematiques: selectedDescriptions,
+        );
+        debugPrint('✅ Problématiques synchronisées avec Supabase');
+      } else {
+        debugPrint('⚠️ Utilisateur non connecté, sauvegarde locale uniquement');
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur lors de la synchronisation Supabase: $e');
+      // Continue même si la synchronisation échoue
     }
   }
 

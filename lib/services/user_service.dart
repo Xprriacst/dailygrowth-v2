@@ -57,6 +57,7 @@ class UserService {
     required String userId,
     String? fullName,
     List<String>? selectedLifeDomains,
+    List<String>? selectedProblematiques,
     String? notificationTime,
     bool? notificationsEnabled,
   }) async {
@@ -68,6 +69,8 @@ class UserService {
       if (fullName != null) updates['full_name'] = fullName;
       if (selectedLifeDomains != null)
         updates['selected_life_domains'] = selectedLifeDomains;
+      if (selectedProblematiques != null)
+        updates['selected_problematiques'] = selectedProblematiques;
       if (notificationTime != null)
         updates['notification_time'] = notificationTime;
       if (notificationsEnabled != null)
