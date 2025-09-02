@@ -1,8 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import './supabase_service.dart';
+import './user_service.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -174,6 +176,10 @@ class AuthService {
       }
 
       debugPrint('Sign-in successful for user: ${response.user!.email}');
+      
+      // NOUVEAU: Synchroniser les problématiques après connexion réussie
+      await _syncProblematiquesAfterLogin();
+      
       return response;
     } catch (error) {
       debugPrint('Sign in error: $error');
@@ -479,5 +485,33 @@ class AuthService {
   void dispose() {
     _authSubscription?.cancel();
     _authStateController.close();
+  }
+
+  // Synchroniser les problématiques depuis SharedPreferences vers Supabase après connexion
+  Future<void> _syncProblematiquesAfterLogin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final selectedProblematiques = prefs.getStringList('selected_problematiques');
+      
+      if (selectedProblematiques != null && selectedProblematiques.isNotEmpty) {
+        debugPrint('🔄 Synchronisation des problématiques après connexion: $selectedProblematiques');
+        
+        final userService = UserService();
+        await userService.initialize();
+        
+        final currentUser = _client.auth.currentUser;
+        if (currentUser != null) {
+          await userService.updateUserProfile(
+            userId: currentUser.id,
+            selectedProblematiques: selectedProblematiques,
+          );
+          debugPrint('✅ Problématiques synchronisées vers Supabase après connexion');
+        }
+      } else {
+        debugPrint('ℹ️ Aucune problématique à synchroniser');
+      }
+    } catch (e) {
+      debugPrint('❌ Erreur lors de la synchronisation des problématiques: $e');
+    }
   }
 }
