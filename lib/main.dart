@@ -3,6 +3,7 @@ import 'package:sizer/sizer.dart';
 
 import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
@@ -18,10 +19,13 @@ Future<void> main() async {
 
   try {
     // Initialize Supabase first
-    await SupabaseService();
+    await SupabaseService().initialize();
 
     // Initialize authentication service
     await AuthService().initialize();
+
+    // Initialize notification service (without Supabase dependency for now)
+    await NotificationService().initialize();
 
     debugPrint('✅ All services initialized successfully');
   } catch (e) {

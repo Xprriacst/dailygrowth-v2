@@ -5,17 +5,24 @@ class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   late final SupabaseClient _client;
   bool _isInitialized = false;
-  final Future<void> _initFuture;
+  Future<void>? _initFuture;
 
   // Singleton pattern
   factory SupabaseService() {
     return _instance;
   }
 
-  SupabaseService._internal() : _initFuture = _initializeSupabase();
+  SupabaseService._internal();
+
+  // Public initialize method
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+    _initFuture ??= _initializeSupabase();
+    await _initFuture;
+  }
 
   // Internal initialization logic
-  static Future<void> _initializeSupabase() async {
+  Future<void> _initializeSupabase() async {
     // Validate configuration before initialization
     AppConfig.validateConfig();
     
@@ -31,14 +38,14 @@ class SupabaseService {
       ),
     );
 
-    _instance._client = Supabase.instance.client;
-    _instance._isInitialized = true;
+    _client = Supabase.instance.client;
+    _isInitialized = true;
   }
 
   // Client getter (async)
   Future<SupabaseClient> get client async {
     if (!_isInitialized) {
-      await _initFuture;
+      await initialize();
     }
     return _client;
   }

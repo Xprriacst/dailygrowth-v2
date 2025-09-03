@@ -51,13 +51,17 @@ class NotificationService {
       await _requestPermissions();
     }
 
-    // Initialize services
-    await _challengeService.initialize();
-    await _quoteService.initialize();
-    await _userService.initialize();
+    // Initialize services (defer Supabase-dependent services)
+    try {
+      await _challengeService.initialize();
+      await _quoteService.initialize();
+      await _userService.initialize();
+    } catch (e) {
+      print('⚠️ Warning: Some services failed to initialize: $e');
+    }
 
-    // Setup daily content generation
-    _setupDailyContentGeneration();
+    // Setup daily notifications (will work without Supabase for local notifications)
+    _setupDailyNotifications();
 
     _isInitialized = true;
   }
@@ -166,13 +170,8 @@ class NotificationService {
         payload: payload);
   }
 
-  // Setup automated daily content generation
-  void _setupDailyContentGeneration() {
-    // Generate content every day at 6 AM
-    _cron.schedule(Schedule.parse('0 6 * * *'), () async {
-      await _generateDailyContentForAllUsers();
-    });
-
+  // Setup automated daily notifications (no content generation)
+  void _setupDailyNotifications() {
     // Send daily reminders at users' preferred times
     _cron.schedule(Schedule.parse('0 * * * *'), () async {
       await _sendDailyReminders();
@@ -223,16 +222,34 @@ class NotificationService {
   Future<void> _generateDailyChallengeForUser(
       String userId, String lifeDomain) async {
     try {
-      // Use challenge service fallback directly
+      // Use the new micro-challenge generation system
+      final newChallenge = await _challengeService.generateTodayChallenge(
+        userId: userId,
+        lifeDomain: lifeDomain,
+      );
+      
+      if (newChallenge != null) {
+        debugPrint('✅ Daily micro-challenge generated for user $userId: ${newChallenge['nom']}');
+        
+        // Send notification about the new challenge
+        await sendInstantNotification(
+          title: '🎯 Nouveau micro-défi généré !',
+          body: newChallenge['nom'] ?? 'Votre nouveau défi vous attend !',
+          payload: 'new_challenge:$userId',
+        );
+      } else {
+        debugPrint('⚠️ No new challenge generated for user $userId (may already exist for today)');
+      }
+    } catch (e) {
+      debugPrint('Failed to generate micro-challenge for user $userId: $e');
+      
+      // Fallback to generic challenge creation
       await _challengeService.createChallenge(
           userId: userId,
           title: 'Moment de réflexion',
           description:
               'Prenez 10 minutes pour réfléchir à vos objectifs et notez une action concrète à réaliser aujourd\'hui.',
           lifeDomain: lifeDomain);
-      debugPrint('✅ Daily challenge generated for user $userId');
-    } catch (e) {
-      debugPrint('Failed to generate challenge for user $userId: $e');
     }
   }
 
@@ -258,7 +275,7 @@ class NotificationService {
       // Get users who should receive notifications at this hour
       final usersResponse = await client
           .from('user_profiles')
-          .select('id, full_name, notification_time, notifications_enabled')
+          .select('id, full_name, notification_time, notifications_enabled, reminder_notifications_enabled')
           .eq('status', 'active')
           .eq('notifications_enabled', true);
 
@@ -270,15 +287,82 @@ class NotificationService {
         final notificationHour = int.parse(notificationTime.split(':')[0]);
 
         if (notificationHour == currentHour) {
+          final userId = user['id'] as String;
+          final userName = user['full_name'] as String? ?? 'utilisateur';
+          
+          // Send simple reminder notification (no generation)
           await sendInstantNotification(
-              title: 'Votre défi quotidien vous attend !',
-              body:
-                  'Bonjour ${user['full_name']}, découvrez votre nouveau défi pour grandir aujourd\'hui.',
-              payload: user['id']);
+            title: '🎯 Votre défi quotidien vous attend !',
+            body: 'Bonjour $userName, connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+            payload: 'daily_reminder:$userId',
+          );
+          
+          // Schedule optional reminder if enabled
+          final reminderEnabled = user['reminder_notifications_enabled'] as bool? ?? false;
+          if (reminderEnabled) {
+            await _scheduleOptionalReminder(userId, userName);
+          }
         }
       }
     } catch (e) {
       debugPrint('Failed to send daily reminders: $e');
+    }
+  }
+
+  // Update user notification preferences
+  Future<void> updateNotificationSettings({
+    required String userId,
+    required String notificationTime, // Format: "09:00:00"
+    required bool notificationsEnabled,
+    bool reminderNotificationsEnabled = false,
+  }) async {
+    try {
+      final client = await SupabaseService().client;
+      
+      await client
+          .from('user_profiles')
+          .update({
+            'notification_time': notificationTime,
+            'notifications_enabled': notificationsEnabled,
+            'reminder_notifications_enabled': reminderNotificationsEnabled,
+          })
+          .eq('id', userId);
+
+      // Cancel existing scheduled notifications
+      await cancelUserNotifications(userId);
+      
+      // Schedule new daily notification if enabled
+      if (notificationsEnabled) {
+        await scheduleDailyNotification(
+          userId: userId,
+          time: notificationTime,
+          title: '🎯 Votre défi quotidien vous attend !',
+          body: 'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+        );
+      }
+      
+      debugPrint('✅ Notification settings updated for user $userId');
+    } catch (e) {
+      debugPrint('❌ Failed to update notification settings: $e');
+      throw e;
+    }
+  }
+
+  // Get user notification settings
+  Future<Map<String, dynamic>?> getUserNotificationSettings(String userId) async {
+    try {
+      final client = await SupabaseService().client;
+      
+      final response = await client
+          .from('user_profiles')
+          .select('notification_time, notifications_enabled, reminder_notifications_enabled')
+          .eq('id', userId)
+          .maybeSingle();
+          
+      return response;
+    } catch (e) {
+      debugPrint('❌ Failed to get notification settings: $e');
+      return null;
     }
   }
 
@@ -351,6 +435,95 @@ class NotificationService {
     if (title.isNotEmpty) {
       await sendInstantNotification(
           title: title, body: body, payload: 'streak:$userId');
+    }
+  }
+
+  // Generate and notify about new micro-challenge
+  Future<void> generateAndNotifyNewMicroChallenge(String userId) async {
+    try {
+      debugPrint('🔄 Generating new micro-challenge for user: $userId');
+      
+      // Generate new micro-challenge using the challenge service
+      final newChallenge = await _challengeService.generateTodayChallenge(
+        userId: userId,
+        lifeDomain: 'developpement',
+      );
+      
+      if (newChallenge != null) {
+        final challengeName = newChallenge['nom'] as String? ?? 'Nouveau défi';
+        final challengeMission = newChallenge['mission'] as String? ?? '';
+        
+        debugPrint('✅ New micro-challenge generated: $challengeName');
+        
+        // Send notification about the new challenge
+        await sendInstantNotification(
+          title: '🎯 Nouveau micro-défi disponible !',
+          body: challengeName,
+          payload: 'new_challenge:$userId',
+        );
+        
+        // Schedule reminder notification if enabled
+        final settings = await getUserNotificationSettings(userId);
+        if (settings != null && settings['reminder_notifications_enabled'] == true) {
+          // Reminder functionality can be added here if needed
+        }
+        
+      } else {
+        debugPrint('⚠️ No new challenge generated for user $userId');
+        
+        // Send a motivational notification instead
+        await sendInstantNotification(
+          title: '💪 Continuez votre progression !',
+          body: 'Votre défi d\'aujourd\'hui vous attend dans l\'application.',
+          payload: 'reminder:$userId',
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error generating micro-challenge for user $userId: $e');
+      
+      // Send error notification
+      await sendInstantNotification(
+        title: '🔄 Nouveau contenu en préparation',
+        body: 'Votre défi personnalisé sera bientôt disponible !',
+        payload: 'error:$userId',
+      );
+    }
+  }
+
+  // Schedule optional reminder notification for later in the day
+  Future<void> _scheduleOptionalReminder(String userId, String userName) async {
+    if (kIsWeb || _flutterLocalNotificationsPlugin == null) return;
+    
+    try {
+      // Schedule reminder 6 hours later
+      final reminderTime = DateTime.now().add(const Duration(hours: 6));
+      
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+              'challenge_reminders', 'Challenge Reminders',
+              channelDescription: 'Optional reminders about daily challenges',
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority);
+
+      const DarwinNotificationDetails iOSPlatformChannelSpecifics =
+          DarwinNotificationDetails();
+
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+          android: androidPlatformChannelSpecifics,
+          iOS: iOSPlatformChannelSpecifics);
+
+      await _flutterLocalNotificationsPlugin!.zonedSchedule(
+          '${userId}_reminder'.hashCode,
+          '⏰ N\'oubliez pas votre défi !',
+          'Votre micro-défi personnalisé vous attend toujours dans l\'application.',
+          tz.TZDateTime.from(reminderTime, tz.local),
+          platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          payload: 'reminder:$userId');
+          
+      debugPrint('📅 Optional reminder scheduled for $reminderTime for user $userName');
+    } catch (e) {
+      debugPrint('Failed to schedule optional reminder notification: $e');
     }
   }
 

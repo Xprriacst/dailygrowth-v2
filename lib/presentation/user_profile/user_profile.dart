@@ -17,6 +17,7 @@ import './widgets/profile_header_widget.dart';
 import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
 import './widgets/settings_section_widget.dart';
+import '../settings/notification_settings_widget.dart';
 
 import 'package:universal_html/html.dart' as html;
 
@@ -259,26 +260,8 @@ class _UserProfileState extends State<UserProfile> {
                                 showDivider: false),
                             ]),
 
-                          // Notification Preferences Section
-                          SettingsSectionWidget(
-                            title: 'Préférences de notification',
-                            children: [
-                              NotificationToggleWidget(
-                                title: 'Notifications activées',
-                                subtitle: 'Recevoir toutes les notifications',
-                                value: _userData!["notifications_enabled"]
-                                        as bool? ??
-                                    true,
-                                onChanged: (value) => _updateNotificationSetting(
-                                    'notifications_enabled', value)),
-                              SettingsItemWidget(
-                                iconName: 'schedule',
-                                title: 'Heure des notifications',
-                                subtitle:
-                                    'Quotidien à ${_formatNotificationTime(_userData!["notification_time"])}',
-                                onTap: _showTimePicker,
-                                showDivider: false),
-                            ]),
+                          // Notification Settings Section
+                          const NotificationSettingsWidget(),
 
                           // Life Domains Section
                           SettingsSectionWidget(
