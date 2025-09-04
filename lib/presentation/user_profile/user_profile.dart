@@ -33,7 +33,7 @@ class _UserProfileState extends State<UserProfile> {
   String? _selectedProfileImage;
 
   // Bottom navigation state
-  int _currentBottomNavIndex = 3; // Profile is index 3
+  int _currentBottomNavIndex = 2; // Profile is index 2
 
   // Real user data from Supabase
   Map<String, dynamic>? _userData;
@@ -250,13 +250,7 @@ class _UserProfileState extends State<UserProfile> {
                                 iconName: 'lock',
                                 title: 'Mot de passe',
                                 subtitle: 'Cliquez pour changer',
-                                onTap: () => _showChangePasswordDialog()),
-                              SettingsItemWidget(
-                                iconName: 'notifications',
-                                title: 'Notifications',
-                                subtitle: 'Gérer vos préférences',
-                                onTap: () => Navigator.pushNamed(
-                                    context, '/notification-settings'),
+                                onTap: () => _showChangePasswordDialog(),
                                 showDivider: false),
                             ]),
 
@@ -272,55 +266,7 @@ class _UserProfileState extends State<UserProfile> {
                                 onEditTap: _showLifeDomainsModal),
                             ]),
 
-                          // Statistics Section
-                          if (_userStats != null)
-                            SettingsSectionWidget(
-                              title: 'Statistiques',
-                              children: [
-                                SettingsItemWidget(
-                                  iconName: 'local_fire_department',
-                                  title: 'Série actuelle',
-                                  subtitle:
-                                      '${_userStats!["streak_count"] ?? 0} jours',
-                                  onTap: null),
-                                SettingsItemWidget(
-                                  iconName: 'star',
-                                  title: 'Points totaux',
-                                  subtitle:
-                                      '${_userStats!["total_points"] ?? 0} points',
-                                  onTap: null),
-                                SettingsItemWidget(
-                                  iconName: 'check_circle',
-                                  title: 'Défis complétés',
-                                  subtitle:
-                                      '${_userStats!["completed_challenges"] ?? 0} défis',
-                                  onTap: null,
-                                  showDivider: false),
-                              ]),
 
-                          // Data Section
-                          SettingsSectionWidget(
-                            title: 'Données',
-                            children: [
-                              SettingsItemWidget(
-                                iconName: 'history',
-                                title: 'Historique des défis',
-                                subtitle: 'Voir tous vos défis complétés',
-                                onTap: () => Navigator.pushNamed(
-                                    context, '/challenge-history')),
-                              SettingsItemWidget(
-                                iconName: 'analytics',
-                                title: 'Suivi des progrès',
-                                subtitle: 'Statistiques et graphiques',
-                                onTap: () => Navigator.pushNamed(
-                                    context, '/progress-tracking')),
-                              SettingsItemWidget(
-                                iconName: 'file_download',
-                                title: 'Exporter mes données',
-                                subtitle: 'Télécharger vos informations',
-                                onTap: _exportUserData,
-                                showDivider: false),
-                            ]),
 
                           // Support Section
                           SettingsSectionWidget(
@@ -456,9 +402,6 @@ class _UserProfileState extends State<UserProfile> {
         Navigator.pushReplacementNamed(context, '/challenge-history');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/progress-tracking');
-        break;
-      case 3:
         // Already on user profile
         break;
     }

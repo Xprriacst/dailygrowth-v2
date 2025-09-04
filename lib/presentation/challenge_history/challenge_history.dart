@@ -714,9 +714,6 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
         // Already on challenge history
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/progress-tracking');
-        break;
-      case 3:
         Navigator.pushReplacementNamed(context, '/user-profile');
         break;
     }

@@ -27,11 +27,6 @@ class BottomNavigationWidget extends StatelessWidget {
         'route': '/challenge-history',
       },
       {
-        'icon': 'analytics',
-        'label': 'Progrès',
-        'route': '/progress-tracking',
-      },
-      {
         'icon': 'person',
         'label': 'Profil',
         'route': '/user-profile',

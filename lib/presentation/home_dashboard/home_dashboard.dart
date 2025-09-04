@@ -27,7 +27,7 @@ class HomeDashboard extends StatefulWidget {
   State<HomeDashboard> createState() => _HomeDashboardState();
 }
 
-class _HomeDashboardState extends State<HomeDashboard> {
+class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateMixin {
   int _currentBottomNavIndex = 0;
   bool _isChallengeCompleted = false;
   bool _isRefreshing = false;
@@ -518,9 +518,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
         Navigator.pushReplacementNamed(context, '/challenge-history');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/progress-tracking');
-        break;
-      case 3:
         Navigator.pushReplacementNamed(context, '/user-profile');
         break;
     }
