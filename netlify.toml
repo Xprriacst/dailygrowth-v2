@@ -1,6 +1,6 @@
 [build]
-  # Commande de build simplifiée pour éviter les erreurs Firebase
-  command = "flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY"
+  # Installation Flutter et build
+  command = "git clone https://github.com/flutter/flutter.git -b stable && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY"
   publish = "build/web"
 
 # Configuration des redirections pour SPA
