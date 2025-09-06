@@ -17,6 +17,9 @@
     "lang": "fr",
     "scope": "./",
     "id": "dailygrowth-pwa",
+    "permissions": [
+        "notifications"
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

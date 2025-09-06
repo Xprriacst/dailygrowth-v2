@@ -4,9 +4,11 @@ import 'package:sizer/sizer.dart';
 import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/web_notification_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +28,15 @@ Future<void> main() async {
 
     // Initialize notification service (without Supabase dependency for now)
     await NotificationService().initialize();
+
+    // Initialize web notification service for PWA
+    if (kIsWeb) {
+      try {
+        await WebNotificationService().initialize();
+      } catch (e) {
+        debugPrint('⚠️ Web notifications not available: $e');
+      }
+    }
 
     debugPrint('✅ All services initialized successfully');
   } catch (e) {

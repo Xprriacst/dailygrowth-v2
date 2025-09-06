@@ -26,7 +26,7 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // Initialize for mobile platforms only
+    // Initialize for mobile platforms
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -67,7 +67,6 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-    if (kIsWeb) return;
 
     if (Platform.isAndroid) {
       await _flutterLocalNotificationsPlugin!
@@ -96,7 +95,12 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    if (kIsWeb || _flutterLocalNotificationsPlugin == null) return;
+    // For web, return early
+    if (kIsWeb) {
+      return;
+    }
+    
+    if (_flutterLocalNotificationsPlugin == null) return;
 
     try {
       final timeParts = time.split(':');
@@ -146,7 +150,13 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    if (kIsWeb || _flutterLocalNotificationsPlugin == null) return;
+    // For web, return early
+    if (kIsWeb) {
+      debugPrint('Web notifications not implemented');
+      return;
+    }
+    
+    if (_flutterLocalNotificationsPlugin == null) return;
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -490,9 +500,16 @@ class NotificationService {
     }
   }
 
+  
+
   // Schedule optional reminder notification for later in the day
   Future<void> _scheduleOptionalReminder(String userId, String userName) async {
-    if (kIsWeb || _flutterLocalNotificationsPlugin == null) return;
+    // For web, return early
+    if (kIsWeb) {
+      return;
+    }
+    
+    if (_flutterLocalNotificationsPlugin == null) return;
     
     try {
       // Schedule reminder 6 hours later
@@ -529,7 +546,12 @@ class NotificationService {
 
   // Cancel all notifications for a user
   Future<void> cancelUserNotifications(String userId) async {
-    if (kIsWeb || _flutterLocalNotificationsPlugin == null) return;
+    // For web, return early
+    if (kIsWeb) {
+      return;
+    }
+    
+    if (_flutterLocalNotificationsPlugin == null) return;
 
     await _flutterLocalNotificationsPlugin!.cancel(userId.hashCode);
   }

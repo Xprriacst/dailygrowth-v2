@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test DailyGrowth Notifications</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="web/manifest.json">
+</head>
+<body>
+    <h1>🔥 Test DailyGrowth Notifications PWA</h1>
+    
+    <div>
+        <h2>Status</h2>
+        <p id="status">Initializing...</p>
+    </div>
+    
+    <div>
+        <h2>Actions</h2>
+        <button onclick="requestNotificationPermission()">📱 Request Permission</button>
+        <button onclick="showTestNotification()">🔔 Show Test Notification</button>
+        <button onclick="updateBadge()">🔴 Set Badge (5)</button>
+        <button onclick="clearBadge()">⚫ Clear Badge</button>
+    </div>
+
+    <div>
+        <h2>FCM Token</h2>
+        <textarea id="token" style="width: 100%; height: 100px;" readonly></textarea>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+            authDomain: "dailygrowth-pwa.firebaseapp.com",
+            projectId: "dailygrowth-pwa",
+            storageBucket: "dailygrowth-pwa.appspot.com",
+            messagingSenderId: "443167745906",
+            appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+            measurementId: "G-BXJW80Y4EF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        // Variables globales
+        window.messaging = messaging;
+        window.firebaseConfig = firebaseConfig;
+
+        // Status initial
+        document.getElementById('status').textContent = 'Firebase initialized ✅';
+
+        // Demander token FCM
+        async function getFCMToken() {
+            try {
+                const token = await getToken(messaging, { 
+                    vapidKey: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhlu_s_AZODY9ucqBi0FgMxXs' 
+                });
+                
+                if (token) {
+                    document.getElementById('token').value = token;
+                    console.log('🔥 FCM Token:', token);
+                    return token;
+                } else {
+                    console.log('❌ No token available');
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Error getting token:', error);
+                document.getElementById('status').textContent = 'Error getting FCM token: ' + error;
+                return null;
+            }
+        }
+
+        // Écouter messages en premier plan
+        onMessage(messaging, (payload) => {
+            console.log('🔔 Foreground message:', payload);
+            document.getElementById('status').textContent = 'Message reçu: ' + payload.notification?.title;
+        });
+
+        // Fonctions globales pour les boutons
+        window.requestNotificationPermission = async function() {
+            const permission = await Notification.requestPermission();
+            document.getElementById('status').textContent = `Permission: ${permission}`;
+            
+            if (permission === 'granted') {
+                await getFCMToken();
+            }
+        };
+
+        window.showTestNotification = function() {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🎯 Test DailyGrowth', {
+                    body: 'Votre système de notifications fonctionne !',
+                    icon: '/web/icons/Icon-192.png',
+                    badge: '/web/icons/Icon-192.png'
+                });
+            } else {
+                alert('Notifications non autorisées');
+            }
+        };
+
+        window.updateBadge = function() {
+            if ('setAppBadge' in navigator) {
+                navigator.setAppBadge(5);
+                document.getElementById('status').textContent = 'Badge mis à jour: 5';
+            } else {
+                document.getElementById('status').textContent = 'Badge API non supporté (iOS Safari 16.4+ requis)';
+            }
+        };
+
+        window.clearBadge = function() {
+            if ('clearAppBadge' in navigator) {
+                navigator.clearAppBadge();
+                document.getElementById('status').textContent = 'Badge effacé';
+            } else {
+                document.getElementById('status').textContent = 'Badge API non supporté';
+            }
+        };
+
+        // Auto-demander permission au chargement
+        if ('Notification' in window) {
+            requestNotificationPermission();
+        }
+    </script>
+
+    <!-- Service Workers -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/web/firebase-messaging-sw.js')
+                    .then(reg => console.log('🔥 Firebase SW registered'))
+                    .catch(err => console.log('❌ Firebase SW failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

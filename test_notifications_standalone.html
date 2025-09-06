@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔥 DailyGrowth PWA - Test Notifications (Standalone)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#47C5FB">
+    
+    <!-- PWA Meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DailyGrowth Test">
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .card { 
+            background: rgba(255,255,255,0.1); 
+            backdrop-filter: blur(10px);
+            padding: 20px; 
+            border-radius: 16px; 
+            margin: 16px 0; 
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        button { 
+            background: #47C5FB; 
+            color: white; 
+            border: none; 
+            padding: 14px 20px; 
+            border-radius: 12px; 
+            margin: 8px 4px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        button:hover, button:active { 
+            transform: scale(0.95); 
+            background: #3ba3d9; 
+        }
+        button:disabled { 
+            background: #666; 
+            cursor: not-allowed; 
+            transform: none;
+        }
+        .status { 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin: 8px 0; 
+            font-weight: 500;
+        }
+        .success { 
+            background: rgba(40, 167, 69, 0.8); 
+            border: 1px solid rgba(40, 167, 69, 0.5); 
+        }
+        .error { 
+            background: rgba(220, 53, 69, 0.8); 
+            border: 1px solid rgba(220, 53, 69, 0.5); 
+        }
+        .info { 
+            background: rgba(23, 162, 184, 0.8); 
+            border: 1px solid rgba(23, 162, 184, 0.5); 
+        }
+        .test-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+            gap: 12px; 
+        }
+        .logs { 
+            background: rgba(0,0,0,0.3); 
+            padding: 16px; 
+            border-radius: 12px; 
+            height: 200px; 
+            overflow-y: scroll; 
+            font-family: 'SF Mono', Consolas, monospace; 
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .version { 
+            opacity: 0.7; 
+            font-size: 12px; 
+            text-align: center; 
+            margin-top: 20px;
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        h2 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>🔥 DailyGrowth<br>Test Notifications PWA</h1>
+    
+    <div class="card">
+        <h2>📱 Status Environnement</h2>
+        <div id="deviceInfo" class="status info">Détection...</div>
+        <div id="pwaStatus" class="status info">Vérification PWA...</div>
+        <div id="badgeStatus" class="status info">Test Badge API...</div>
+    </div>
+
+    <div class="card">
+        <h2>🔔 Tests Notifications Web</h2>
+        <div id="notificationStatus" class="status info">Permissions...</div>
+        <button onclick="requestPermissions()">📱 Autoriser Notifications</button>
+        <div class="test-grid">
+            <button onclick="testBasicNotification()">🔔 Test Simple</button>
+            <button onclick="testChallengeNotification()">🎯 Nouveau Défi</button>
+            <button onclick="testSuccessNotification()">🏆 Succès</button>
+            <button onclick="testStreakNotification()">🔥 Série</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔴 Tests Badge iOS Safari 16.4+</h2>
+        <div class="test-grid">
+            <button onclick="setBadge(1)">🔴 Badge 1</button>
+            <button onclick="setBadge(5)">🔴 Badge 5</button>
+            <button onclick="setBadge(42)">🔴 Badge 42</button>
+            <button onclick="clearBadge()">⚫ Effacer</button>
+        </div>
+        <div style="margin-top: 12px; font-size: 14px; opacity: 0.9;">
+            💡 Le badge apparaît sur l'icône PWA de l'écran d'accueil
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Logs Tests</h2>
+        <div id="logs" class="logs"></div>
+        <button onclick="clearLogs()" style="margin-top: 12px;">🧹 Effacer Logs</button>
+    </div>
+
+    <div class="version">
+        Version Test Standalone - DailyGrowth PWA<br>
+        Compatible iOS Safari 16.4+ • Web Notifications • Badge API
+    </div>
+
+    <script>
+        // Variables globales
+        let testCount = 0;
+
+        // Fonction de logging
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            
+            const logLine = `[${timestamp}] ${emoji} ${message}`;
+            logElement.innerHTML += logLine + '\n';
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logLine);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTest();
+        });
+
+        function initializeTest() {
+            log('🚀 Initialisation DailyGrowth Test Standalone');
+            
+            // Détection environnement
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone || 
+                                window.matchMedia('(display-mode: standalone)').matches;
+            
+            const deviceText = `${isIOS ? '📱 iOS' : '💻 Desktop'} ${isSafari ? 'Safari' : 'Autre'} ${isStandalone ? '(PWA)' : '(Web)'}`;
+            document.getElementById('deviceInfo').textContent = deviceText;
+            log(`Environnement: ${deviceText}`);
+
+            // Status PWA
+            if (isStandalone) {
+                document.getElementById('pwaStatus').innerHTML = '✅ Mode PWA actif';
+                document.getElementById('pwaStatus').className = 'status success';
+                log('✅ PWA Mode détecté', 'success');
+            } else {
+                document.getElementById('pwaStatus').innerHTML = '⚠️ Mode Web - Ajouter à l\'écran d\'accueil pour PWA complète';
+                document.getElementById('pwaStatus').className = 'status error';
+                log('⚠️ Mode Web - Fonctionnalités limitées');
+            }
+
+            // Test Badge API
+            if ('setAppBadge' in navigator) {
+                document.getElementById('badgeStatus').innerHTML = '✅ Badge API supporté';
+                document.getElementById('badgeStatus').className = 'status success';
+                log('✅ Badge API disponible (iOS Safari 16.4+)', 'success');
+            } else {
+                document.getElementById('badgeStatus').innerHTML = '❌ Badge API non supporté';
+                document.getElementById('badgeStatus').className = 'status error';
+                log('❌ Badge API non disponible');
+            }
+
+            // Test permissions notifications
+            checkNotificationPermission();
+        }
+
+        function checkNotificationPermission() {
+            if (!('Notification' in window)) {
+                document.getElementById('notificationStatus').innerHTML = '❌ Notifications non supportées';
+                document.getElementById('notificationStatus').className = 'status error';
+                log('❌ Web Notifications non supportées', 'error');
+                return;
+            }
+
+            const permission = Notification.permission;
+            if (permission === 'granted') {
+                document.getElementById('notificationStatus').innerHTML = '✅ Notifications autorisées';
+                document.getElementById('notificationStatus').className = 'status success';
+                log('✅ Permissions notifications accordées', 'success');
+            } else if (permission === 'denied') {
+                document.getElementById('notificationStatus').innerHTML = '❌ Notifications refusées';
+                document.getElementById('notificationStatus').className = 'status error';
+                log('❌ Permissions notifications refusées', 'error');
+            } else {
+                document.getElementById('notificationStatus').innerHTML = '⚠️ Permissions notifications non demandées';
+                document.getElementById('notificationStatus').className = 'status info';
+                log('⚠️ Permissions en attente');
+            }
+        }
+
+        // Demander permissions
+        async function requestPermissions() {
+            log('📱 Demande permissions notifications...');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log(`🔔 Résultat permission: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                checkNotificationPermission();
+            } catch (error) {
+                log(`❌ Erreur permissions: ${error}`, 'error');
+            }
+        }
+
+        // Afficher notification personnalisée
+        function showNotification(title, body, icon = '🔔', data = {}) {
+            if (Notification.permission !== 'granted') {
+                log('❌ Notifications non autorisées - Cliquer sur "Autoriser Notifications"', 'error');
+                return false;
+            }
+
+            try {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>${icon}</text></svg>`,
+                    tag: `dailygrowth-test-${Date.now()}`,
+                    requireInteraction: false,
+                    data: data
+                });
+
+                notification.onclick = () => {
+                    log('🔔 Notification cliquée', 'success');
+                    window.focus();
+                    notification.close();
+                };
+
+                // Auto-fermer après 4 secondes
+                setTimeout(() => {
+                    try { notification.close(); } catch (e) {}
+                }, 4000);
+
+                testCount++;
+                log(`✅ Notification ${testCount} envoyée: "${title}"`, 'success');
+                return true;
+
+            } catch (error) {
+                log(`❌ Erreur notification: ${error}`, 'error');
+                return false;
+            }
+        }
+
+        // Tests de notifications
+        function testBasicNotification() {
+            showNotification(
+                '🔔 Test DailyGrowth',
+                'Votre système de notifications fonctionne parfaitement !',
+                '🔔',
+                { type: 'test' }
+            );
+        }
+
+        function testChallengeNotification() {
+            showNotification(
+                '🎯 Nouveau micro-défi disponible !',
+                'Méditation de 10 minutes - Prenez un moment pour vous recentrer',
+                '🎯',
+                { type: 'challenge', id: 123 }
+            );
+            setBadge(1);
+        }
+
+        function testSuccessNotification() {
+            showNotification(
+                '🏆 Nouveau succès débloqué !',
+                'Premier défi complété - Félicitations ! (+50 points)',
+                '🏆',
+                { type: 'achievement', points: 50 }
+            );
+            setBadge(2);
+        }
+
+        function testStreakNotification() {
+            showNotification(
+                '🔥 Série de 7 jours !',
+                'Incroyable ! Vous maintenez votre progression depuis une semaine !',
+                '🔥',
+                { type: 'streak', count: 7 }
+            );
+            setBadge(7);
+        }
+
+        // Badge API
+        function setBadge(count) {
+            if ('setAppBadge' in navigator) {
+                try {
+                    navigator.setAppBadge(count);
+                    log(`🔴 Badge mis à jour: ${count}`, 'success');
+                } catch (error) {
+                    log(`❌ Erreur badge: ${error}`, 'error');
+                }
+            } else {
+                log('❌ Badge API non supporté (iOS Safari 16.4+ en mode PWA requis)', 'error');
+            }
+        }
+
+        function clearBadge() {
+            if ('clearAppBadge' in navigator) {
+                try {
+                    navigator.clearAppBadge();
+                    log('⚫ Badge effacé', 'success');
+                } catch (error) {
+                    log(`❌ Erreur effacement badge: ${error}`, 'error');
+                }
+            } else {
+                log('❌ Badge API non supporté', 'error');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            testCount = 0;
+            log('🧹 Logs effacés - Nouveau test');
+        }
+
+        // Auto-log au chargement
+        setTimeout(() => {
+            log('💡 Instructions: 1) Autoriser notifications 2) Ajouter à l\'écran d\'accueil 3) Tester !');
+        }, 1000);
+    </script>
+</body>
+</html>

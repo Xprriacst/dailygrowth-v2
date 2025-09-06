@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔥 DailyGrowth PWA - Test Notifications Push</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#47C5FB">
+    
+    <!-- PWA Meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DailyGrowth">
+    <link rel="apple-touch-icon" href="web/icons/Icon-192.png">
+    <link rel="manifest" href="web/manifest.json">
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin: 16px 0; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button { 
+            background: #47C5FB; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            margin: 8px; 
+            font-size: 16px; 
+            cursor: pointer;
+        }
+        button:hover { background: #3ba3d9; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status { 
+            padding: 12px; 
+            border-radius: 8px; 
+            margin: 8px 0; 
+            font-weight: 500;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        textarea { width: 100%; height: 60px; font-family: monospace; font-size: 12px; }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    </style>
+</head>
+<body>
+    <h1>🔥 DailyGrowth PWA - Test Notifications</h1>
+    
+    <div class="card">
+        <h2>📱 Status PWA</h2>
+        <div id="pwaStatus" class="status info">Initialisation...</div>
+        <div id="deviceInfo"></div>
+    </div>
+
+    <div class="card">
+        <h2>🔔 Permissions & Token FCM</h2>
+        <div id="permissionStatus" class="status info">Vérification permissions...</div>
+        <button onclick="requestAllPermissions()">📱 Demander Permissions</button>
+        <button onclick="getFCMToken()">🔥 Obtenir Token FCM</button>
+        <br><br>
+        <strong>Token FCM:</strong>
+        <textarea id="fcmToken" readonly placeholder="Token FCM apparaîtra ici..."></textarea>
+    </div>
+
+    <div class="card">
+        <h2>🧪 Tests de Notifications</h2>
+        <div class="test-grid">
+            <button onclick="testBasicNotification()">🔔 Notification Basique</button>
+            <button onclick="testChallengeNotification()">🎯 Défi Quotidien</button>
+            <button onclick="testAchievementNotification()">🏆 Succès Débloqué</button>
+            <button onclick="testStreakNotification()">🔥 Série de 7 jours</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔴 Tests Badge iOS Safari 16.4+</h2>
+        <div class="test-grid">
+            <button onclick="setBadge(1)">🔴 Badge 1</button>
+            <button onclick="setBadge(5)">🔴 Badge 5</button>
+            <button onclick="setBadge(99)">🔴 Badge 99</button>
+            <button onclick="clearBadge()">⚫ Effacer Badge</button>
+        </div>
+        <div id="badgeStatus" class="status info">Badge API: Vérification support...</div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Logs en Temps Réel</h2>
+        <div id="logs" style="background: #f8f9fa; padding: 12px; border-radius: 8px; height: 200px; overflow-y: scroll; font-family: monospace; font-size: 12px;"></div>
+        <button onclick="clearLogs()">🧹 Effacer Logs</button>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+
+        // Configuration Firebase DailyGrowth
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+            authDomain: "dailygrowth-pwa.firebaseapp.com",
+            projectId: "dailygrowth-pwa",
+            storageBucket: "dailygrowth-pwa.appspot.com",
+            messagingSenderId: "443167745906",
+            appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+            measurementId: "G-BXJW80Y4EF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        // Variables globales pour les tests
+        window.messaging = messaging;
+        window.vapidKey = 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhlu_s_AZODY9ucqBi0FgMxXs';
+
+        // Fonction de logging
+        window.log = function(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const logClass = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            logElement.innerHTML += `<div>[${timestamp}] ${logClass} ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        };
+
+        // Initialisation
+        window.addEventListener('DOMContentLoaded', () => {
+            initializePWATest();
+        });
+
+        async function initializePWATest() {
+            log('🚀 Initialisation DailyGrowth PWA Test');
+            
+            // Détection de l'environnement
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+            
+            log(`📱 Environnement: ${isIOS ? 'iOS' : 'Desktop'} ${isSafari ? 'Safari' : 'Autre navigateur'} ${isStandalone ? '(Mode PWA)' : '(Navigateur)'}`);
+            
+            document.getElementById('deviceInfo').innerHTML = `
+                <strong>Device:</strong> ${isIOS ? 'iOS' : 'Desktop'} | 
+                <strong>Browser:</strong> ${isSafari ? 'Safari' : 'Other'} | 
+                <strong>Mode:</strong> ${isStandalone ? 'PWA' : 'Browser'}
+            `;
+
+            // Vérifier support Badge API
+            if ('setAppBadge' in navigator) {
+                document.getElementById('badgeStatus').innerHTML = '✅ Badge API supporté (iOS Safari 16.4+)';
+                document.getElementById('badgeStatus').className = 'status success';
+                log('✅ Badge API détecté - Support iOS Safari 16.4+', 'success');
+            } else {
+                document.getElementById('badgeStatus').innerHTML = '❌ Badge API non supporté (iOS Safari 16.4+ requis)';
+                document.getElementById('badgeStatus').className = 'status error';
+                log('❌ Badge API non supporté', 'error');
+            }
+
+            // Status PWA
+            if (isStandalone) {
+                document.getElementById('pwaStatus').innerHTML = '✅ PWA installée et lancée depuis l\'écran d\'accueil';
+                document.getElementById('pwaStatus').className = 'status success';
+                log('✅ PWA mode détecté', 'success');
+            } else {
+                document.getElementById('pwaStatus').innerHTML = '⚠️ PWA non installée - Ajouter à l\'écran d\'accueil pour notifications complètes';
+                document.getElementById('pwaStatus').className = 'status error';
+                log('⚠️ Mode navigateur - notifications limitées', 'error');
+            }
+
+            // Écouter messages Firebase
+            onMessage(messaging, (payload) => {
+                log(`🔥 Message Firebase reçu: ${payload.notification?.title}`, 'success');
+                
+                // Afficher notification personnalisée
+                if (Notification.permission === 'granted') {
+                    showCustomNotification(
+                        payload.notification?.title || 'DailyGrowth',
+                        payload.notification?.body || 'Nouveau message',
+                        payload.data
+                    );
+                }
+            });
+
+            // Auto-demander permissions
+            setTimeout(() => {
+                requestAllPermissions();
+            }, 1000);
+        }
+
+        // Fonctions globales pour les boutons
+        window.requestAllPermissions = async function() {
+            log('📱 Demande de permissions...');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                log(`🔔 Permission notifications: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                
+                if (permission === 'granted') {
+                    document.getElementById('permissionStatus').innerHTML = '✅ Permissions accordées';
+                    document.getElementById('permissionStatus').className = 'status success';
+                    
+                    // Obtenir token FCM automatiquement
+                    getFCMToken();
+                } else {
+                    document.getElementById('permissionStatus').innerHTML = '❌ Permissions refusées';
+                    document.getElementById('permissionStatus').className = 'status error';
+                }
+            } catch (error) {
+                log(`❌ Erreur permissions: ${error}`, 'error');
+            }
+        };
+
+        window.getFCMToken = async function() {
+            log('🔥 Récupération token FCM...');
+            
+            try {
+                const token = await getToken(messaging, { vapidKey: window.vapidKey });
+                
+                if (token) {
+                    document.getElementById('fcmToken').value = token;
+                    log('✅ Token FCM obtenu', 'success');
+                    
+                    // Stocker le token (simulation sauvegarde Supabase)
+                    localStorage.setItem('dailygrowth_fcm_token', token);
+                    
+                } else {
+                    log('❌ Aucun token FCM disponible', 'error');
+                }
+            } catch (error) {
+                log(`❌ Erreur token FCM: ${error}`, 'error');
+            }
+        };
+
+        window.showCustomNotification = function(title, body, data = {}) {
+            if (Notification.permission !== 'granted') {
+                log('❌ Notifications non autorisées', 'error');
+                return;
+            }
+
+            const notification = new Notification(title, {
+                body,
+                icon: '/web/icons/Icon-192.png',
+                badge: '/web/icons/Icon-192.png',
+                tag: 'dailygrowth-test',
+                requireInteraction: false,
+                data: data
+            });
+
+            notification.onclick = () => {
+                log('🔔 Notification cliquée', 'success');
+                window.focus();
+                notification.close();
+            };
+
+            // Auto-fermer après 5 secondes
+            setTimeout(() => {
+                try { notification.close(); } catch (e) {}
+            }, 5000);
+        };
+
+        // Tests de notifications
+        window.testBasicNotification = function() {
+            log('🧪 Test notification basique');
+            showCustomNotification(
+                '🔔 Test DailyGrowth',
+                'Votre système de notifications fonctionne parfaitement !',
+                { type: 'test' }
+            );
+        };
+
+        window.testChallengeNotification = function() {
+            log('🧪 Test notification défi');
+            showCustomNotification(
+                '🎯 Nouveau micro-défi disponible !',
+                'Méditation de 10 minutes - Prenez un moment pour vous recentrer',
+                { type: 'challenge', challengeId: '123' }
+            );
+            setBadge(1);
+        };
+
+        window.testAchievementNotification = function() {
+            log('🧪 Test notification succès');
+            showCustomNotification(
+                '🏆 Nouveau succès débloqué !',
+                'Premier défi complété - Bravo pour ce premier pas ! (+50 points)',
+                { type: 'achievement', points: 50 }
+            );
+            setBadge(2);
+        };
+
+        window.testStreakNotification = function() {
+            log('🧪 Test notification série');
+            showCustomNotification(
+                '🔥 Série de 7 jours !',
+                'Incroyable ! Vous avez maintenu votre série pendant une semaine entière !',
+                { type: 'streak', count: 7 }
+            );
+            setBadge(7);
+        };
+
+        // Badge API
+        window.setBadge = function(count) {
+            if ('setAppBadge' in navigator) {
+                navigator.setAppBadge(count);
+                log(`🔴 Badge mis à jour: ${count}`, 'success');
+            } else {
+                log('❌ Badge API non supporté (iOS Safari 16.4+ requis)', 'error');
+            }
+        };
+
+        window.clearBadge = function() {
+            if ('clearAppBadge' in navigator) {
+                navigator.clearAppBadge();
+                log('⚫ Badge effacé', 'success');
+            } else {
+                log('❌ Badge API non supporté', 'error');
+            }
+        };
+
+        window.clearLogs = function() {
+            document.getElementById('logs').innerHTML = '';
+        };
+    </script>
+
+    <!-- Service Worker pour Firebase -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Service worker principal
+                navigator.serviceWorker.register('/web/sw.js')
+                    .then(reg => {
+                        console.log('✅ Service Worker principal enregistré');
+                        window.log('✅ Service Worker principal enregistré', 'success');
+                    })
+                    .catch(err => {
+                        console.log('❌ Service Worker principal échoué:', err);
+                        window.log(`❌ Service Worker principal échoué: ${err}`, 'error');
+                    });
+
+                // Service worker Firebase
+                navigator.serviceWorker.register('/web/firebase-messaging-sw.js')
+                    .then(reg => {
+                        console.log('🔥 Firebase Service Worker enregistré');
+                        window.log('🔥 Firebase Service Worker enregistré', 'success');
+                    })
+                    .catch(err => {
+                        console.log('❌ Firebase Service Worker échoué:', err);
+                        window.log(`❌ Firebase Service Worker échoué: ${err}`, 'error');
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
