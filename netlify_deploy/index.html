@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>🔥 DailyGrowth PWA - Test Notifications Push</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#47C5FB">
+    <meta name="description" content="Test des notifications push PWA DailyGrowth avec support iOS Safari 16.4+ Badge API">
+    
+    <!-- PWA Meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DailyGrowth Test">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2347C5FB'/><text x='50' y='65' text-anchor='middle' font-size='45' fill='white'>🔥</text></svg>">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🔥</text></svg>">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .card { 
+            background: rgba(255,255,255,0.15); 
+            backdrop-filter: blur(10px);
+            padding: 24px; 
+            border-radius: 20px; 
+            margin: 20px 0; 
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button { 
+            background: #47C5FB; 
+            color: white; 
+            border: none; 
+            padding: 16px 24px; 
+            border-radius: 16px; 
+            margin: 8px 6px; 
+            font-size: 16px; 
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(71, 197, 251, 0.4);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover, button:active { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(71, 197, 251, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled { 
+            background: #666; 
+            cursor: not-allowed; 
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status { 
+            padding: 16px; 
+            border-radius: 12px; 
+            margin: 12px 0; 
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .success { 
+            background: rgba(40, 167, 69, 0.2); 
+            border: 1px solid rgba(40, 167, 69, 0.4); 
+        }
+        
+        .error { 
+            background: rgba(220, 53, 69, 0.2); 
+            border: 1px solid rgba(220, 53, 69, 0.4); 
+        }
+        
+        .info { 
+            background: rgba(23, 162, 184, 0.2); 
+            border: 1px solid rgba(23, 162, 184, 0.4); 
+        }
+        
+        .test-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 12px; 
+            margin-top: 16px;
+        }
+        
+        .logs { 
+            background: rgba(0,0,0,0.4); 
+            padding: 20px; 
+            border-radius: 16px; 
+            height: 250px; 
+            overflow-y: scroll; 
+            font-family: 'SF Mono', Monaco, Consolas, monospace; 
+            font-size: 13px;
+            line-height: 1.5;
+            scroll-behavior: smooth;
+        }
+        
+        .logs::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .logs::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        
+        .version { 
+            opacity: 0.7; 
+            font-size: 13px; 
+            text-align: center; 
+            margin: 40px 0 20px 0;
+            padding: 20px;
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border-left: 4px solid #47C5FB;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 12px;
+            color: #47C5FB;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .badge-demo {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            margin-top: 16px;
+        }
+        
+        .badge-demo .icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .header { padding-top: 20px; }
+            .header h1 { font-size: 2rem; }
+            .card { padding: 20px; margin: 16px 0; }
+            button { padding: 14px 20px; font-size: 15px; }
+            .test-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 DailyGrowth PWA</h1>
+            <div class="subtitle">Test Complet Notifications Push & Badge API</div>
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Instructions de Test iOS Safari 16.4+</h3>
+            <ol>
+                <li><strong>Autoriser notifications</strong> avec le bouton ci-dessous</li>
+                <li><strong>Ajouter à l'écran d'accueil</strong> : Partager → "Ajouter à l'écran d'accueil"</li>
+                <li><strong>Lancer depuis l'icône PWA</strong> (pas Safari) pour activer les badges</li>
+                <li><strong>Tester notifications et badges</strong> avec les boutons</li>
+            </ol>
+        </div>
+        
+        <div class="card">
+            <h2>📱 Statut Environnement</h2>
+            <div id="deviceInfo" class="status info">
+                <span>🔍</span>
+                <span>Détection environnement...</span>
+            </div>
+            <div id="pwaStatus" class="status info">
+                <span>⚡</span>
+                <span>Vérification mode PWA...</span>
+            </div>
+            <div id="badgeStatus" class="status info">
+                <span>🔴</span>
+                <span>Test Badge API...</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔔 Notifications Web</h2>
+            <div id="notificationStatus" class="status info">
+                <span>🔐</span>
+                <span>Vérification permissions...</span>
+            </div>
+            
+            <button onclick="requestPermissions()" id="permissionBtn">
+                📱 Autoriser Notifications
+            </button>
+            
+            <div class="test-grid">
+                <button onclick="testBasicNotification()">🔔 Test Simple</button>
+                <button onclick="testChallengeNotification()">🎯 Nouveau Défi</button>
+                <button onclick="testSuccessNotification()">🏆 Succès Débloqué</button>
+                <button onclick="testStreakNotification()">🔥 Série 7 Jours</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔴 Badge API iOS Safari 16.4+</h2>
+            
+            <div class="badge-demo">
+                <span class="icon">📱</span>
+                <div>Le badge apparaît sur l'icône PWA de votre écran d'accueil</div>
+            </div>
+            
+            <div class="test-grid">
+                <button onclick="setBadge(1)">🔴 Badge 1</button>
+                <button onclick="setBadge(5)">🔴 Badge 5</button>
+                <button onclick="setBadge(42)">🔴 Badge 42</button>
+                <button onclick="clearBadge()">⚫ Effacer Badge</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Logs de Test en Temps Réel</h2>
+            <div id="logs" class="logs"></div>
+            <button onclick="clearLogs()" style="margin-top: 16px;">🧹 Effacer Logs</button>
+        </div>
+
+        <div class="version">
+            <div><strong>DailyGrowth PWA Test Suite v1.0</strong></div>
+            <div>Compatible iOS Safari 16.4+ • Web Notifications • Badge API</div>
+            <div style="margin-top: 10px; opacity: 0.6;">
+                🌐 Hébergé sur Netlify avec HTTPS<br>
+                🔥 Firebase FCM Integration Ready<br>
+                📱 Optimisé pour iPhone PWA Mode
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let testCount = 0;
+        let isInitialized = false;
+
+        // Fonction de logging avancée
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            
+            const typeMap = {
+                'error': { emoji: '❌', color: '#ff6b6b' },
+                'success': { emoji: '✅', color: '#51cf66' },
+                'info': { emoji: '📝', color: '#74c0fc' },
+                'warning': { emoji: '⚠️', color: '#ffd43b' }
+            };
+            
+            const logType = typeMap[type] || typeMap.info;
+            
+            const logLine = `<div style="color: ${logType.color}; margin: 4px 0;">[${timestamp}] ${logType.emoji} ${message}</div>`;
+            logElement.innerHTML += logLine;
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(`[${timestamp}] ${logType.emoji} ${message}`);
+        }
+
+        // Détection avancée de l'environnement
+        function detectEnvironment() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+            const isStandalone = window.navigator.standalone || 
+                                window.matchMedia('(display-mode: standalone)').matches;
+            
+            const osVersion = ua.match(/OS (\d+)_(\d+)_?(\d+)?/);
+            const iosVersion = osVersion ? `${osVersion[1]}.${osVersion[2]}` : 'Unknown';
+            
+            return {
+                isIOS,
+                isSafari,
+                isStandalone,
+                iosVersion,
+                userAgent: ua,
+                supportsNotifications: 'Notification' in window,
+                supportsBadge: 'setAppBadge' in navigator,
+                supportsServiceWorker: 'serviceWorker' in navigator
+            };
+        }
+
+        // Initialisation complète
+        function initialize() {
+            if (isInitialized) return;
+            
+            log('🚀 Initialisation DailyGrowth PWA Test Suite', 'info');
+            
+            const env = detectEnvironment();
+            
+            // Affichage environnement
+            const deviceText = `${env.isIOS ? '📱 iOS' : '💻 Desktop'} ${env.isSafari ? 'Safari' : 'Autre'} ${env.isStandalone ? '(PWA)' : '(Web)'}`;
+            document.getElementById('deviceInfo').innerHTML = `<span>🔍</span><span>${deviceText}</span>`;
+            
+            if (env.isIOS) {
+                log(`📱 iOS ${env.iosVersion} détecté`, 'info');
+            }
+            
+            // Status PWA
+            if (env.isStandalone) {
+                document.getElementById('pwaStatus').innerHTML = '<span>✅</span><span>Mode PWA actif - Badges disponibles</span>';
+                document.getElementById('pwaStatus').className = 'status success';
+                log('✅ PWA Mode actif - Toutes fonctionnalités disponibles', 'success');
+            } else {
+                document.getElementById('pwaStatus').innerHTML = '<span>⚠️</span><span>Mode Web - Ajouter à l\'écran d\'accueil pour PWA complète</span>';
+                document.getElementById('pwaStatus').className = 'status error';
+                log('⚠️ Mode Web - Badges limités, ajouter à l\'écran d\'accueil', 'warning');
+            }
+
+            // Test Badge API
+            if (env.supportsBadge) {
+                document.getElementById('badgeStatus').innerHTML = '<span>✅</span><span>Badge API supporté (iOS Safari 16.4+)</span>';
+                document.getElementById('badgeStatus').className = 'status success';
+                log('✅ Badge API disponible - Tests de badges possibles', 'success');
+            } else {
+                document.getElementById('badgeStatus').innerHTML = '<span>❌</span><span>Badge API non supporté</span>';
+                document.getElementById('badgeStatus').className = 'status error';
+                if (env.isIOS && !env.isStandalone) {
+                    log('⚠️ Badge API: Installer PWA sur écran d\'accueil requis', 'warning');
+                } else {
+                    log('❌ Badge API non disponible sur cet environnement', 'error');
+                }
+            }
+
+            // Permissions notifications
+            checkNotificationPermission();
+            
+            // Auto-demander permissions après 2 secondes
+            setTimeout(() => {
+                if (Notification.permission === 'default') {
+                    log('💡 Conseil: Cliquez sur "Autoriser Notifications" pour commencer', 'info');
+                }
+            }, 2000);
+            
+            isInitialized = true;
+            log('🎯 Initialisation terminée - Prêt pour les tests !', 'success');
+        }
+
+        function checkNotificationPermission() {
+            if (!('Notification' in window)) {
+                document.getElementById('notificationStatus').innerHTML = '<span>❌</span><span>Notifications non supportées</span>';
+                document.getElementById('notificationStatus').className = 'status error';
+                log('❌ Web Notifications non supportées sur cet appareil', 'error');
+                return false;
+            }
+
+            const permission = Notification.permission;
+            const statusElement = document.getElementById('notificationStatus');
+            const permissionBtn = document.getElementById('permissionBtn');
+            
+            switch (permission) {
+                case 'granted':
+                    statusElement.innerHTML = '<span>✅</span><span>Notifications autorisées</span>';
+                    statusElement.className = 'status success';
+                    permissionBtn.innerHTML = '✅ Notifications Autorisées';
+                    permissionBtn.disabled = true;
+                    log('✅ Permissions notifications accordées', 'success');
+                    break;
+                case 'denied':
+                    statusElement.innerHTML = '<span>❌</span><span>Notifications refusées - Réactiver dans paramètres Safari</span>';
+                    statusElement.className = 'status error';
+                    permissionBtn.innerHTML = '❌ Permissions Refusées';
+                    permissionBtn.disabled = true;
+                    log('❌ Permissions notifications refusées - Vérifier paramètres Safari', 'error');
+                    break;
+                default:
+                    statusElement.innerHTML = '<span>⚠️</span><span>Permissions notifications non demandées</span>';
+                    statusElement.className = 'status info';
+                    permissionBtn.innerHTML = '📱 Autoriser Notifications';
+                    permissionBtn.disabled = false;
+                    log('⚠️ Permissions en attente - Cliquer pour autoriser', 'warning');
+            }
+            
+            return permission === 'granted';
+        }
+
+        // Demander permissions
+        async function requestPermissions() {
+            log('📱 Demande d\'autorisation notifications...', 'info');
+            
+            try {
+                const permission = await Notification.requestPermission();
+                
+                switch (permission) {
+                    case 'granted':
+                        log('🎉 Permissions accordées - Tests disponibles !', 'success');
+                        break;
+                    case 'denied':
+                        log('❌ Permissions refusées - Vérifier paramètres Safari', 'error');
+                        break;
+                    default:
+                        log('⚠️ Permissions non déterminées', 'warning');
+                }
+                
+                checkNotificationPermission();
+                
+            } catch (error) {
+                log(`❌ Erreur demande permissions: ${error.message}`, 'error');
+            }
+        }
+
+        // Afficher notification avec gestion d'erreurs
+        function showNotification(title, body, icon = '🔔', data = {}) {
+            if (!checkNotificationPermission()) {
+                log('❌ Notifications non autorisées - Cliquer sur "Autoriser Notifications"', 'error');
+                return false;
+            }
+
+            try {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>${icon}</text></svg>`,
+                    tag: `dailygrowth-test-${Date.now()}`,
+                    requireInteraction: false,
+                    silent: false,
+                    data: data
+                });
+
+                notification.onclick = () => {
+                    log('🔔 Notification cliquée - Focus sur PWA', 'success');
+                    window.focus();
+                    notification.close();
+                };
+
+                notification.onerror = (error) => {
+                    log(`❌ Erreur notification: ${error}`, 'error');
+                };
+
+                // Auto-fermer après 5 secondes
+                setTimeout(() => {
+                    try { notification.close(); } catch (e) {}
+                }, 5000);
+
+                testCount++;
+                log(`✅ Notification ${testCount} envoyée: "${title}"`, 'success');
+                return true;
+
+            } catch (error) {
+                log(`❌ Erreur création notification: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Tests de notifications spécialisés
+        function testBasicNotification() {
+            showNotification(
+                '🔔 Test DailyGrowth PWA',
+                'Félicitations ! Votre système de notifications fonctionne parfaitement sur cette plateforme.',
+                '🔔',
+                { type: 'test', timestamp: Date.now() }
+            );
+        }
+
+        function testChallengeNotification() {
+            const challenges = [
+                'Méditation de 10 minutes - Prenez un moment pour vous recentrer',
+                'Marche de 15 minutes en nature - Reconnectez-vous avec l\'environnement',
+                'Lecture de 20 pages - Nourrissez votre esprit',
+                'Appel à un proche - Renforcez vos liens sociaux'
+            ];
+            
+            const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+            
+            if (showNotification(
+                '🎯 Nouveau micro-défi disponible !',
+                randomChallenge,
+                '🎯',
+                { type: 'challenge', id: Math.floor(Math.random() * 1000) }
+            )) {
+                setBadge(1);
+            }
+        }
+
+        function testSuccessNotification() {
+            const achievements = [
+                'Premier défi complété - Félicitations pour ce premier pas ! (+50 points)',
+                'Série de 3 jours - Vous développez une belle habitude ! (+100 points)',
+                'Perfectionniste - Défi complété à 100% ! (+75 points)',
+                'Explorateur - 5 domaines différents explorés ! (+125 points)'
+            ];
+            
+            const randomAchievement = achievements[Math.floor(Math.random() * achievements.length)];
+            const points = parseInt(randomAchievement.match(/\((\+\d+) points\)/)[1].replace('+', ''));
+            
+            if (showNotification(
+                '🏆 Nouveau succès débloqué !',
+                randomAchievement,
+                '🏆',
+                { type: 'achievement', points: points }
+            )) {
+                setBadge(2);
+            }
+        }
+
+        function testStreakNotification() {
+            const streakMessages = {
+                7: 'Incroyable ! Vous maintenez votre progression depuis une semaine entière !',
+                14: 'Fantastique ! Deux semaines de croissance continue !',
+                30: 'Extraordinaire ! Un mois complet de développement personnel !',
+                100: 'Légendaire ! Vous êtes un véritable champion de la croissance !'
+            };
+            
+            const streakDays = [7, 14, 30, 100];
+            const randomStreak = streakDays[Math.floor(Math.random() * streakDays.length)];
+            
+            if (showNotification(
+                `🔥 Série de ${randomStreak} jours !`,
+                streakMessages[randomStreak],
+                '🔥',
+                { type: 'streak', count: randomStreak }
+            )) {
+                setBadge(randomStreak);
+            }
+        }
+
+        // Badge API avec feedback
+        function setBadge(count) {
+            if ('setAppBadge' in navigator) {
+                try {
+                    navigator.setAppBadge(count);
+                    log(`🔴 Badge mis à jour: ${count} (vérifiez l'icône PWA sur votre écran d'accueil)`, 'success');
+                } catch (error) {
+                    log(`❌ Erreur badge: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ Badge API non supporté - iOS Safari 16.4+ en mode PWA requis', 'error');
+            }
+        }
+
+        function clearBadge() {
+            if ('clearAppBadge' in navigator) {
+                try {
+                    navigator.clearAppBadge();
+                    log('⚫ Badge effacé avec succès', 'success');
+                } catch (error) {
+                    log(`❌ Erreur effacement badge: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ Badge API non supporté pour l\'effacement', 'error');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            testCount = 0;
+            log('🧹 Logs effacés - Session de test réinitialisée', 'info');
+        }
+
+        // Initialisation au chargement
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        // Messages d'aide contextuels
+        setTimeout(() => {
+            const env = detectEnvironment();
+            if (env.isIOS && !env.isStandalone) {
+                log('💡 Pour tester les badges: Partager → "Ajouter à l\'écran d\'accueil" puis lancer depuis l\'icône PWA', 'info');
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
