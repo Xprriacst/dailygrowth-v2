@@ -8,6 +8,7 @@ import './supabase_service.dart';
 import './challenge_service.dart';
 import './quote_service.dart';
 import './user_service.dart';
+import './web_notification_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -22,6 +23,7 @@ class NotificationService {
   final ChallengeService _challengeService = ChallengeService();
   final QuoteService _quoteService = QuoteService();
   final UserService _userService = UserService();
+  final WebNotificationService _webNotificationService = WebNotificationService();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -49,6 +51,11 @@ class NotificationService {
 
       // Request permissions
       await _requestPermissions();
+    }
+
+    // Initialize web notifications for web platforms
+    if (kIsWeb) {
+      await _webNotificationService.initialize();
     }
 
     // Initialize services (defer Supabase-dependent services)
@@ -95,8 +102,9 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    // For web, return early
+    // For web, use browser's native scheduling (limited support)
     if (kIsWeb) {
+      debugPrint('⚠️ Web platforms don\'t support scheduled notifications - use service worker instead');
       return;
     }
     
@@ -150,9 +158,13 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    // For web, return early
+    // Use web notifications for web platforms
     if (kIsWeb) {
-      debugPrint('Web notifications not implemented');
+      await _webNotificationService.showNotification(
+        title: title,
+        body: body,
+        data: payload != null ? {'payload': payload} : null,
+      );
       return;
     }
     
@@ -413,10 +425,18 @@ class NotificationService {
     required String description,
     required int pointsEarned,
   }) async {
-    await sendInstantNotification(
-        title: '🏆 Nouveau succès débloqué !',
-        body: '$achievementName - $description (+$pointsEarned points)',
-        payload: 'achievement:$userId');
+    if (kIsWeb) {
+      await _webNotificationService.showAchievementNotification(
+        achievementName: achievementName,
+        description: description,
+        pointsEarned: pointsEarned,
+      );
+    } else {
+      await sendInstantNotification(
+          title: '🏆 Nouveau succès débloqué !',
+          body: '$achievementName - $description (+$pointsEarned points)',
+          payload: 'achievement:$userId');
+    }
   }
 
   // Send streak milestone notification
@@ -424,27 +444,33 @@ class NotificationService {
     required String userId,
     required int streakCount,
   }) async {
-    String title = '';
-    String body = '';
+    if (kIsWeb) {
+      await _webNotificationService.showStreakNotification(
+        streakCount: streakCount,
+      );
+    } else {
+      String title = '';
+      String body = '';
 
-    if (streakCount == 7) {
-      title = '🔥 Série de 7 jours !';
-      body =
-          'Incroyable ! Vous avez maintenu votre série pendant une semaine entière !';
-    } else if (streakCount == 30) {
-      title = '🌟 Série de 30 jours !';
-      body = 'Extraordinaire ! Un mois complet de croissance personnelle !';
-    } else if (streakCount == 100) {
-      title = '💎 Série de 100 jours !';
-      body = 'Légendaire ! Vous êtes un véritable champion de la croissance !';
-    } else if (streakCount % 10 == 0) {
-      title = '🚀 Série de $streakCount jours !';
-      body = 'Fantastique ! Continuez sur cette belle lancée !';
-    }
+      if (streakCount == 7) {
+        title = '🔥 Série de 7 jours !';
+        body =
+            'Incroyable ! Vous avez maintenu votre série pendant une semaine entière !';
+      } else if (streakCount == 30) {
+        title = '🌟 Série de 30 jours !';
+        body = 'Extraordinaire ! Un mois complet de croissance personnelle !';
+      } else if (streakCount == 100) {
+        title = '💎 Série de 100 jours !';
+        body = 'Légendaire ! Vous êtes un véritable champion de la croissance !';
+      } else if (streakCount % 10 == 0) {
+        title = '🚀 Série de $streakCount jours !';
+        body = 'Fantastique ! Continuez sur cette belle lancée !';
+      }
 
-    if (title.isNotEmpty) {
-      await sendInstantNotification(
-          title: title, body: body, payload: 'streak:$userId');
+      if (title.isNotEmpty) {
+        await sendInstantNotification(
+            title: title, body: body, payload: 'streak:$userId');
+      }
     }
   }
 
@@ -466,11 +492,18 @@ class NotificationService {
         debugPrint('✅ New micro-challenge generated: $challengeName');
         
         // Send notification about the new challenge
-        await sendInstantNotification(
-          title: '🎯 Nouveau micro-défi disponible !',
-          body: challengeName,
-          payload: 'new_challenge:$userId',
-        );
+        if (kIsWeb) {
+          await _webNotificationService.showChallengeNotification(
+            challengeName: challengeName,
+            challengeId: newChallenge['id']?.toString(),
+          );
+        } else {
+          await sendInstantNotification(
+            title: '🎯 Nouveau micro-défi disponible !',
+            body: challengeName,
+            payload: 'new_challenge:$userId',
+          );
+        }
         
         // Schedule reminder notification if enabled
         final settings = await getUserNotificationSettings(userId);
@@ -504,8 +537,14 @@ class NotificationService {
 
   // Schedule optional reminder notification for later in the day
   Future<void> _scheduleOptionalReminder(String userId, String userName) async {
-    // For web, return early
+    // For web, use immediate reminder (no scheduling support)
     if (kIsWeb) {
+      // Schedule a delayed reminder using Future.delayed
+      Future.delayed(const Duration(hours: 6), () async {
+        await _webNotificationService.showReminderNotification(
+          userName: userName,
+        );
+      });
       return;
     }
     
@@ -546,8 +585,9 @@ class NotificationService {
 
   // Cancel all notifications for a user
   Future<void> cancelUserNotifications(String userId) async {
-    // For web, return early
+    // For web, clear notifications via service worker
     if (kIsWeb) {
+      await _webNotificationService.clearAllNotifications();
       return;
     }
     
