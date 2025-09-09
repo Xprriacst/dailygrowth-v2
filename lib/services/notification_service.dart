@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cron/cron.dart';
@@ -102,9 +103,9 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    // For web, use browser's native scheduling (limited support)
+    // For web, use service worker scheduling
     if (kIsWeb) {
-      debugPrint('⚠️ Web platforms don\'t support scheduled notifications - use service worker instead');
+      await _scheduleWebNotification(userId, time, title, body);
       return;
     }
     
@@ -530,6 +531,56 @@ class NotificationService {
         body: 'Votre défi personnalisé sera bientôt disponible !',
         payload: 'error:$userId',
       );
+    }
+  }
+
+  // Schedule web notification using localStorage and periodic checks
+  Future<void> _scheduleWebNotification(String userId, String time, String title, String body) async {
+    debugPrint('📅 Scheduling web notification for $time');
+    
+    try {
+      // Store notification data in localStorage for persistence
+      await _webNotificationService.sendMessageToServiceWorker({
+        'type': 'SCHEDULE_NOTIFICATION',
+        'userId': userId,
+        'time': time,
+        'title': title,
+        'body': body,
+        'scheduledAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      // Also use a simple timer approach as fallback
+      final timeParts = time.split(':');
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      
+      final now = DateTime.now();
+      var scheduledTime = DateTime(now.year, now.month, now.day, hour, minute);
+      
+      // If time has passed today, schedule for tomorrow
+      if (scheduledTime.isBefore(now)) {
+        scheduledTime = scheduledTime.add(const Duration(days: 1));
+      }
+      
+      final delay = scheduledTime.difference(now);
+      debugPrint('⏰ Web notification scheduled in ${delay.inMinutes} minutes');
+      
+      // Schedule using Timer (works only while app is open)
+      Timer(delay, () async {
+        await _webNotificationService.showNotification(
+          title: title,
+          body: body,
+          data: {
+            'type': 'scheduled_daily',
+            'userId': userId,
+            'scheduledTime': time,
+          },
+        );
+        debugPrint('✅ Scheduled web notification sent at $time');
+      });
+      
+    } catch (e) {
+      debugPrint('❌ Failed to schedule web notification: $e');
     }
   }
 
