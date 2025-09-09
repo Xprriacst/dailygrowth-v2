@@ -58,16 +58,23 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Force l'enregistrement de notre service worker principal APRÈS Flutter
+        // Force l'enregistrement de notre service worker principal
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const delay = isIOS ? 2000 : 1000; // Plus de délai sur iOS
+        
         setTimeout(function() {
-          navigator.serviceWorker.register('/sw.js')
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
             .then(function(registration) {
               console.log('✅ ServiceWorker registration successful');
+              // Force activation sur iOS
+              if (isIOS && registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
             })
             .catch(function(error) {
               console.log('❌ ServiceWorker registration failed: ', error);
             });
-        }, 1000); // Attendre 1 seconde que Flutter s'enregistre d'abord
+        }, delay);
 
         // Firebase ServiceWorker temporarily disabled
         // navigator.serviceWorker.register('/firebase-messaging-sw.js')
