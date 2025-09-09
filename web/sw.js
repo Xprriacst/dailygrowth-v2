@@ -66,7 +66,58 @@ self.addEventListener('fetch', function(event) {
 // Gestion des notifications programmées et badges
 let scheduledNotifications = new Map();
 
-self.addEventListener('message', function(event) {
+// Fonction pour sauvegarder dans IndexedDB
+async function saveToIndexedDB(data) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('DailyGrowthDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction(['notifications'], 'readwrite');
+      const store = transaction.objectStore('notifications');
+      store.put({ id: 'scheduled', data: data });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    };
+    
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('notifications')) {
+        db.createObjectStore('notifications', { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+// Fonction pour lire depuis IndexedDB
+async function loadFromIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('DailyGrowthDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction(['notifications'], 'readonly');
+      const store = transaction.objectStore('notifications');
+      const getRequest = store.get('scheduled');
+      
+      getRequest.onsuccess = () => {
+        resolve(getRequest.result?.data || null);
+      };
+      getRequest.onerror = () => reject(getRequest.error);
+    };
+    
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('notifications')) {
+        db.createObjectStore('notifications', { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+self.addEventListener('message', async function(event) {
   const data = event.data;
   
   if (data && data.type === 'SET_BADGE') {
@@ -89,7 +140,7 @@ self.addEventListener('message', function(event) {
     const { userId, time, title, body } = data;
     console.log('[SW] Programming daily notification for', userId, 'at', time);
     
-    // Stocker dans localStorage pour persistance
+    // Stocker dans IndexedDB pour persistance
     const notificationData = {
       userId,
       time,
@@ -100,12 +151,13 @@ self.addEventListener('message', function(event) {
     
     scheduledNotifications.set(userId, notificationData);
     
-    // Sauvegarder dans localStorage
+    // Sauvegarder dans IndexedDB
     try {
       const stored = Array.from(scheduledNotifications.entries());
-      self.localStorage?.setItem('scheduledNotifications', JSON.stringify(stored));
+      await saveToIndexedDB(stored);
+      console.log('[SW] Notifications saved to IndexedDB');
     } catch (e) {
-      console.log('[SW] Could not save to localStorage:', e);
+      console.log('[SW] Could not save to IndexedDB:', e);
     }
     
     // Démarrer le système de vérification périodique
@@ -133,7 +185,7 @@ function startPeriodicCheck() {
   }, 60000); // Vérifier toutes les minutes
 }
 
-function checkAndSendNotifications() {
+async function checkAndSendNotifications() {
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   const today = now.toDateString();
@@ -166,29 +218,29 @@ function checkAndSendNotifications() {
       // Sauvegarder la mise à jour
       try {
         const stored = Array.from(scheduledNotifications.entries());
-        self.localStorage?.setItem('scheduledNotifications', JSON.stringify(stored));
+        await saveToIndexedDB(stored);
+        console.log('[SW] Notifications updated in IndexedDB');
       } catch (e) {
-        console.log('[SW] Could not update localStorage:', e);
+        console.log('[SW] Could not update IndexedDB:', e);
       }
     }
   });
 }
 
 // Restaurer les notifications programmées au démarrage
-function restoreScheduledNotifications() {
+async function restoreScheduledNotifications() {
   try {
-    const stored = self.localStorage?.getItem('scheduledNotifications');
+    const stored = await loadFromIndexedDB();
     if (stored) {
-      const entries = JSON.parse(stored);
-      scheduledNotifications = new Map(entries);
-      console.log('[SW] Restored', scheduledNotifications.size, 'scheduled notifications');
+      scheduledNotifications = new Map(stored);
+      console.log('[SW] Restored', scheduledNotifications.size, 'scheduled notifications from IndexedDB');
       
       if (scheduledNotifications.size > 0) {
         startPeriodicCheck();
       }
     }
   } catch (e) {
-    console.log('[SW] Could not restore scheduled notifications:', e);
+    console.log('[SW] Could not restore scheduled notifications from IndexedDB:', e);
   }
 }
 
