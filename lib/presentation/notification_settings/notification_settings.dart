@@ -267,10 +267,27 @@ class _NotificationSettingsState extends State<NotificationSettings> {
     );
   }
 
-  void _requestNotificationPermission() {
-    // Simulate permission request
+  Future<void> _requestNotificationPermission() async {
+    // VRAIE demande de permission (pas simulation)
     HapticFeedback.mediumImpact();
 
+    try {
+      final permission = await ref.read(notificationServiceProvider).webNotificationService.requestPermission();
+      
+      if (permission == 'granted') {
+        _showSnackBar('✅ Notifications autorisées !');
+        setState(() {
+          // Refresh permission status
+        });
+      } else {
+        _showSnackBar('❌ Permission refusée');
+      }
+    } catch (e) {
+      _showSnackBar('❌ Erreur: $e');
+    }
+
+    // Fallback dialogue si pas web
+    /*
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -319,6 +336,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
         ],
       ),
     );
+    */
   }
 
   void _sendTestNotification() {
