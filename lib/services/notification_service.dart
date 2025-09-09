@@ -533,7 +533,56 @@ class NotificationService {
     }
   }
 
-  
+  // Test notification for debugging
+  Future<void> triggerTestNotification() async {
+    debugPrint('🧪 Triggering test notification...');
+    
+    if (kIsWeb) {
+      debugPrint('🌐 Web platform detected - using WebNotificationService');
+      
+      // Check permission status first
+      final permission = _webNotificationService.permissionStatus;
+      debugPrint('🔔 Current permission status: $permission');
+      
+      if (permission != 'granted') {
+        debugPrint('❌ Permission not granted, requesting...');
+        final newPermission = await _webNotificationService.requestPermission();
+        debugPrint('🔔 New permission status: $newPermission');
+        
+        if (newPermission != 'granted') {
+          throw Exception('Permission denied for web notifications');
+        }
+      }
+      
+      // Test basic notification
+      await _webNotificationService.showNotification(
+        title: '🧪 Test DailyGrowth',
+        body: 'Cette notification de test confirme que le système fonctionne sur votre appareil !',
+        data: {'test': true, 'timestamp': DateTime.now().millisecondsSinceEpoch},
+      );
+      
+      debugPrint('✅ Web test notification sent');
+      
+      // Test challenge notification
+      await Future.delayed(const Duration(seconds: 2));
+      await _webNotificationService.showChallengeNotification(
+        challengeName: 'Défi de test : Sourire à 3 personnes aujourd\'hui',
+      );
+      
+      debugPrint('✅ Web challenge notification sent');
+      
+    } else {
+      debugPrint('📱 Mobile platform detected - using FlutterLocalNotifications');
+      
+      await sendInstantNotification(
+        title: '🧪 Test DailyGrowth',
+        body: 'Cette notification de test confirme que le système fonctionne !',
+        payload: 'test_notification',
+      );
+      
+      debugPrint('✅ Mobile test notification sent');
+    }
+  }
 
   // Schedule optional reminder notification for later in the day
   Future<void> _scheduleOptionalReminder(String userId, String userName) async {

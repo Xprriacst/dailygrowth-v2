@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
+import '../../services/notification_service.dart';
 import '../../utils/auth_guard.dart';
 import './widgets/life_domains_modal.dart';
 import './widgets/life_domains_widget.dart';
@@ -41,6 +42,7 @@ class _UserProfileState extends State<UserProfile> {
 
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
+  final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -192,6 +194,13 @@ class _UserProfileState extends State<UserProfile> {
                   iconName: 'admin_panel_settings',
                   color: AppTheme.lightTheme.colorScheme.secondary,
                   size: 6.w)),
+            // Add notification test button
+            IconButton(
+              onPressed: _triggerTestNotification,
+              icon: CustomIconWidget(
+                iconName: 'notifications',
+                color: AppTheme.lightTheme.colorScheme.primary,
+                size: 6.w)),
           ]),
         body: _isLoading
             ? Center(
@@ -782,5 +791,14 @@ class _UserProfileState extends State<UserProfile> {
         content: Text(message),
         backgroundColor: AppTheme.lightTheme.colorScheme.error,
         behavior: SnackBarBehavior.floating));
+  }
+
+  void _triggerTestNotification() async {
+    try {
+      await _notificationService.triggerTestNotification();
+      _showSuccessMessage('Notification de test envoyée');
+    } catch (e) {
+      _showErrorMessage('Erreur lors de l\'envoi de la notification de test: $e');
+    }
   }
 }

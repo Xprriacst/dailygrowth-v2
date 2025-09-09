@@ -21,15 +21,15 @@ class WebNotificationService {
         return;
       }
 
-      // Demander la permission
-      _permission = await html.Notification.requestPermission();
-      debugPrint('🔔 Web notification permission: $_permission');
+      // Vérifier l'état actuel des permissions sans les demander
+      _permission = html.Notification.permission;
+      debugPrint('🔔 Current web notification permission: $_permission');
 
       // Configurer les gestionnaires d'événements
       _setupEventHandlers();
 
       _isInitialized = true;
-      debugPrint('✅ WebNotificationService initialized');
+      debugPrint('✅ WebNotificationService initialized (permission not requested yet)');
     } catch (e) {
       debugPrint('❌ Failed to initialize WebNotificationService: $e');
     }
