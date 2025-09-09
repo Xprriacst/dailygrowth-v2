@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/web_notification_service.dart';
 import './widgets/notification_toggle_widget.dart';
 import './widgets/permission_status_widget.dart';
 import './widgets/quiet_hours_widget.dart';
@@ -272,15 +273,18 @@ class _NotificationSettingsState extends State<NotificationSettings> {
     HapticFeedback.mediumImpact();
 
     try {
-      final permission = await ref.read(notificationServiceProvider).webNotificationService.requestPermission();
+      final permission = await WebNotificationService().requestPermission();
       
       if (permission == 'granted') {
         _showSnackBar('✅ Notifications autorisées !');
         setState(() {
-          // Refresh permission status
+          _notificationPermissionGranted = true;
         });
       } else {
         _showSnackBar('❌ Permission refusée');
+        setState(() {
+          _notificationPermissionGranted = false;
+        });
       }
     } catch (e) {
       _showSnackBar('❌ Erreur: $e');
