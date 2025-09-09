@@ -58,14 +58,16 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Enregistrer le service worker principal
-        navigator.serviceWorker.register('/sw.js')
-          .then(function(registration) {
-            console.log('✅ ServiceWorker registration successful');
-          })
-          .catch(function(error) {
-            console.log('❌ ServiceWorker registration failed: ', error);
-          });
+        // Force l'enregistrement de notre service worker principal APRÈS Flutter
+        setTimeout(function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('✅ ServiceWorker registration successful');
+            })
+            .catch(function(error) {
+              console.log('❌ ServiceWorker registration failed: ', error);
+            });
+        }, 1000); // Attendre 1 seconde que Flutter s'enregistre d'abord
 
         // Firebase ServiceWorker temporarily disabled
         // navigator.serviceWorker.register('/firebase-messaging-sw.js')
