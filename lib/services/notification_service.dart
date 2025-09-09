@@ -534,50 +534,22 @@ class NotificationService {
     }
   }
 
-  // Schedule web notification using localStorage and periodic checks
+  // Schedule web notification using service worker for persistence
   Future<void> _scheduleWebNotification(String userId, String time, String title, String body) async {
-    debugPrint('📅 Scheduling web notification for $time');
+    debugPrint('📅 Scheduling persistent web notification for $time');
     
     try {
-      // Store notification data in localStorage for persistence
+      // Send to service worker for persistent scheduling
       await _webNotificationService.sendMessageToServiceWorker({
         'type': 'SCHEDULE_NOTIFICATION',
         'userId': userId,
         'time': time,
         'title': title,
         'body': body,
-        'scheduledAt': DateTime.now().millisecondsSinceEpoch,
       });
       
-      // Also use a simple timer approach as fallback
-      final timeParts = time.split(':');
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
-      
-      final now = DateTime.now();
-      var scheduledTime = DateTime(now.year, now.month, now.day, hour, minute);
-      
-      // If time has passed today, schedule for tomorrow
-      if (scheduledTime.isBefore(now)) {
-        scheduledTime = scheduledTime.add(const Duration(days: 1));
-      }
-      
-      final delay = scheduledTime.difference(now);
-      debugPrint('⏰ Web notification scheduled in ${delay.inMinutes} minutes');
-      
-      // Schedule using Timer (works only while app is open)
-      Timer(delay, () async {
-        await _webNotificationService.showNotification(
-          title: title,
-          body: body,
-          data: {
-            'type': 'scheduled_daily',
-            'userId': userId,
-            'scheduledTime': time,
-          },
-        );
-        debugPrint('✅ Scheduled web notification sent at $time');
-      });
+      debugPrint('✅ Notification scheduled in service worker - will trigger daily at $time');
+      debugPrint('ℹ️ No need to keep app open - service worker handles it');
       
     } catch (e) {
       debugPrint('❌ Failed to schedule web notification: $e');

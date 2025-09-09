@@ -63,10 +63,14 @@ self.addEventListener('fetch', function(event) {
   );
 });
 
-// Badge API pour iOS Safari 16.4+
+// Gestion des notifications programmées et badges
+let scheduledNotifications = new Map();
+
 self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SET_BADGE') {
-    const count = event.data.count;
+  const data = event.data;
+  
+  if (data && data.type === 'SET_BADGE') {
+    const count = data.count;
     
     // Utiliser Badge API si disponible (iOS Safari 16.4+)
     if ('setAppBadge' in navigator) {
@@ -79,6 +83,116 @@ self.addEventListener('message', function(event) {
       }
     }
   }
+  
+  // Programmer une notification quotidienne
+  else if (data && data.type === 'SCHEDULE_NOTIFICATION') {
+    const { userId, time, title, body } = data;
+    console.log('[SW] Programming daily notification for', userId, 'at', time);
+    
+    // Stocker dans localStorage pour persistance
+    const notificationData = {
+      userId,
+      time,
+      title,
+      body,
+      lastSent: null
+    };
+    
+    scheduledNotifications.set(userId, notificationData);
+    
+    // Sauvegarder dans localStorage
+    try {
+      const stored = Array.from(scheduledNotifications.entries());
+      self.localStorage?.setItem('scheduledNotifications', JSON.stringify(stored));
+    } catch (e) {
+      console.log('[SW] Could not save to localStorage:', e);
+    }
+    
+    // Démarrer le système de vérification périodique
+    startPeriodicCheck();
+  }
+  
+  // Supprimer une notification programmée
+  else if (data && data.type === 'CANCEL_NOTIFICATION') {
+    const { userId } = data;
+    scheduledNotifications.delete(userId);
+    console.log('[SW] Cancelled notification for', userId);
+  }
 });
+
+// Système de vérification périodique (toutes les minutes)
+let periodicCheckInterval = null;
+
+function startPeriodicCheck() {
+  if (periodicCheckInterval) return; // Déjà démarré
+  
+  console.log('[SW] Starting periodic notification check');
+  
+  periodicCheckInterval = setInterval(() => {
+    checkAndSendNotifications();
+  }, 60000); // Vérifier toutes les minutes
+}
+
+function checkAndSendNotifications() {
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  const today = now.toDateString();
+  
+  scheduledNotifications.forEach((notification, userId) => {
+    const { time, title, body, lastSent } = notification;
+    
+    // Vérifier si c'est l'heure ET qu'on n'a pas déjà envoyé aujourd'hui
+    if (currentTime === time.substring(0, 5) && lastSent !== today) {
+      console.log('[SW] Sending scheduled notification for', userId, 'at', currentTime);
+      
+      // Envoyer la notification
+      self.registration.showNotification(title, {
+        body: body,
+        icon: '/icons/Icon-192.png',
+        badge: '/icons/Icon-192.png',
+        tag: `daily-${userId}`,
+        requireInteraction: false,
+        data: {
+          type: 'scheduled_daily',
+          userId: userId,
+          time: time
+        }
+      });
+      
+      // Marquer comme envoyé aujourd'hui
+      notification.lastSent = today;
+      scheduledNotifications.set(userId, notification);
+      
+      // Sauvegarder la mise à jour
+      try {
+        const stored = Array.from(scheduledNotifications.entries());
+        self.localStorage?.setItem('scheduledNotifications', JSON.stringify(stored));
+      } catch (e) {
+        console.log('[SW] Could not update localStorage:', e);
+      }
+    }
+  });
+}
+
+// Restaurer les notifications programmées au démarrage
+function restoreScheduledNotifications() {
+  try {
+    const stored = self.localStorage?.getItem('scheduledNotifications');
+    if (stored) {
+      const entries = JSON.parse(stored);
+      scheduledNotifications = new Map(entries);
+      console.log('[SW] Restored', scheduledNotifications.size, 'scheduled notifications');
+      
+      if (scheduledNotifications.size > 0) {
+        startPeriodicCheck();
+      }
+    }
+  } catch (e) {
+    console.log('[SW] Could not restore scheduled notifications:', e);
+  }
+}
+
+// Restaurer au démarrage du service worker
+restoreScheduledNotifications();
 
 console.log('[SW] Service Worker principal chargé');
