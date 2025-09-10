@@ -465,12 +465,12 @@ class ChallengeService {
       
       final nombreDefisReleves = completedChallenges.count ?? 0;
       
-      // Get user's exact problematique text
+      // Get user's exact problematique text with rotation
       String problematique = lifeDomain;
       if (userProfile['selected_problematiques'] != null) {
         final problematiques = List<String>.from(userProfile['selected_problematiques']);
         if (problematiques.isNotEmpty) {
-          problematique = problematiques.first; // Use exact problematique text
+          problematique = problematiques.first; // Use first selected problematique
         }
       } else if (userProfile['selected_life_domains'] != null) {
         // Fallback to domain if no specific problematique

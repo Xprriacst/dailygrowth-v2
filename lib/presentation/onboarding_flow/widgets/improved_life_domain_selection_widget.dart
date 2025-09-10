@@ -70,6 +70,8 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
       if (_selectedProblematiques.contains(problematique)) {
         _selectedProblematiques.remove(problematique);
       } else {
+        // Nouvelle logique: ne permettre qu'une seule problématique
+        _selectedProblematiques.clear();
         _selectedProblematiques.add(problematique);
       }
     });
@@ -101,7 +103,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
     if (_selectedProblematiques.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Veuillez sélectionner au moins une problématique'),
+          content: Text('Veuillez sélectionner une problématique'),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 2),
         ),
@@ -179,7 +181,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
     if (_selectedProblematiques.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Veuillez sélectionner au moins une problématique'),
+          content: Text('Veuillez sélectionner une problématique'),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 2),
         ),
@@ -244,6 +246,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
 
   Widget _buildProblematiqueCard(ChallengeProblematique problematique) {
     final isSelected = _selectedProblematiques.contains(problematique);
+    final isDisabled = _selectedProblematiques.isNotEmpty && !isSelected;
     
     return AnimatedBuilder(
       animation: _selectionAnimation,
@@ -259,19 +262,25 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
               decoration: BoxDecoration(
                 color: isSelected 
                     ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.15)
-                    : AppTheme.lightTheme.colorScheme.surface,
+                    : isDisabled
+                        ? AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.5)
+                        : AppTheme.lightTheme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected 
                       ? AppTheme.lightTheme.colorScheme.primary
-                      : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+                      : isDisabled
+                          ? AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.1)
+                          : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isSelected 
                         ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2)
-                        : AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.08),
+                        : isDisabled
+                            ? AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.02)
+                            : AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.08),
                     blurRadius: isSelected ? 12 : 8,
                     offset: const Offset(0, 2),
                     spreadRadius: isSelected ? 1 : 0,
@@ -290,10 +299,13 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      problematique.emoji,
-                      style: TextStyle(
-                        fontSize: isSelected ? 20.sp : 18.sp,
+                    child: Opacity(
+                      opacity: isDisabled ? 0.3 : 1.0,
+                      child: Text(
+                        problematique.emoji,
+                        style: TextStyle(
+                          fontSize: isSelected ? 20.sp : 18.sp,
+                        ),
                       ),
                     ),
                   ),
@@ -301,30 +313,36 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                   
                   // Titre
                   Expanded(
-                    child: Text(
-                      problematique.title,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected 
-                            ? AppTheme.lightTheme.colorScheme.primary
-                            : AppTheme.lightTheme.colorScheme.onSurface,
-                        height: 1.3,
+                    child: Opacity(
+                      opacity: isDisabled ? 0.3 : 1.0,
+                      child: Text(
+                        problematique.title,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected 
+                              ? AppTheme.lightTheme.colorScheme.primary
+                              : AppTheme.lightTheme.colorScheme.onSurface,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   
                   // Icône de sélection
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                      color: isSelected 
-                          ? AppTheme.lightTheme.colorScheme.primary
-                          : AppTheme.lightTheme.colorScheme.outline,
-                      size: 20.sp,
+                    child: Opacity(
+                      opacity: isDisabled ? 0.3 : 1.0,
+                      child: Icon(
+                        isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                        color: isSelected 
+                            ? AppTheme.lightTheme.colorScheme.primary
+                            : AppTheme.lightTheme.colorScheme.outline,
+                        size: 20.sp,
+                      ),
                     ),
                   ),
                 ],
@@ -477,7 +495,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Sélectionnez une ou plusieurs problématiques sur lesquelles vous souhaitez travailler. Nous générerons des défis personnalisés pour vous aider à progresser.',
+                    'Sélectionnez la problématique principale sur laquelle vous souhaitez travailler. Nous générerons des défis personnalisés pour vous aider à progresser.',
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -496,7 +514,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                         ),
                       ),
                       child: Text(
-                        '${_selectedProblematiques.length} objectif${_selectedProblematiques.length > 1 ? "s" : ""} sélectionné${_selectedProblematiques.length > 1 ? "s" : ""}',
+                        '1 objectif sélectionné',
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
@@ -540,7 +558,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                     SizedBox(width: 3.w),
                     Expanded(
                       child: Text(
-                        'Sélectionnez au moins une problématique pour continuer',
+                        'Sélectionnez une problématique pour continuer',
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.7),
