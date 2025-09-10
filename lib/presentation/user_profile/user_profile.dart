@@ -795,10 +795,18 @@ class _UserProfileState extends State<UserProfile> {
 
   void _triggerTestNotification() async {
     try {
+      debugPrint('🔔 User clicked test notification button');
+      _showSuccessMessage('Test en cours... Vérifiez la console pour les détails');
+      
       await _notificationService.triggerTestNotification();
-      _showSuccessMessage('Notification de test envoyée');
+      
+      // Attendre un peu pour laisser le temps aux logs de s'afficher
+      await Future.delayed(const Duration(seconds: 1));
+      _showSuccessMessage('✅ Test terminé - Consultez la console (F12) pour voir le diagnostic iOS complet');
+      
     } catch (e) {
-      _showErrorMessage('Erreur lors de l\'envoi de la notification de test: $e');
+      debugPrint('❌ Test notification error: $e');
+      _showErrorMessage('❌ Erreur: $e\n\n💡 Sur iOS: Vérifiez que l\'app est installée comme PWA depuis Safari → Partager → "Ajouter à l\'écran d\'accueil"');
     }
   }
 }
