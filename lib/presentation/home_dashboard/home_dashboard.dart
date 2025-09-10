@@ -376,14 +376,14 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
                               SizedBox(height: 2.h),
 
-                              // Inspirational Quote Card
-                              InspirationalQuoteCardWidget(
-                                  quote: _inspirationalQuote['quote'] as String,
-                                  author:
-                                      _inspirationalQuote['author'] as String,
-                                  onShare: _handleQuoteShare),
+                              // Inspirational Quote Card - MASQUÉ
+                              // InspirationalQuoteCardWidget(
+                              //     quote: _inspirationalQuote['quote'] as String,
+                              //     author:
+                              //         _inspirationalQuote['author'] as String,
+                              //     onShare: _handleQuoteShare),
 
-                              SizedBox(height: 3.h),
+                              // SizedBox(height: 3.h), // Espacement supprimé avec la citation
 
                               // Recent Achievements Section
                               AchievementsSectionWidget(
