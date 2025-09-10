@@ -1,5 +1,5 @@
 // Service Worker pour PWA DailyGrowth
-const CACHE_NAME = 'dailygrowth-v1';
+const CACHE_NAME = 'dailygrowth-v2-' + Date.now();
 const urlsToCache = [
   '/',
   '/main.dart.js',
@@ -12,20 +12,21 @@ const urlsToCache = [
 
 // Installation du service worker
 self.addEventListener('install', function(event) {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing new version...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('[SW] Caching files');
+        console.log('[SW] Caching files with new cache name:', CACHE_NAME);
         return cache.addAll(urlsToCache);
       })
   );
+  // Force immediate activation
   self.skipWaiting();
 });
 
 // Activation du service worker
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Activating...');
+  console.log('[SW] Activating new version and clearing old caches...');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
@@ -38,6 +39,7 @@ self.addEventListener('activate', function(event) {
       );
     })
   );
+  // Force immediate control of all clients
   self.clients.claim();
 });
 
