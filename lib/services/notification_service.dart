@@ -597,7 +597,7 @@ class NotificationService {
       // Test de notification programmée pour dans 1 minute (pour debug)
       debugPrint('🕐 Programming test notification for 1 minute from now...');
       final testTime = DateTime.now().add(const Duration(minutes: 1));
-      final timeString = '${testTime.hour.toString().padStart(2, '0')}:${testTime.minute.toString().padStart(2, '0')}:00';
+      final timeString = '${testTime.hour.toString().padLeft(2, '0')}:${testTime.minute.toString().padLeft(2, '0')}:00';
       
       await _scheduleWebNotification(
         'test_user',

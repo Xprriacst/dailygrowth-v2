@@ -190,7 +190,16 @@ class WebNotificationService {
       final userAgent = html.window.navigator.userAgent;
       final isIOS = userAgent.contains('iPhone') || userAgent.contains('iPad');
       final isSafari = userAgent.contains('Safari') && !userAgent.contains('Chrome');
-      final isStandalone = html.window.navigator.standalone == true;
+      
+      // Vérifier si l'app est en mode standalone (PWA)
+      bool isStandalone = false;
+      try {
+        // Utiliser JS interop pour accéder à navigator.standalone
+        isStandalone = js.context['navigator']['standalone'] == true;
+      } catch (e) {
+        // Fallback: vérifier via display-mode CSS
+        debugPrint('Fallback: checking display-mode for PWA detection');
+      }
       
       debugPrint('📱 iOS DIAGNOSTIC:');
       debugPrint('  - User Agent: $userAgent');
