@@ -795,18 +795,38 @@ class _UserProfileState extends State<UserProfile> {
 
   void _triggerTestNotification() async {
     try {
-      debugPrint('🔔 User clicked test notification button');
-      _showSuccessMessage('Test en cours... Vérifiez la console pour les détails');
+      _showSuccessMessage('Test en cours...');
       
-      await _notificationService.triggerTestNotification();
+      final diagnosticResult = await _notificationService.triggerTestNotification();
       
-      // Attendre un peu pour laisser le temps aux logs de s'afficher
-      await Future.delayed(const Duration(seconds: 1));
-      _showSuccessMessage('✅ Test terminé - Consultez la console (F12) pour voir le diagnostic iOS complet');
+      // Afficher le diagnostic complet dans une dialog
+      _showDiagnosticDialog('🔔 Diagnostic Notifications', diagnosticResult);
       
     } catch (e) {
-      debugPrint('❌ Test notification error: $e');
-      _showErrorMessage('❌ Erreur: $e\n\n💡 Sur iOS: Vérifiez que l\'app est installée comme PWA depuis Safari → Partager → "Ajouter à l\'écran d\'accueil"');
+      _showDiagnosticDialog('❌ Erreur Notifications', e.toString());
     }
+  }
+  
+  void _showDiagnosticDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: SingleChildScrollView(
+            child: Text(
+              message,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
