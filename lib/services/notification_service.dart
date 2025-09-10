@@ -556,7 +556,7 @@ class NotificationService {
     }
   }
 
-  // Test notification for debugging
+  // Test notification for debugging avec diagnostic iOS amélioré
   Future<void> triggerTestNotification() async {
     debugPrint('🧪 Triggering test notification...');
     
@@ -573,7 +573,7 @@ class NotificationService {
         debugPrint('🔔 New permission status: $newPermission');
         
         if (newPermission != 'granted') {
-          throw Exception('Permission denied for web notifications');
+          throw Exception('Permission denied for web notifications. Sur iOS: vérifiez que l\'app est installée comme PWA depuis Safari → Partager → "Ajouter à l\'écran d\'accueil"');
         }
       }
       
@@ -593,6 +593,20 @@ class NotificationService {
       );
       
       debugPrint('✅ Web challenge notification sent');
+      
+      // Test de notification programmée pour dans 1 minute (pour debug)
+      debugPrint('🕐 Programming test notification for 1 minute from now...');
+      final testTime = DateTime.now().add(const Duration(minutes: 1));
+      final timeString = '${testTime.hour.toString().padStart(2, '0')}:${testTime.minute.toString().padStart(2, '0')}:00';
+      
+      await _scheduleWebNotification(
+        'test_user',
+        timeString,
+        '⏰ Test Notification Programmée',
+        'Cette notification était programmée pour ${testTime.hour}:${testTime.minute}'
+      );
+      
+      debugPrint('✅ Test scheduled notification programmed for $timeString');
       
     } else {
       debugPrint('📱 Mobile platform detected - using FlutterLocalNotifications');

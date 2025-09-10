@@ -159,19 +159,52 @@ class WebNotificationService {
   // Obtenir le statut de permission
   String get permissionStatus => _permission ?? 'default';
 
-  // Demander la permission explicitement
+  // Demander la permission explicitement avec diagnostic iOS
   Future<String> requestPermission() async {
     if (!kIsWeb || !_isNotificationSupported()) {
+      debugPrint('❌ Web notifications not supported');
       return 'denied';
     }
 
     try {
+      // Diagnostic iOS spécifique
+      _logIOSDiagnostic();
+      
       _permission = await html.Notification.requestPermission();
       debugPrint('🔔 Permission requested: $_permission');
+      
+      // Diagnostic post-permission
+      if (_permission == 'denied') {
+        debugPrint('❌ DIAGNOSTIC: Permission denied - vérifiez que l\'app est installée comme PWA');
+      }
+      
       return _permission!;
     } catch (e) {
       debugPrint('❌ Failed to request permission: $e');
       return 'denied';
+    }
+  }
+
+  void _logIOSDiagnostic() {
+    try {
+      final userAgent = html.window.navigator.userAgent;
+      final isIOS = userAgent.contains('iPhone') || userAgent.contains('iPad');
+      final isSafari = userAgent.contains('Safari') && !userAgent.contains('Chrome');
+      final isStandalone = html.window.navigator.standalone == true;
+      
+      debugPrint('📱 iOS DIAGNOSTIC:');
+      debugPrint('  - User Agent: $userAgent');
+      debugPrint('  - Is iOS: $isIOS');
+      debugPrint('  - Is Safari: $isSafari');
+      debugPrint('  - Is PWA (standalone): $isStandalone');
+      debugPrint('  - Notification support: ${_isNotificationSupported()}');
+      
+      if (isIOS && !isStandalone) {
+        debugPrint('⚠️ PROBLÈME DÉTECTÉ: App non installée comme PWA sur iOS');
+        debugPrint('   SOLUTION: Safari → Partager → "Ajouter à l\'écran d\'accueil"');
+      }
+    } catch (e) {
+      debugPrint('❌ Error in iOS diagnostic: $e');
     }
   }
 
