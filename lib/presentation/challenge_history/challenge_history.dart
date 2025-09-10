@@ -73,7 +73,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
+    _tabController = TabController(length: 1, vsync: this, initialIndex: 0); // Masqué l'onglet Citations
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
     _checkAuthenticationAndInitialize();
@@ -358,73 +358,30 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
                 ),
               ),
 
-              // Tab Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.lightTheme.colorScheme.surface,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppTheme.lightTheme.colorScheme.outline
-                          .withValues(alpha: 0.1),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  tabs: [
-                    Tab(text: 'Citations'),
-                    Tab(text: 'Historique'),
-                  ],
-                ),
-              ),
+              // Tab Bar - MASQUÉ (onglet Citations supprimé)
+              // Container(
+              //   decoration: BoxDecoration(
+              //     color: AppTheme.lightTheme.colorScheme.surface,
+              //     border: Border(
+              //       bottom: BorderSide(
+              //         color: AppTheme.lightTheme.colorScheme.outline
+              //             .withValues(alpha: 0.1),
+              //         width: 1,
+              //       ),
+              //     ),
+              //   ),
+              //   child: TabBar(
+              //     controller: _tabController,
+              //     tabs: [
+              //       Tab(text: 'Citations'),
+              //       Tab(text: 'Historique'),
+              //     ],
+              //   ),
+              // ),
 
-              // Tab Bar View
+              // Tab Bar View - SIMPLIFIÉ (plus d'onglets)
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Citations tab (placeholder for future implementation)
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CustomIconWidget(
-                            iconName: 'format_quote',
-                            color: AppTheme.lightTheme.colorScheme.primary
-                                .withValues(alpha: 0.3),
-                            size: 60,
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Citations inspirantes',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  color: AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                          SizedBox(height: 1.h),
-                          Text(
-                            'Bientôt disponible',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // History tab
-                    _buildHistoryTab(),
-                  ],
-                ),
+                child: _buildHistoryTab(), // Affichage direct de l'historique
               ),
             ],
           ),

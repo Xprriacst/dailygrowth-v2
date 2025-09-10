@@ -664,6 +664,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: AppTheme.lightTheme.textTheme.titleMedium
                                 ?.copyWith(
                               fontWeight: FontWeight.w600,
+                              color: (_emailController.text.isNotEmpty &&
+                                      _passwordController.text.isNotEmpty)
+                                  ? Colors.white // Texte blanc quand le bouton est bleu
+                                  : AppTheme.lightTheme.colorScheme.onSurface
+                                      .withAlpha(97),
                             ),
                           ),
                   ),
