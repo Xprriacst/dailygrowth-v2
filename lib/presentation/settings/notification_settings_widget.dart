@@ -400,7 +400,7 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
                   SizedBox(width: 2.w),
                   Expanded(
                     child: Text(
-                      'Vous recevrez une notification quotidienne quand un nouveau micro-défi personnalisé sera généré selon vos problématiques sélectionnées.',
+                      'Vous recevrez une notification quotidienne quand un nouveau micro-défi personnalisé sera généré selon votre problématique sélectionnée.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.blue.shade700,
                       ),
