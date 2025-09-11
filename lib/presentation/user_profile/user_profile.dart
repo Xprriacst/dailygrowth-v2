@@ -11,7 +11,7 @@ import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../services/notification_service.dart';
 import '../../utils/auth_guard.dart';
-import './widgets/life_domains_modal.dart';
+import 'widgets/problematique_selection_modal.dart';
 import './widgets/life_domains_widget.dart';
 import './widgets/notification_toggle_widget.dart';
 import './widgets/profile_header_widget.dart';
@@ -395,6 +395,15 @@ class _UserProfileState extends State<UserProfile> {
     return ["Erreur: Aucune problématique sélectionnée"];
   }
 
+  String? _getSelectedProblematique() {
+    // Get the single selected problematique
+    final problematiques = _userData?["selected_problematiques"];
+    if (problematiques != null && problematiques is List && problematiques.isNotEmpty) {
+      return problematiques.first as String;
+    }
+    return null;
+  }
+
   void _handleBottomNavTap(int index) async {
     if (index == _currentBottomNavIndex) return;
 
@@ -442,15 +451,15 @@ class _UserProfileState extends State<UserProfile> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => LifeDomainsModal(
-        selectedDomains: _getSelectedDomains(),
-        onDomainsChanged: (List<String> newDomains) async {
+      builder: (context) => ProblematiqueSelectionModal(
+        selectedProblematique: _getSelectedProblematique(),
+        onProblematiqueChanged: (String newProblematique) async {
           try {
             await _userService.updateUserProfile(
               userId: _authService.userId!,
-              selectedLifeDomains: newDomains);
+              selectedProblematiques: [newProblematique]);
             await _loadUserData(); // Reload data
-            _showSuccessMessage('Domaines de vie mis à jour');
+            _showSuccessMessage('Objectif mis à jour');
           } catch (e) {
             _showErrorMessage('Erreur lors de la mise à jour: $e');
           }
