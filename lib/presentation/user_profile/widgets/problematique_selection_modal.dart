@@ -28,22 +28,22 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
   }
 
   // Mapping des catégories vers des icônes
-  Map<String, String> getCategoryIcon(String category) {
+  String getCategoryIcon(String category) {
     switch (category) {
       case 'Mental & émotionnel':
-        return {'icon': 'psychology', 'name': 'Mental & émotionnel'};
+        return 'psychology';
       case 'Relations & communication':
-        return {'icon': 'people', 'name': 'Relations & communication'};
+        return 'people';
       case 'Argent & carrière':
-        return {'icon': 'work', 'name': 'Argent & carrière'};
+        return 'work';
       case 'Santé & habitudes de vie':
-        return {'icon': 'favorite', 'name': 'Santé & habitudes de vie'};
+        return 'favorite';
       case 'Productivité & concentration':
-        return {'icon': 'schedule', 'name': 'Productivité & concentration'};
+        return 'schedule';
       case 'Confiance & identité':
-        return {'icon': 'self_improvement', 'name': 'Confiance & identité'};
+        return 'self_improvement';
       default:
-        return {'icon': 'star', 'name': category};
+        return 'star';
     }
   }
 
@@ -113,7 +113,7 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
               itemBuilder: (context, index) {
                 final problematique = ChallengeProblematique.allProblematiques[index];
                 final isSelected = _selectedProblematique == problematique.description;
-                final categoryInfo = getCategoryIcon(problematique.category);
+                final categoryIcon = getCategoryIcon(problematique.category);
 
                 return Container(
                   margin: EdgeInsets.only(bottom: 2.h),
@@ -153,37 +153,26 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
                                       .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Center(
-                              child: Text(
-                                problematique.emoji,
-                                style: TextStyle(fontSize: 6.w),
-                              ),
+                            child: CustomIconWidget(
+                              iconName: categoryIcon,
+                              color: isSelected
+                                  ? AppTheme.lightTheme.colorScheme.onPrimary
+                                  : AppTheme
+                                      .lightTheme.colorScheme.onSurfaceVariant,
+                              size: 6.w,
                             ),
                           ),
                           SizedBox(width: 4.w),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  problematique.title,
-                                  style: AppTheme.lightTheme.textTheme.bodyLarge
-                                      ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected
-                                        ? AppTheme.lightTheme.colorScheme.primary
-                                        : AppTheme.lightTheme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                SizedBox(height: 0.5.h),
-                                Text(
-                                  categoryInfo['name']!,
-                                  style: AppTheme.lightTheme.textTheme.bodySmall
-                                      ?.copyWith(
-                                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              problematique.title,
+                              style: AppTheme.lightTheme.textTheme.bodyLarge
+                                  ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: isSelected
+                                    ? AppTheme.lightTheme.colorScheme.primary
+                                    : AppTheme.lightTheme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
                           if (isSelected)
