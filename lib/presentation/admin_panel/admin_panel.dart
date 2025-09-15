@@ -46,7 +46,7 @@ class _AdminPanelState extends State<AdminPanel>
       await _loadAdminData();
     } catch (e) {
       if (mounted) {
-        _showErrorMessage('Erreur lors de l\'initialisation: $e');
+        _showBeautifulErrorMessage('Erreur lors de l\'initialisation: $e');
         setState(() {
           _isLoading = false;
         });
@@ -70,7 +70,7 @@ class _AdminPanelState extends State<AdminPanel>
       final isAdmin = await _adminService.isUserAdmin(currentUser.id);
       if (!isAdmin) {
         Navigator.pop(context);
-        _showErrorMessage('Accès non autorisé');
+        _showBeautifulErrorMessage('Accès non autorisé');
         return;
       }
 
@@ -92,7 +92,7 @@ class _AdminPanelState extends State<AdminPanel>
         setState(() {
           _isLoading = false;
         });
-        _showErrorMessage('Erreur lors du chargement des données: $e');
+        _showBeautifulErrorMessage('Erreur lors du chargement des données: $e');
       }
     }
   }
@@ -325,10 +325,10 @@ class _AdminPanelState extends State<AdminPanel>
     try {
       await _adminService.validateContent(type, contentId, status);
       await _loadAdminData(); // Reload data
-      _showSuccessMessage(
+      _showBeautifulSuccessMessage(
           'Contenu ${status == 'approved' ? 'approuvé' : 'rejeté'} avec succès');
     } catch (e) {
-      _showErrorMessage('Erreur lors de la validation: $e');
+      _showBeautifulErrorMessage('Erreur lors de la validation: $e');
     }
   }
 
@@ -373,10 +373,10 @@ class _AdminPanelState extends State<AdminPanel>
                 );
                 Navigator.pop(context);
                 await _loadAdminData();
-                _showSuccessMessage('Contenu rejeté avec succès');
+                _showBeautifulSuccessMessage('Contenu rejeté avec succès');
               } catch (e) {
                 Navigator.pop(context);
-                _showErrorMessage('Erreur lors du rejet: $e');
+                _showBeautifulErrorMessage('Erreur lors du rejet: $e');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -386,6 +386,184 @@ class _AdminPanelState extends State<AdminPanel>
           ),
         ],
       ),
+    );
+  }
+
+  void _showBeautifulSuccessMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: AppTheme.lightTheme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success Icon
+                Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 8.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                // Title
+                Text(
+                  'Succès',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                // Message
+                Text(
+                  message,
+                  style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurface.withAlpha(204),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                // OK Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                      foregroundColor: AppTheme.lightTheme.colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'OK',
+                      style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showBeautifulErrorMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: AppTheme.lightTheme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Error Icon
+                Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error,
+                    color: Colors.red,
+                    size: 8.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                // Title
+                Text(
+                  'Erreur',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                // Message
+                Text(
+                  message,
+                  style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurface.withAlpha(204),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                // OK Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.error,
+                      foregroundColor: AppTheme.lightTheme.colorScheme.onError,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'OK',
+                      style: AppTheme.lightTheme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

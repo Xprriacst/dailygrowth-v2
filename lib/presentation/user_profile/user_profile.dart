@@ -74,7 +74,7 @@ class _UserProfileState extends State<UserProfile> {
       await _loadUserData();
     } catch (e) {
       if (mounted) {
-        _showErrorMessage('Erreur lors de l\'initialisation: $e');
+        _showBeautifulErrorMessage('Erreur lors de l\'initialisation: $e');
         setState(() {
           _isLoading = false;
         });
@@ -123,7 +123,7 @@ class _UserProfileState extends State<UserProfile> {
         if (e.toString().contains('JWT') || e.toString().contains('auth')) {
           _handleAuthenticationExpired();
         } else {
-          _showErrorMessage('Erreur lors du chargement des données: $e');
+          _showBeautifulErrorMessage('Erreur lors du chargement des données: $e');
         }
       }
     }
@@ -436,12 +436,12 @@ class _UserProfileState extends State<UserProfile> {
             setState(() {
               _selectedProfileImage = image.path;
             });
-            _showSuccessMessage('Photo de profil mise à jour');
+            _showBeautifulSuccessMessage('Photo de profil mise à jour');
           } else {
             setState(() {
               _selectedProfileImage = null;
             });
-            _showSuccessMessage('Photo de profil supprimée');
+            _showBeautifulSuccessMessage('Photo de profil supprimée');
           }
         }));
   }
@@ -472,9 +472,9 @@ class _UserProfileState extends State<UserProfile> {
         userId: _authService.userId!,
         notificationsEnabled: value);
       await _loadUserData(); // Reload data
-      _showSuccessMessage('Préférences sauvegardées');
+      _showBeautifulSuccessMessage('Préférences sauvegardées');
     } catch (e) {
-      _showErrorMessage('Erreur lors de la sauvegarde: $e');
+      _showBeautifulErrorMessage('Erreur lors de la sauvegarde: $e');
     }
   }
 
@@ -511,9 +511,9 @@ class _UserProfileState extends State<UserProfile> {
           userId: _authService.userId!,
           notificationTime: timeString);
         await _loadUserData(); // Reload data
-        _showSuccessMessage('Heure de notification mise à jour');
+        _showBeautifulSuccessMessage('Heure de notification mise à jour');
       } catch (e) {
-        _showErrorMessage('Erreur lors de la mise à jour: $e');
+        _showBeautifulErrorMessage('Erreur lors de la mise à jour: $e');
       }
     }
   }
@@ -542,9 +542,9 @@ class _UserProfileState extends State<UserProfile> {
                 // Update in auth service (this would need to be implemented)
                 // await _authService.updateEmail(emailController.text);
                 Navigator.pop(context);
-                _showSuccessMessage('Fonctionnalité à implémenter');
+                _showBeautifulSuccessMessage('Fonctionnalité à implémenter');
               } catch (e) {
-                _showErrorMessage('Erreur: $e');
+                _showBeautifulErrorMessage('Erreur: $e');
               }
             },
             child: Text('Sauvegarder')),
@@ -590,9 +590,9 @@ class _UserProfileState extends State<UserProfile> {
               if (newPasswordController.text ==
                   confirmPasswordController.text) {
                 Navigator.pop(context);
-                _showSuccessMessage('Fonctionnalité à implémenter');
+                _showBeautifulSuccessMessage('Fonctionnalité à implémenter');
               } else {
-                _showErrorMessage('Les mots de passe ne correspondent pas');
+                _showBeautifulErrorMessage('Les mots de passe ne correspondent pas');
               }
             },
             child: Text('Sauvegarder')),
@@ -625,9 +625,9 @@ class _UserProfileState extends State<UserProfile> {
         html.Url.revokeObjectUrl(url);
       }
 
-      _showSuccessMessage('Données exportées avec succès');
+      _showBeautifulSuccessMessage('Données exportées avec succès');
     } catch (e) {
-      _showErrorMessage('Erreur lors de l\'export des données: $e');
+      _showBeautifulErrorMessage('Erreur lors de l\'export des données: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -649,7 +649,7 @@ class _UserProfileState extends State<UserProfile> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _showSuccessMessage('Redirection vers le centre d\'aide');
+              _showBeautifulSuccessMessage('Redirection vers le centre d\'aide');
             },
             child: Text('Visiter')),
         ]));
@@ -675,7 +675,7 @@ class _UserProfileState extends State<UserProfile> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _showSuccessMessage('Commentaires envoyés. Merci !');
+              _showBeautifulSuccessMessage('Commentaires envoyés. Merci !');
             },
             child: Text('Envoyer')),
         ]));
@@ -737,7 +737,7 @@ class _UserProfileState extends State<UserProfile> {
                     context, '/login-screen', (route) => false);
               } catch (e) {
                 Navigator.pop(context); // Close loading dialog
-                _showErrorMessage('Erreur lors de la déconnexion: $e');
+                _showBeautifulErrorMessage('Erreur lors de la déconnexion: $e');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -775,9 +775,9 @@ class _UserProfileState extends State<UserProfile> {
                 Navigator.pop(context);
                 Navigator.pushNamedAndRemoveUntil(
                     context, '/login-screen', (route) => false);
-                _showSuccessMessage('Fonctionnalité à implémenter');
+                _showBeautifulSuccessMessage('Fonctionnalité à implémenter');
               } else {
-                _showErrorMessage('L\'adresse e-mail ne correspond pas');
+                _showBeautifulErrorMessage('L\'adresse e-mail ne correspond pas');
               }
             },
             style: ElevatedButton.styleFrom(
@@ -994,7 +994,7 @@ class _UserProfileState extends State<UserProfile> {
 
   void _triggerTestNotification() async {
     try {
-      _showSuccessMessage('Test en cours...');
+      _showBeautifulSuccessMessage('Test en cours...');
       
       final diagnosticResult = await _notificationService.triggerTestNotification();
       
