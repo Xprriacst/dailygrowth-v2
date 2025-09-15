@@ -30,7 +30,7 @@ serve(async (req) => {
     // We'll check each user's timezone and notification time individually
     const { data: users, error: usersError } = await supabase
       .from('user_profiles')
-      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time, timezone')
+      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time')
       .eq('notifications_enabled', true)
       .eq('reminder_notifications_enabled', true)
       .not('fcm_token', 'is', null)
