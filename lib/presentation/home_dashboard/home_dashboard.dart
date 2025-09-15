@@ -532,12 +532,123 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
   }
 
   void _showToast(String message) {
-    Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-        textColor: AppTheme.lightTheme.colorScheme.onSurface,
-        fontSize: 14.sp);
+    _showBeautifulSuccessMessage(message);
+  }
+
+  void _showBeautifulSuccessMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
+                  AppTheme.lightTheme.colorScheme.surface,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Animation de confettis/succès
+                Container(
+                  width: 24.w,
+                  height: 24.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.lightTheme.colorScheme.primary,
+                        AppTheme.lightTheme.colorScheme.primary.withOpacity(0.8),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.celebration,
+                    color: Colors.white,
+                    size: 14.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                
+                // Titre festif
+                Text(
+                  'Bravo ! 🎉',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                
+                // Message personnalisé
+                Text(
+                  message,
+                  style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                
+                // Bouton stylé
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                      shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                    ),
+                    child: Text(
+                      'Continuer',
+                      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
