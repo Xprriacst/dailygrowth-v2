@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -414,9 +415,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
     try {
       await _loadUserData();
-      _showToast('Contenu actualisé !');
+      _showDiscreteNotification('Contenu actualisé !', isSuccess: true);
     } catch (e) {
-      _showToast('Erreur lors de l\'actualisation');
+      _showDiscreteNotification('Erreur lors de l\'actualisation', isSuccess: false);
     } finally {
       setState(() {
         _isRefreshing = false;
@@ -647,5 +648,70 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         );
       },
     );
+  }
+
+  void _showDiscreteNotification(String message, {bool isSuccess = true}) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 10,
+        left: 4.w,
+        right: 4.w,
+        child: Material(
+          color: Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+            decoration: BoxDecoration(
+              color: isSuccess 
+                ? AppTheme.lightTheme.colorScheme.primaryContainer
+                : AppTheme.lightTheme.colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isSuccess ? Icons.check_circle : Icons.error,
+                  color: isSuccess 
+                    ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
+                    : AppTheme.lightTheme.colorScheme.onErrorContainer,
+                  size: 5.w,
+                ),
+                SizedBox(width: 2.w),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                      color: isSuccess 
+                        ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
+                        : AppTheme.lightTheme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    // Auto-dismiss après 2 secondes
+    Timer(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 }
