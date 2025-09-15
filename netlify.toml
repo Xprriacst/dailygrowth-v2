@@ -1,6 +1,6 @@
 [build]
   # Installation Flutter et build avec gestion du cache
-  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable; fi && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && echo \"window.ENV={SUPABASE_URL:'$SUPABASE_URL',SUPABASE_ANON_KEY:'$SUPABASE_ANON_KEY',FIREBASE_VAPID_KEY:'$FIREBASE_VAPID_KEY'};\" > build/web/env.js"
+  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable; fi && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && sed -i \"s/NETLIFY_SUPABASE_URL_PLACEHOLDER/$SUPABASE_URL/g\" build/web/index.html && sed -i \"s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g\" build/web/index.html && sed -i \"s/NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER/$FIREBASE_VAPID_KEY/g\" build/web/index.html"
   publish = "build/web"
 
 # Configuration des redirections pour SPA

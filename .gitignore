@@ -48,6 +48,7 @@ app.*.map.json
 
 # Environment variables (contains sensitive API keys)
 env.json
+web/env.js
 
 # Local Netlify folder
 .netlify
