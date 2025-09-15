@@ -20,11 +20,11 @@
   to = "/icons/:splat"
   status = 200
 
-# Variables d'environnement (à configurer dans l'interface Netlify)
+# Variables d'environnement
 [build.environment]
-  # Ces variables doivent être définies dans l'interface Netlify
-  # SUPABASE_URL = "votre_url_supabase"
-  # SUPABASE_ANON_KEY = "votre_clé_anon"
+  SUPABASE_URL = "https://hekdcsulxrukfturuone.supabase.co"
+  SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1NTI5MjMsImV4cCI6MjA0MTEyODkyM30.gVpXFCHhFQI4Vd7n7kfGC8Y2i7mCrB8CzU7ePFoazhU"
+  FIREBASE_VAPID_KEY = "BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs"
 
 # Headers de sécurité pour l'application web
 [[headers]]
