@@ -57,7 +57,8 @@
     };
   </script>
 
-  <!-- Firebase Configuration -->
+  <!-- Firebase Configuration - Temporarily disabled for build compatibility -->
+  <!-- 
   <script type="module">
     // Import Firebase modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
@@ -97,6 +98,7 @@
 
     console.log('Firebase initialized successfully');
   </script>
+  -->
 
   <!-- Service Worker Registration for PWA -->
   <script>
@@ -120,14 +122,14 @@
             });
         }, delay);
 
-        // Register Firebase ServiceWorker
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-          .then(function(registration) {
-            console.log('✅ Firebase ServiceWorker registration successful');
-          })
-          .catch(function(error) {
-            console.log('❌ Firebase ServiceWorker registration failed: ', error);
-          });
+        // Firebase ServiceWorker temporarily disabled for build compatibility
+        // navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        //   .then(function(registration) {
+        //     console.log('✅ Firebase ServiceWorker registration successful');
+        //   })
+        //   .catch(function(error) {
+        //     console.log('❌ Firebase ServiceWorker registration failed: ', error);
+        //   });
       });
     }
   </script>
