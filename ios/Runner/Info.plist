@@ -54,6 +54,13 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Cette application a besoin d'accéder à votre photothèque pour sélectionner des images à analyser avec l'IA.</string>
 	
+	<!-- Push Notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>background-fetch</string>
+	</array>
+	
 	<!-- Deep linking for Supabase auth -->
 	<key>CFBundleURLTypes</key>
 	<array>

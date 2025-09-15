@@ -47,12 +47,56 @@
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   
-  <!-- Firebase Configuration - Temporarily disabled -->
-  <!-- 
-  <script type="module">
-    // Firebase integration will be re-added after resolving compatibility issues
+  <!-- Environment variables -->
+  <script>
+    // Environment configuration
+    window.ENV = {
+      FIREBASE_VAPID_KEY: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs',
+      SUPABASE_URL: 'https://hekdcsulxrukfturuone.supabase.co',
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1NTI5MjMsImV4cCI6MjA0MTEyODkyM30.gVpXFCHhFQI4Vd7n7kfGC8Y2i7mCrB8CzU7ePFoazhU'
+    };
   </script>
-  -->
+
+  <!-- Firebase Configuration -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+      authDomain: "dailygrowth-pwa.firebaseapp.com",
+      projectId: "dailygrowth-pwa",
+      storageBucket: "dailygrowth-pwa.appspot.com",
+      messagingSenderId: "443167745906",
+      appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+      measurementId: "G-BXJW80Y4EF"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+
+    // Store Firebase objects globally
+    window.firebaseApp = app;
+    window.firebaseMessaging = messaging;
+
+    // Store VAPID key globally for Flutter access  
+    window.firebaseVapidKey = window.ENV?.FIREBASE_VAPID_KEY || 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs';
+
+    // Handle foreground messages
+    onMessage(messaging, (payload) => {
+      console.log('Message received in foreground: ', payload);
+      
+      // Send to Flutter app via window event
+      window.dispatchEvent(new CustomEvent('firebase-message', {
+        detail: payload
+      }));
+    });
+
+    console.log('Firebase initialized successfully');
+  </script>
 
   <!-- Service Worker Registration for PWA -->
   <script>
@@ -76,8 +120,14 @@
             });
         }, delay);
 
-        // Firebase ServiceWorker temporarily disabled
-        // navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        // Register Firebase ServiceWorker
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(function(registration) {
+            console.log('✅ Firebase ServiceWorker registration successful');
+          })
+          .catch(function(error) {
+            console.log('❌ Firebase ServiceWorker registration failed: ', error);
+          });
       });
     }
   </script>

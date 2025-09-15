@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Push Notifications - DailyGrowth</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button { 
+            background: #007AFF; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 8px;
+            font-size: 16px;
+        }
+        button:hover { background: #0051D2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status { 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 6px; 
+            font-weight: 500;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .token { 
+            word-break: break-all; 
+            background: #f8f9fa; 
+            padding: 8px; 
+            border-radius: 4px; 
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        h2 { color: #555; margin-top: 0; }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Push Notifications DailyGrowth</h1>
+        
+        <!-- Environment Configuration -->
+        <script>
+            window.ENV = {
+                FIREBASE_VAPID_KEY: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs',
+                SUPABASE_URL: 'https://hekdcsulxrukfturuone.supabase.co',
+                SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1NTI5MjMsImV4cCI6MjA0MTEyODkyM30.gVpXFCHhFQI4Vd7n7kfGC8Y2i7mCrB8CzU7ePFoazhU'
+            };
+        </script>
+        
+        <div class="section">
+            <h2>1. Initialisation Firebase</h2>
+            <button id="initFirebase">Initialiser Firebase</button>
+            <div id="initStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Demande de Permission</h2>
+            <button id="requestPermission" disabled>Demander Permission</button>
+            <div id="permissionStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Token FCM</h2>
+            <button id="getToken" disabled>Obtenir Token FCM</button>
+            <div id="tokenStatus"></div>
+            <div id="tokenValue"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Test Notification Locale</h2>
+            <button id="testLocalNotification">Tester Notification Locale</button>
+            <div id="localNotificationStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>5. Test via Edge Function</h2>
+            <input type="text" id="userIdInput" placeholder="User ID (optionnel, utilisera un ID de test)" value="test-user-123">
+            <button id="testEdgeFunction" disabled>Tester via Supabase Edge Function</button>
+            <div id="edgeFunctionStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>6. Écouter les Messages</h2>
+            <button id="startListening" disabled>Commencer l'écoute</button>
+            <button id="stopListening" disabled>Arrêter l'écoute</button>
+            <div id="messageStatus"></div>
+            <div id="messagesLog"></div>
+        </div>
+    </div>
+
+    <!-- Firebase v10 SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+            authDomain: "dailygrowth-pwa.firebaseapp.com",
+            projectId: "dailygrowth-pwa",
+            storageBucket: "dailygrowth-pwa.appspot.com",
+            messagingSenderId: "443167745906",
+            appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+            measurementId: "G-BXJW80Y4EF"
+        };
+
+        let app;
+        let messaging;
+        let unsubscribeOnMessage;
+
+        // Éléments DOM
+        const initFirebaseBtn = document.getElementById('initFirebase');
+        const requestPermissionBtn = document.getElementById('requestPermission');
+        const getTokenBtn = document.getElementById('getToken');
+        const testLocalNotificationBtn = document.getElementById('testLocalNotification');
+        const testEdgeFunctionBtn = document.getElementById('testEdgeFunction');
+        const startListeningBtn = document.getElementById('startListening');
+        const stopListeningBtn = document.getElementById('stopListening');
+
+        // Fonctions utilitaires
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function appendLog(elementId, message) {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            element.innerHTML += `<div class="status info">[${timestamp}] ${message}</div>`;
+        }
+
+        // 1. Initialiser Firebase
+        initFirebaseBtn.addEventListener('click', async () => {
+            try {
+                app = initializeApp(firebaseConfig);
+                messaging = getMessaging(app);
+                
+                showStatus('initStatus', '✅ Firebase initialisé avec succès', 'success');
+                requestPermissionBtn.disabled = false;
+                getTokenBtn.disabled = false;
+                startListeningBtn.disabled = false;
+                
+            } catch (error) {
+                showStatus('initStatus', `❌ Erreur Firebase: ${error.message}`, 'error');
+                console.error('Firebase init error:', error);
+            }
+        });
+
+        // 2. Demander permission
+        requestPermissionBtn.addEventListener('click', async () => {
+            try {
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    showStatus('permissionStatus', '✅ Permission accordée', 'success');
+                    testEdgeFunctionBtn.disabled = false;
+                } else {
+                    showStatus('permissionStatus', `⚠️ Permission refusée: ${permission}`, 'error');
+                }
+                
+            } catch (error) {
+                showStatus('permissionStatus', `❌ Erreur permission: ${error.message}`, 'error');
+                console.error('Permission error:', error);
+            }
+        });
+
+        // 3. Obtenir token FCM
+        getTokenBtn.addEventListener('click', async () => {
+            try {
+                const vapidKey = window.ENV?.FIREBASE_VAPID_KEY || 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs';
+                const token = await getToken(messaging, { vapidKey });
+                
+                showStatus('tokenStatus', '✅ Token FCM obtenu', 'success');
+                document.getElementById('tokenValue').innerHTML = `<div class="token">${token}</div>`;
+                
+                console.log('FCM Token:', token);
+                
+            } catch (error) {
+                showStatus('tokenStatus', `❌ Erreur token: ${error.message}`, 'error');
+                console.error('Token error:', error);
+            }
+        });
+
+        // 4. Test notification locale
+        testLocalNotificationBtn.addEventListener('click', () => {
+            try {
+                if (Notification.permission === 'granted') {
+                    new Notification('🎯 Test DailyGrowth', {
+                        body: 'Notification de test locale réussie !',
+                        icon: '/icons/Icon-192.png',
+                        badge: '/icons/Icon-192.png',
+                        tag: 'test-notification'
+                    });
+                    
+                    showStatus('localNotificationStatus', '✅ Notification locale envoyée', 'success');
+                } else {
+                    showStatus('localNotificationStatus', '⚠️ Permission requise', 'error');
+                }
+                
+            } catch (error) {
+                showStatus('localNotificationStatus', `❌ Erreur: ${error.message}`, 'error');
+            }
+        });
+
+        // 5. Test via Edge Function
+        testEdgeFunctionBtn.addEventListener('click', async () => {
+            try {
+                const userId = document.getElementById('userIdInput').value || 'test-user-123';
+                
+                const supabaseUrl = window.ENV?.SUPABASE_URL || 'https://hekdcsulxrukfturuone.supabase.co';
+                const supabaseKey = window.ENV?.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1NTI5MjMsImV4cCI6MjA0MTEyODkyM30.gVpXFCHhFQI4Vd7n7kfGC8Y2i7mCrB8CzU7ePFoazhU';
+                
+                const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        title: '🚀 Test Edge Function',
+                        body: 'Notification envoyée via Supabase Edge Function !',
+                        type: 'test',
+                        url: '/test'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus('edgeFunctionStatus', `✅ Edge Function: ${result.message}`, 'success');
+                } else {
+                    showStatus('edgeFunctionStatus', `❌ Edge Function Error: ${result.error}`, 'error');
+                }
+                
+                console.log('Edge Function Result:', result);
+                
+            } catch (error) {
+                showStatus('edgeFunctionStatus', `❌ Erreur Edge Function: ${error.message}`, 'error');
+                console.error('Edge Function error:', error);
+            }
+        });
+
+        // 6. Écouter les messages
+        startListeningBtn.addEventListener('click', () => {
+            if (!messaging) {
+                showStatus('messageStatus', '❌ Firebase non initialisé', 'error');
+                return;
+            }
+
+            unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                console.log('Message reçu en premier plan:', payload);
+                
+                appendLog('messagesLog', `📨 Message reçu: ${payload.notification?.title || 'Sans titre'}`);
+                
+                // Afficher une notification locale si l'app est au premier plan
+                if (payload.notification) {
+                    new Notification(payload.notification.title, {
+                        body: payload.notification.body,
+                        icon: '/icons/Icon-192.png',
+                        badge: '/icons/Icon-192.png'
+                    });
+                }
+            });
+            
+            showStatus('messageStatus', '✅ Écoute des messages activée', 'success');
+            startListeningBtn.disabled = true;
+            stopListeningBtn.disabled = false;
+        });
+
+        stopListeningBtn.addEventListener('click', () => {
+            if (unsubscribeOnMessage) {
+                unsubscribeOnMessage();
+                unsubscribeOnMessage = null;
+            }
+            
+            showStatus('messageStatus', '⏹️ Écoute des messages arrêtée', 'info');
+            startListeningBtn.disabled = false;
+            stopListeningBtn.disabled = true;
+        });
+
+        // Enregistrer le service worker Firebase
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                .then(registration => {
+                    console.log('Firebase SW registered:', registration);
+                })
+                .catch(error => {
+                    console.error('Firebase SW registration failed:', error);
+                });
+        }
+
+        // Afficher des informations système
+        console.log('🔧 Informations système:');
+        console.log('- Notification API:', 'Notification' in window ? '✅' : '❌');
+        console.log('- Service Worker API:', 'serviceWorker' in navigator ? '✅' : '❌');
+        console.log('- User Agent:', navigator.userAgent);
+        console.log('- Permission actuelle:', Notification.permission);
+    </script>
+</body>
+</html>
