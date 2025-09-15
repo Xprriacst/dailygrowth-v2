@@ -57,12 +57,11 @@
     };
   </script>
 
-  <!-- Firebase Configuration - Temporarily disabled for build compatibility -->
-  <!-- 
+  <!-- Firebase Configuration -->
   <script type="module">
-    // Import Firebase modules
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+    // Import Firebase v9 modules (compatible with older versions)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js';
 
     // Firebase config
     const firebaseConfig = {
@@ -98,7 +97,6 @@
 
     console.log('Firebase initialized successfully');
   </script>
-  -->
 
   <!-- Service Worker Registration for PWA -->
   <script>
@@ -122,14 +120,14 @@
             });
         }, delay);
 
-        // Firebase ServiceWorker temporarily disabled for build compatibility
-        // navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        //   .then(function(registration) {
-        //     console.log('✅ Firebase ServiceWorker registration successful');
-        //   })
-        //   .catch(function(error) {
-        //     console.log('❌ Firebase ServiceWorker registration failed: ', error);
-        //   });
+        // Register Firebase ServiceWorker
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(function(registration) {
+            console.log('✅ Firebase ServiceWorker registration successful');
+          })
+          .catch(function(error) {
+            console.log('❌ Firebase ServiceWorker registration failed: ', error);
+          });
       });
     }
   </script>

@@ -18,18 +18,19 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get current time in different timezones
+    // Get current time and calculate time ranges for different timezones
     const now = new Date()
     const currentHour = now.getUTCHours()
     const currentMinute = now.getUTCMinutes()
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
 
-    console.log(`Running daily notifications check at ${now.toISOString()}`)
+    console.log(`Running daily notifications check at ${now.toISOString()} (UTC ${currentTime})`)
 
-    // Find users who should receive notifications at this time
-    // Note: This is a simplified version - in production you'd want to handle timezones properly
+    // Get all users with notifications enabled
+    // We'll check each user's timezone and notification time individually
     const { data: users, error: usersError } = await supabase
       .from('user_profiles')
-      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time')
+      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time, timezone')
       .eq('notifications_enabled', true)
       .eq('reminder_notifications_enabled', true)
       .not('fcm_token', 'is', null)
@@ -56,21 +57,24 @@ serve(async (req) => {
         // Parse user's preferred notification time
         const notificationTime = user.notification_time || '09:00:00'
         const [hours, minutes] = notificationTime.split(':').map(Number)
+        const userNotificationTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
         
-        // Simple check - in production you'd want proper timezone handling
-        // For now, assuming users set their local time and we check every hour
-        const shouldSendNow = (
-          currentHour === hours && 
-          currentMinute >= minutes && 
-          currentMinute < minutes + 60
-        ) || (
-          // Also send if it's 9 AM UTC as fallback (adjust as needed)
-          currentHour === 9 && currentMinute < 30 && !user.notification_time
-        )
+        // For now, treat notification_time as user's local time
+        // In a real app, you'd store timezone and convert properly
+        // Current simplified logic: send if within ±15 minutes of target time
+        const targetMinutes = hours * 60 + minutes
+        const currentMinutes = currentHour * 60 + currentMinute
+        const timeDiff = Math.abs(currentMinutes - targetMinutes)
+        
+        // Send if within 15 minutes of target time, or exactly at target time
+        const shouldSendNow = timeDiff <= 15 || (currentHour === hours && Math.abs(currentMinute - minutes) <= 15)
 
         if (!shouldSendNow) {
+          console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime}, current ${currentTime}, diff ${timeDiff}min`)
           continue
         }
+
+        console.log(`🎯 Sending notification to user ${user.id}: target ${userNotificationTime}, current ${currentTime}`)
 
         // Check if user already has an active challenge today
         const today = new Date().toISOString().split('T')[0]
