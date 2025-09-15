@@ -459,9 +459,9 @@ class _UserProfileState extends State<UserProfile> {
               userId: _authService.userId!,
               selectedProblematiques: [newProblematique]);
             await _loadUserData(); // Reload data
-            _showSuccessMessage('Objectif mis à jour');
+            _showBeautifulSuccessMessage('Objectif mis à jour');
           } catch (e) {
-            _showErrorMessage('Erreur lors de la mise à jour: $e');
+            _showBeautifulErrorMessage('Erreur lors de la mise à jour: $e');
           }
         }));
   }
@@ -800,6 +800,196 @@ class _UserProfileState extends State<UserProfile> {
         content: Text(message),
         backgroundColor: AppTheme.lightTheme.colorScheme.error,
         behavior: SnackBarBehavior.floating));
+  }
+
+  // Nouvelle popup de succès centrée et esthétique
+  void _showBeautifulSuccessMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: AppTheme.lightTheme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de succès animée
+                Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                    size: 12.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                
+                // Titre
+                Text(
+                  'Succès !',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                
+                // Message
+                Text(
+                  message,
+                  style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                
+                // Bouton OK
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                      foregroundColor: AppTheme.lightTheme.colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'OK',
+                      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Nouvelle popup d'erreur centrée et esthétique
+  void _showBeautifulErrorMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: AppTheme.lightTheme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône d'erreur animée
+                Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.error.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error,
+                    color: AppTheme.lightTheme.colorScheme.error,
+                    size: 12.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                
+                // Titre
+                Text(
+                  'Erreur',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                
+                // Message
+                Text(
+                  message,
+                  style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+                
+                // Bouton OK
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.error,
+                      foregroundColor: AppTheme.lightTheme.colorScheme.onError,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'OK',
+                      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _triggerTestNotification() async {
