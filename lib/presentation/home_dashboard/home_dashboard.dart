@@ -550,15 +550,12 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           child: Container(
             padding: EdgeInsets.all(6.w),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
-                  AppTheme.lightTheme.colorScheme.surface,
-                ],
-              ),
+              color: AppTheme.lightTheme.colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
