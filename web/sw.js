@@ -45,6 +45,13 @@ self.addEventListener('activate', function(event) {
 
 // Stratégie de cache : Network First avec fallback sur cache
 self.addEventListener('fetch', function(event) {
+  // Skip chrome-extension and other extension URLs
+  if (event.request.url.startsWith('chrome-extension:') || 
+      event.request.url.startsWith('moz-extension:') ||
+      event.request.url.startsWith('safari-extension:')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then(function(response) {
