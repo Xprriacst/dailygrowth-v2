@@ -387,17 +387,60 @@ class WebNotificationService {
         return token;
       }
       
-      // If not in localStorage, try to get from Firebase messaging
-      if (js.context['firebase'] != null) {
-        // This would require Firebase SDK to be loaded
-        debugPrint('🔍 Attempting to get FCM token from Firebase...');
-        // We can't directly call Firebase from Dart, so we'll use the stored token
-      }
-      
-      debugPrint('⚠️ No FCM token available');
+      debugPrint('⚠️ No FCM token in localStorage');
       return null;
     } catch (e) {
       debugPrint('❌ Error getting FCM token: $e');
+      return null;
+    }
+  }
+
+  // Generate FCM token by calling Firebase JavaScript
+  Future<String?> generateFCMToken() async {
+    if (!kIsWeb) return null;
+    
+    try {
+      debugPrint('🔍 Attempting to generate FCM token...');
+      
+      // Call Firebase JavaScript code to generate token
+      final result = js.context.callMethod('eval', ['''
+        (async function() {
+          try {
+            // Check if Firebase is available
+            if (typeof firebase === 'undefined') {
+              return { error: 'Firebase not loaded' };
+            }
+            
+            // Get messaging instance
+            const messaging = firebase.messaging();
+            
+            // Get token
+            const token = await messaging.getToken({
+              vapidKey: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs'
+            });
+            
+            if (token) {
+              // Save to localStorage
+              localStorage.setItem('fcm_token', token);
+              return { success: true, token: token };
+            } else {
+              return { error: 'No token generated' };
+            }
+          } catch (error) {
+            return { error: error.message };
+          }
+        })()
+      ''']);
+      
+      // The result is a Promise, we need to handle it
+      debugPrint('🔄 FCM token generation initiated');
+      
+      // Try to get from localStorage after a delay
+      await Future.delayed(Duration(seconds: 2));
+      return await getFCMToken();
+      
+    } catch (e) {
+      debugPrint('❌ Error generating FCM token: $e');
       return null;
     }
   }

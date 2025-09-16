@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Forcer génération Token FCM</title>
+</head>
+<body>
+    <h1>🔑 Générer Token FCM</h1>
+    
+    <button onclick="testButton()">🧪 Test Bouton</button>
+    <button onclick="checkPermissions()">🔔 Vérifier Permissions</button>
+    <button onclick="generateFCMToken()">🚀 Générer Token FCM</button>
+    <div id="result"></div>
+
+    <script>
+        function testButton() {
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ JavaScript fonctionne !</p>';
+        }
+
+        function checkPermissions() {
+            const result = document.getElementById('result');
+            if ('Notification' in window) {
+                result.innerHTML = `<p>🔔 Support notifications: ✅</p><p>Permission actuelle: ${Notification.permission}</p>`;
+            } else {
+                result.innerHTML = '<p style="color: red;">❌ Notifications non supportées</p>';
+            }
+        }
+
+        async function generateFCMToken() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Tentative de génération FCM token...</p>';
+            
+            try {
+                // Test if Firebase is available
+                if (typeof importScripts === 'undefined') {
+                    // We're in main thread, use dynamic import
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js');
+                    const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js');
+                    
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_UmdC5U",
+                        authDomain: "dailygrowth-pwa.firebaseapp.com",
+                        projectId: "dailygrowth-pwa",
+                        storageBucket: "dailygrowth-pwa.appspot.com",
+                        messagingSenderId: "443167745906",
+                        appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+                        measurementId: "G-BXJW80Y4EF"
+                    };
+
+                    const app = initializeApp(firebaseConfig);
+                    const messaging = getMessaging(app);
+
+                    // Request permission first
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        result.innerHTML = '<p style="color: red;">❌ Permission refusée. Accorde les permissions.</p>';
+                        return;
+                    }
+
+                    // Get FCM token
+                    const token = await getToken(messaging, {
+                        vapidKey: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs'
+                    });
+
+                    if (token) {
+                        localStorage.setItem('fcm_token', token);
+                        
+                        result.innerHTML = `
+                            <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                                <h3 style="color: #155724;">✅ Token FCM Généré !</h3>
+                                <p><strong>Token (tronqué):</strong><br>${token.substring(0, 50)}...${token.substring(token.length - 20)}</p>
+                                <h4>📋 Token complet (copie-le) :</h4>
+                                <textarea style="width: 100%; height: 120px; font-family: monospace; font-size: 11px;" readonly onclick="this.select()">${token}</textarea>
+                                <br><br>
+                                <p style="background: #fff3cd; padding: 10px; border-radius: 5px;"><strong>🔧 SQL à exécuter dans Supabase :</strong></p>
+                                <textarea style="width: 100%; height: 80px; font-family: monospace; font-size: 11px;" readonly onclick="this.select()">UPDATE user_profiles SET fcm_token = '${token}', reminder_notifications_enabled = true WHERE email = 'expertiaen5min@gmail.com';</textarea>
+                            </div>
+                        `;
+                        
+                        console.log('🔑 FCM Token:', token);
+                    } else {
+                        result.innerHTML = '<p style="color: orange;">⚠️ Aucun token généré. Vérifie les permissions.</p>';
+                    }
+                } else {
+                    result.innerHTML = '<p style="color: red;">❌ Environnement non supporté</p>';
+                }
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+                console.error('Erreur FCM:', error);
+            }
+        }
+    </script>
+</body>
+</html>

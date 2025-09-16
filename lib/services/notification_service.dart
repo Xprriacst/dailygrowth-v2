@@ -580,10 +580,19 @@ class NotificationService {
       final permission = _webNotificationService.permissionStatus;
       diagnosticMessage += '🔔 Permissions: $permission\n';
       
-      // Get and display FCM token
+      // Get and display FCM token - try to generate it if not available
       try {
-        final fcmToken = await _webNotificationService.getFCMToken();
-        if (fcmToken != null) {
+        // First try to get existing token
+        var fcmToken = await _webNotificationService.getFCMToken();
+        
+        if (fcmToken == null) {
+          diagnosticMessage += '🔍 Aucun token trouvé, tentative de génération...\n';
+          
+          // Try to generate FCM token via JavaScript
+          fcmToken = await _webNotificationService.generateFCMToken();
+        }
+        
+        if (fcmToken != null && fcmToken.isNotEmpty) {
           diagnosticMessage += '🔑 Token FCM: ${fcmToken.substring(0, 20)}...${fcmToken.substring(fcmToken.length - 10)}\n';
           diagnosticMessage += '📋 Token complet disponible dans la console\n';
           debugPrint('🔑 FCM Token complet: $fcmToken');
@@ -594,12 +603,15 @@ class NotificationService {
             diagnosticMessage += '✅ Token sauvegardé en base de données\n';
           } catch (e) {
             diagnosticMessage += '⚠️ Erreur sauvegarde token: $e\n';
+            debugPrint('❌ Erreur sauvegarde token: $e');
           }
         } else {
-          diagnosticMessage += '⚠️ Aucun token FCM disponible\n';
+          diagnosticMessage += '⚠️ Impossible de générer le token FCM\n';
+          diagnosticMessage += '💡 Solution: Accepte les permissions notifications\n';
         }
       } catch (e) {
         diagnosticMessage += '❌ Erreur récupération token: $e\n';
+        debugPrint('❌ Erreur FCM Token: $e');
       }
       
       if (permission != 'granted') {
