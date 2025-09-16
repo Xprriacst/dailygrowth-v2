@@ -23,7 +23,7 @@
 # Variables d'environnement
 [build.environment]
   SUPABASE_URL = "https://hekdcsulxrukfturuone.supabase.co"
-  SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1NTI5MjMsImV4cCI6MjA0MTEyODkyM30.gVpXFCHhFQI4Vd7n7kfGC8Y2i7mCrB8CzU7ePFoazhU"
+  SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTEyMDQsImV4cCI6MjA2OTYyNzIwNH0.xLlrQwSL44QpYdeMPF1PIt3DZoaZ6Cjs2OIvEX58CnY"
   FIREBASE_VAPID_KEY = "BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs"
 
 # Headers de sécurité pour l'application web
