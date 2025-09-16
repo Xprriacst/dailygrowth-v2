@@ -580,6 +580,8 @@ class NotificationService {
       final permission = _webNotificationService.permissionStatus;
       diagnosticMessage += '🔔 Permissions: $permission\n';
       
+      diagnosticMessage += '\n🔧 DEBUG TOKEN FCM:\n';
+      
       // Get and display FCM token - try to generate it if not available
       try {
         // First try to get existing token
@@ -606,8 +608,9 @@ class NotificationService {
             debugPrint('❌ Erreur sauvegarde token: $e');
           }
         } else {
-          diagnosticMessage += '⚠️ Impossible de générer le token FCM\n';
+          diagnosticMessage += '⚠️ IMPOSSIBLE DE GÉNÉRER LE TOKEN FCM\n';
           diagnosticMessage += '💡 Solution: Accepte les permissions notifications\n';
+          diagnosticMessage += '🔍 Debug: fcmToken = ${fcmToken.toString()}\n';
         }
       } catch (e) {
         diagnosticMessage += '❌ Erreur récupération token: $e\n';
