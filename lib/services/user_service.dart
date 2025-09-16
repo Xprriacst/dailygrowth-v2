@@ -148,6 +148,25 @@ class UserService {
     }
   }
 
+  // Update FCM token for push notifications
+  Future<void> updateFCMToken(String fcmToken) async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+
+      await _client
+          .from('user_profiles')
+          .update({'fcm_token': fcmToken})
+          .eq('id', user.id);
+      
+      debugPrint('✅ Token FCM mis à jour pour l\'utilisateur ${user.id}');
+    } catch (error) {
+      throw Exception('Erreur lors de la mise à jour du token FCM: $error');
+    }
+  }
+
   // Add points to user
   Future<void> addPoints(String userId, int points) async {
     try {

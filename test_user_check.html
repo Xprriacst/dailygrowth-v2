@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Utilisateur - DailyGrowth</title>
+</head>
+<body>
+    <h1>🔍 Debug Paramètres Utilisateur</h1>
+    
+    <button onclick="checkUserSettings()">📋 Vérifier Paramètres Utilisateur</button>
+    <button onclick="enableNotificationsForUser()">✅ Activer Notifications</button>
+    
+    <div id="result"></div>
+
+    <script type="module">
+        // Import Firebase config from main app
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_UmdC5U",
+            authDomain: "dailygrowth-pwa.firebaseapp.com",
+            projectId: "dailygrowth-pwa",
+            storageBucket: "dailygrowth-pwa.appspot.com",
+            messagingSenderId: "443167745906",
+            appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+            measurementId: "G-BXJW80Y4EF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        window.checkUserSettings = async function() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Vérification des paramètres utilisateur...</p>';
+            
+            try {
+                // Get current FCM token
+                const currentToken = await getToken(messaging, { 
+                    vapidKey: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs' 
+                });
+                
+                result.innerHTML = `
+                    <h3>📱 Token FCM Actuel:</h3>
+                    <p style="word-break: break-all; background: #f0f0f0; padding: 10px;">
+                        ${currentToken || 'Aucun token disponible'}
+                    </p>
+                    
+                    <h3>✅ Actions à faire dans Supabase:</h3>
+                    <p>1. Aller dans Database → SQL Editor</p>
+                    <p>2. Exécuter cette requête pour vérifier l'utilisateur:</p>
+                    <pre style="background: #f8f8f8; padding: 15px; border-radius: 5px;">
+SELECT 
+    id, email, notifications_enabled, 
+    reminder_notifications_enabled, notification_time,
+    fcm_token IS NOT NULL as has_fcm_token
+FROM user_profiles 
+WHERE email = 'expertiaen5min@gmail.com';</pre>
+                    
+                    <p>3. Si l'utilisateur n'a pas les bonnes valeurs, exécuter:</p>
+                    <pre style="background: #e8f5e8; padding: 15px; border-radius: 5px;">
+UPDATE user_profiles 
+SET notifications_enabled = true,
+    reminder_notifications_enabled = true,
+    notification_time = '09:00:00',
+    fcm_token = '${currentToken || 'VOTRE_TOKEN_FCM'}'
+WHERE email = 'expertiaen5min@gmail.com';</pre>
+                `;
+                
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+            }
+        }
+        
+        window.enableNotificationsForUser = function() {
+            alert('Utilisez les requêtes SQL affichées ci-dessus dans Supabase Dashboard');
+        }
+        
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(checkUserSettings, 1000);
+        });
+    </script>
+</body>
+</html>

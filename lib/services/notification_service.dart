@@ -580,6 +580,28 @@ class NotificationService {
       final permission = _webNotificationService.permissionStatus;
       diagnosticMessage += '🔔 Permissions: $permission\n';
       
+      // Get and display FCM token
+      try {
+        final fcmToken = await _webNotificationService.getFCMToken();
+        if (fcmToken != null) {
+          diagnosticMessage += '🔑 Token FCM: ${fcmToken.substring(0, 20)}...${fcmToken.substring(fcmToken.length - 10)}\n';
+          diagnosticMessage += '📋 Token complet disponible dans la console\n';
+          debugPrint('🔑 FCM Token complet: $fcmToken');
+          
+          // Auto-save token to database
+          try {
+            await _userService.updateFCMToken(fcmToken);
+            diagnosticMessage += '✅ Token sauvegardé en base de données\n';
+          } catch (e) {
+            diagnosticMessage += '⚠️ Erreur sauvegarde token: $e\n';
+          }
+        } else {
+          diagnosticMessage += '⚠️ Aucun token FCM disponible\n';
+        }
+      } catch (e) {
+        diagnosticMessage += '❌ Erreur récupération token: $e\n';
+      }
+      
       if (permission != 'granted') {
         diagnosticMessage += '⚠️ Demande de permissions...\n';
         final newPermission = await _webNotificationService.requestPermission();

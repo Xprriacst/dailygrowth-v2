@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Final - Notification 9h53</title>
+</head>
+<body>
+    <h1>🎯 Test Final - Notification à l'heure</h1>
+    
+    <button onclick="testNotificationSystem()">🚀 Test Complet</button>
+    <div id="result"></div>
+
+    <script>
+        async function testNotificationSystem() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Test du système complet...</p>';
+            
+            try {
+                // Test the cron function with current time logic
+                const response = await fetch('https://hekdcsulxrukfturuone.supabase.co/functions/v1/cron-daily-notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTEyMDQsImV4cCI6MjA2OTYyNzIwNH0.xLlrQwSL44QpYdeMPF1PIt3DZoaZ6Cjs2OIvEX58CnY'
+                    },
+                    body: JSON.stringify({
+                        trigger: 'test-final',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <h3>✅ Résultat Final:</h3>
+                    <pre style="background: #f0f0f0; padding: 15px; border-radius: 5px;">${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                if (data.result && data.result.notifications_sent > 0) {
+                    result.innerHTML += `
+                        <div style="background: #d4edda; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                            <h4 style="color: #155724;">🎉 SUCCÈS !</h4>
+                            <p><strong>${data.result.notifications_sent}</strong> notification(s) envoyée(s)</p>
+                            <p>Tu devrais recevoir une notification sur ton iPhone maintenant !</p>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML += `
+                        <div style="background: #f8d7da; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                            <h4 style="color: #721c24;">⚠️ Problème</h4>
+                            <p>Utilisateurs trouvés: ${data.result?.total_users_checked || 0}</p>
+                            <p>Notifications envoyées: ${data.result?.notifications_sent || 0}</p>
+                            <p><strong>Vérifie:</strong></p>
+                            <ul>
+                                <li>reminder_notifications_enabled = true</li>
+                                <li>fcm_token renseigné dans la base</li>
+                                <li>Permissions accordées sur iPhone</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
