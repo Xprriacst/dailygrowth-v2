@@ -12,6 +12,21 @@ serve(async (req) => {
   }
 
   try {
+    // Check authorization header (allow anon key for testing)
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          code: 401, 
+          message: 'Missing authorization header',
+          hint: 'Add Authorization: Bearer YOUR_SUPABASE_KEY' 
+        }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
     // Get the current time in various timezones
     const now = new Date()
     console.log(`🕐 Cron job triggered at: ${now.toISOString()}`)

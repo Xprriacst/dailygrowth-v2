@@ -48,11 +48,11 @@ serve(async (req) => {
     let notificationsSent = 0
     const errors: any[] = []
 
-    // Firebase configuration - using legacy server key method for simplicity
-    const firebaseServerKey = Deno.env.get('FIREBASE_SERVER_KEY') || 'YOUR_FIREBASE_SERVER_KEY'
+    // Firebase configuration - using VAPID key for web push
+    const vapidKey = Deno.env.get('FIREBASE_VAPID_KEY') || 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs'
     const firebaseProjectId = 'dailygrowth-pwa'
     
-    console.log(`Firebase server key configured: ${firebaseServerKey ? 'YES' : 'NO'}`)
+    console.log(`Firebase VAPID key configured: ${vapidKey ? 'YES' : 'NO'}`)
 
     for (const user of users || []) {
       try {
@@ -102,17 +102,12 @@ serve(async (req) => {
           ? 'Continuez votre progression quotidienne'
           : 'Un nouveau micro-défi personnalisé vous attend'
 
-        // Prepare FCM payload using legacy API (more reliable)
-        const fcmPayload = {
-          to: user.fcm_token,
-          notification: {
-            title: title,
-            body: body,
-            icon: '/icons/Icon-192.png',
-            badge: '/icons/Icon-192.png',
-            tag: 'daily-reminder',
-            click_action: 'https://dailygrowth-pwa.netlify.app/#/challenges'
-          },
+        // Use Firebase Cloud Messaging REST API v1 (requires service account)
+        // For simplicity, call the existing send-push-notification function
+        const notificationPayload = {
+          token: user.fcm_token,
+          title: title,
+          body: body,
           data: {
             type: 'daily-reminder',
             url: '/#/challenges',
@@ -120,18 +115,15 @@ serve(async (req) => {
           }
         }
 
-        // Send push notification using legacy FCM API
-        const fcmResponse = await fetch(
-          'https://fcm.googleapis.com/fcm/send',
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `key=${firebaseServerKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(fcmPayload),
-          }
-        )
+        // Call the send-push-notification function
+        const fcmResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify(notificationPayload)
+        })
 
         const fcmResult = await fcmResponse.json()
 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Cron DailyGrowth - MAINTENANT</title>
+</head>
+<body>
+    <h1>🧪 Test Cron Notification - MAINTENANT</h1>
+    <p>Cela va tester la fonction comme si c'était 9h53...</p>
+    
+    <button onclick="testCronNow()">🚀 Tester Cron MAINTENANT</button>
+    <div id="result"></div>
+
+    <script>
+        async function testCronNow() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>⏳ Test cron en cours...</p>';
+            
+            try {
+                // Test the cron function directly
+                const response = await fetch('https://hekdcsulxrukfturuone.supabase.co/functions/v1/cron-daily-notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTEyMDQsImV4cCI6MjA2OTYyNzIwNH0.xLlrQwSL44QpYdeMPF1PIt3DZoaZ6Cjs2OIvEX58CnY'
+                    },
+                    body: JSON.stringify({
+                        trigger: 'manual-test-now',
+                        timestamp: new Date().toISOString(),
+                        force_send: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <h3>✅ Résultat Test Cron:</h3>
+                    <pre style="background: #f0f0f0; padding: 15px; border-radius: 5px;">${JSON.stringify(data, null, 2)}</pre>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                `;
+                
+                if (data.result && data.result.notifications_sent > 0) {
+                    result.innerHTML += '<p style="color: green;">🎉 <strong>Notification envoyée avec succès !</strong></p>';
+                } else {
+                    result.innerHTML += '<p style="color: orange;">⚠️ <strong>Aucune notification envoyée. Vérifiez les logs.</strong></p>';
+                }
+                
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Erreur: ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-run the test after 2 seconds
+        setTimeout(() => {
+            console.log('🚀 Auto-running cron test...');
+            testCronNow();
+        }, 2000);
+    </script>
+</body>
+</html>

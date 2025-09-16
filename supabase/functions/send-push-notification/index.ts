@@ -7,12 +7,14 @@ const corsHeaders = {
 }
 
 interface NotificationPayload {
-  user_id: string
+  user_id?: string
+  token?: string
   title: string
   body: string
   type?: string
   url?: string
   badge_count?: number
+  data?: any
 }
 
 serve(async (req) => {
@@ -22,48 +24,55 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, title, body, type = 'general', url = '/', badge_count }: NotificationPayload = await req.json()
+    const { user_id, token, title, body, type = 'general', url = '/', badge_count, data }: NotificationPayload = await req.json()
 
-    if (!user_id || !title || !body) {
+    if (!title || !body) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: user_id, title, body' }),
+        JSON.stringify({ error: 'Missing required fields: title, body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    let fcmToken = token
 
-    // Get user's FCM token
-    const { data: userProfile, error: userError } = await supabase
-      .from('user_profiles')
-      .select('fcm_token, notifications_enabled')
-      .eq('id', user_id)
-      .single()
+    // If no direct token provided, fetch from user profile
+    if (!fcmToken && user_id) {
+      // Initialize Supabase client
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    if (userError) {
-      console.error('Error fetching user profile:', userError)
-      return new Response(
-        JSON.stringify({ error: 'User not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      // Get user's FCM token
+      const { data: userProfile, error: userError } = await supabase
+        .from('user_profiles')
+        .select('fcm_token, notifications_enabled')
+        .eq('id', user_id)
+        .single()
+
+      if (userError) {
+        console.error('Error fetching user profile:', userError)
+        return new Response(
+          JSON.stringify({ error: 'User not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Check if user has notifications enabled
+      if (!userProfile.notifications_enabled) {
+        return new Response(
+          JSON.stringify({ message: 'Notifications disabled for user', sent: false }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      fcmToken = userProfile.fcm_token
     }
 
-    // Check if user has notifications enabled
-    if (!userProfile.notifications_enabled) {
+    // Check if we have a valid FCM token
+    if (!fcmToken) {
+      console.log(`No FCM token available`)
       return new Response(
-        JSON.stringify({ message: 'Notifications disabled for user', sent: false }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Check if user has FCM token
-    if (!userProfile.fcm_token) {
-      console.log(`No FCM token found for user ${user_id}`)
-      return new Response(
-        JSON.stringify({ message: 'No FCM token found for user', sent: false }),
+        JSON.stringify({ message: 'No FCM token available', sent: false }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
