@@ -375,6 +375,33 @@ class WebNotificationService {
     }
   }
 
+  // Get FCM token for debugging purposes
+  Future<String?> getFCMToken() async {
+    if (!kIsWeb) return null;
+    
+    try {
+      // Try to get FCM token from localStorage (saved by Firebase JS)
+      final token = html.window.localStorage['fcm_token'];
+      if (token != null && token.isNotEmpty) {
+        debugPrint('🔑 FCM Token retrieved from localStorage');
+        return token;
+      }
+      
+      // If not in localStorage, try to get from Firebase messaging
+      if (js.context['firebase'] != null) {
+        // This would require Firebase SDK to be loaded
+        debugPrint('🔍 Attempting to get FCM token from Firebase...');
+        // We can't directly call Firebase from Dart, so we'll use the stored token
+      }
+      
+      debugPrint('⚠️ No FCM token available');
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error getting FCM token: $e');
+      return null;
+    }
+  }
+
   void dispose() {
     // Cleanup if needed
   }
