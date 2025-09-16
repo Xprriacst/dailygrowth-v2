@@ -48,9 +48,11 @@ serve(async (req) => {
     let notificationsSent = 0
     const errors: any[] = []
 
-    // Firebase configuration
-    const firebaseServerKey = Deno.env.get('FIREBASE_SERVER_KEY')!
+    // Firebase configuration - using legacy server key method for simplicity
+    const firebaseServerKey = Deno.env.get('FIREBASE_SERVER_KEY') || 'YOUR_FIREBASE_SERVER_KEY'
     const firebaseProjectId = 'dailygrowth-pwa'
+    
+    console.log(`Firebase server key configured: ${firebaseServerKey ? 'YES' : 'NO'}`)
 
     for (const user of users || []) {
       try {
@@ -59,15 +61,20 @@ serve(async (req) => {
         const [hours, minutes] = notificationTime.split(':').map(Number)
         const userNotificationTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
         
-        // For now, treat notification_time as user's local time
-        // In a real app, you'd store timezone and convert properly
-        // Current simplified logic: send if within ±15 minutes of target time
-        const targetMinutes = hours * 60 + minutes
-        const currentMinutes = currentHour * 60 + currentMinute
-        const timeDiff = Math.abs(currentMinutes - targetMinutes)
+        // Convert user's local time (France/Paris UTC+2 in summer, UTC+1 in winter) to UTC
+        // For France timezone: subtract 2 hours in summer (DST), 1 hour in winter
+        const parisDate = new Date().toLocaleString("en-US", {timeZone: "Europe/Paris"})
+        const utcDate = new Date().toLocaleString("en-US", {timeZone: "UTC"})
+        const timezoneDiff = Math.floor((new Date(parisDate).getTime() - new Date(utcDate).getTime()) / (1000 * 60 * 60))
         
-        // Send if within 15 minutes of target time, or exactly at target time
-        const shouldSendNow = timeDiff <= 15 || (currentHour === hours && Math.abs(currentMinute - minutes) <= 15)
+        // Convert user's notification time to UTC
+        const utcTargetHours = (hours - timezoneDiff + 24) % 24
+        const utcTargetMinutes = utcTargetHours * 60 + minutes
+        const currentMinutes = currentHour * 60 + currentMinute
+        const timeDiff = Math.abs(currentMinutes - utcTargetMinutes)
+        
+        // Send if within 30 minutes of target time (larger window for reliability)
+        const shouldSendNow = timeDiff <= 30
 
         if (!shouldSendNow) {
           console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime}, current ${currentTime}, diff ${timeDiff}min`)
@@ -95,55 +102,31 @@ serve(async (req) => {
           ? 'Continuez votre progression quotidienne'
           : 'Un nouveau micro-défi personnalisé vous attend'
 
-        // Prepare FCM payload
+        // Prepare FCM payload using legacy API (more reliable)
         const fcmPayload = {
-          message: {
-            token: user.fcm_token,
-            notification: {
-              title: title,
-              body: body,
-            },
-            data: {
-              type: 'daily-reminder',
-              url: '/#/challenges',
-              timestamp: Date.now().toString(),
-            },
-            webpush: {
-              headers: {
-                'TTL': '86400' // 24 hours
-              },
-              notification: {
-                title: title,
-                body: body,
-                icon: '/icons/Icon-192.png',
-                badge: '/icons/Icon-192.png',
-                tag: 'daily-reminder',
-                requireInteraction: false,
-                actions: [
-                  {
-                    action: 'open',
-                    title: 'Voir le défi'
-                  },
-                  {
-                    action: 'dismiss',
-                    title: 'Plus tard'
-                  }
-                ]
-              },
-              fcm_options: {
-                link: 'https://dailygrowth-pwa.netlify.app/#/challenges'
-              }
-            }
+          to: user.fcm_token,
+          notification: {
+            title: title,
+            body: body,
+            icon: '/icons/Icon-192.png',
+            badge: '/icons/Icon-192.png',
+            tag: 'daily-reminder',
+            click_action: 'https://dailygrowth-pwa.netlify.app/#/challenges'
+          },
+          data: {
+            type: 'daily-reminder',
+            url: '/#/challenges',
+            timestamp: Date.now().toString(),
           }
         }
 
-        // Send push notification
+        // Send push notification using legacy FCM API
         const fcmResponse = await fetch(
-          `https://fcm.googleapis.com/v1/projects/${firebaseProjectId}/messages:send`,
+          'https://fcm.googleapis.com/fcm/send',
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${firebaseServerKey}`,
+              'Authorization': `key=${firebaseServerKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(fcmPayload),
