@@ -4,10 +4,22 @@
 - ✅ Projet Firebase créé : `dailygrowth-pwa`
 - ✅ Configuration ajoutée dans `sw.js` et `firebase-messaging-sw.js`
 - ✅ App web enregistrée
+- ✅ API key Firebase corrigée - Token FCM généré avec succès
+- ✅ Notifications immédiates fonctionnelles sur iPhone
 
-## 🚨 ÉTAPE CRITIQUE SUIVANTE
+## 🚨 PROBLÈME RESTANT
 
-### Générer la Clé Serveur Web (VAPID Key)
+### ⏰ Notifications programmées ne se déclenchent qu'avec app ouverte
+**Problème** : Les notifications à heure fixe fonctionnent uniquement quand l'application est ouverte, pas en arrière-plan sur iPhone.
+
+**Solutions à investiguer** :
+1. **Service Worker persistent** : Vérifier que le SW reste actif
+2. **Push depuis serveur** : Notifications envoyées via Firebase Admin SDK
+3. **Web App Manifest** : Configuration PWA pour notifications en arrière-plan
+
+## 🔄 PROCHAINES ÉTAPES
+
+### Générer la Clé Serveur Web (VAPID Key) [OPTIONNEL]
 
 1. **Aller dans Firebase Console** : https://console.firebase.google.com/project/dailygrowth-pwa
 2. **Paramètres du projet** → **Cloud Messaging**

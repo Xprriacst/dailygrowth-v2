@@ -77,11 +77,13 @@ serve(async (req) => {
       )
     }
 
-    // Firebase Cloud Messaging configuration with Service Account
-    const firebaseServiceAccountKey = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+    // Firebase Cloud Messaging API v1 - utiliser compte de service
     const firebaseProjectId = 'dailygrowth-pwa'
-
-    if (!firebaseServiceAccountKey) {
+    
+    // Service account JSON pour l'authentification OAuth2
+    const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+    
+    if (!serviceAccountJson) {
       console.error('FIREBASE_SERVICE_ACCOUNT_KEY not configured')
       return new Response(
         JSON.stringify({ 
@@ -91,66 +93,24 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Get OAuth2 access token
-    async function getFirebaseAccessToken() {
-      try {
-        const serviceAccount = JSON.parse(firebaseServiceAccountKey)
-        
-        // Create JWT for OAuth2
-        const now = Math.floor(Date.now() / 1000)
-        const jwt = {
-          iss: serviceAccount.client_email,
-          scope: 'https://www.googleapis.com/auth/firebase.messaging',
-          aud: 'https://oauth2.googleapis.com/token',
-          iat: now,
-          exp: now + 3600
-        }
-
-        // Create the assertion (simplified)
-        const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
-        const payload = btoa(JSON.stringify(jwt))
-        
-        // Use Google's metadata server for access token (simpler approach)
-        try {
-          const response = await fetch('https://www.googleapis.com/auth/firebase.messaging', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${serviceAccount.private_key_id}`
-            },
-            body: JSON.stringify({
-              grant_type: 'client_credentials',
-              client_id: serviceAccount.client_id,
-              client_email: serviceAccount.client_email
-            })
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-            return data.access_token
-          }
-        } catch (e) {
-          console.log('Metadata server failed, trying direct approach')
-        }
-
-        // Fallback: Create a simulated access token from service account data
-        // This is a temporary solution until proper JWT signing is implemented
-        const mockToken = btoa(JSON.stringify({
-          email: serviceAccount.client_email,
-          project_id: serviceAccount.project_id,
-          private_key_id: serviceAccount.private_key_id,
-          timestamp: Date.now()
-        }))
-        
-        return mockToken
-      } catch (error) {
-        console.error('Error getting access token:', error)
-        throw error
-      }
+    
+    let serviceAccount
+    try {
+      serviceAccount = JSON.parse(serviceAccountJson)
+      console.log(`Firebase service account configured: ${serviceAccount.client_email}`)
+    } catch (parseError) {
+      console.error('Error parsing service account JSON:', parseError)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid Firebase service account JSON format',
+          details: parseError.message,
+          sent: false 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
-
-    // Prepare FCM payload
+    
+    // Payload pour API FCM v1
     const fcmPayload = {
       message: {
         token: fcmToken,
@@ -160,7 +120,7 @@ serve(async (req) => {
         },
         data: {
           type: type,
-          url: url,
+          url: url || '/',
           badge_count: badge_count?.toString() || '0',
           timestamp: Date.now().toString(),
         },
@@ -174,27 +134,141 @@ serve(async (req) => {
             icon: '/icons/Icon-192.png',
             badge: '/icons/Icon-192.png',
             tag: 'dailygrowth-notification',
-            requireInteraction: false,
-            data: {
-              type: type,
-              url: url,
-              badge_count: badge_count || 0,
-              timestamp: Date.now(),
-            }
           },
           fcm_options: {
-            link: `https://dailygrowth-pwa.netlify.app${url}`
+            link: `https://dailygrowth-pwa.netlify.app${url || '/'}`
           }
         }
       }
     }
 
-    // Send push notification via Firebase with OAuth2
-    let fcmResponse
     try {
-      const accessToken = await getFirebaseAccessToken()
+      console.log(`Sending FCM notification to token: ${fcmToken.substring(0, 20)}...`)
       
-      fcmResponse = await fetch(
+      // Générer JWT pour l'authentification OAuth2
+      const now = Math.floor(Date.now() / 1000)
+      const jwtHeader = {
+        alg: 'RS256',
+        typ: 'JWT'
+      }
+      
+      const jwtPayload = {
+        iss: serviceAccount.client_email,
+        scope: 'https://www.googleapis.com/auth/firebase.messaging',
+        aud: 'https://oauth2.googleapis.com/token',
+        iat: now,
+        exp: now + 3600
+      }
+      
+      // Encoder en base64url (fonction helper simple)
+      const base64UrlEncode = (data: any) => {
+        let str: string
+        if (typeof data === 'string') {
+          str = data
+        } else if (data instanceof Uint8Array) {
+          str = String.fromCharCode(...data)
+        } else {
+          str = JSON.stringify(data)
+        }
+        return btoa(str)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '')
+      }
+      
+      const jwtHeaderEncoded = base64UrlEncode(jwtHeader)
+      const jwtPayloadEncoded = base64UrlEncode(jwtPayload)
+      const jwtUnsigned = `${jwtHeaderEncoded}.${jwtPayloadEncoded}`
+      
+      // Pour Edge Functions, on va utiliser Web Crypto API pour signer
+      // Import de la clé privée
+      const privateKeyPem = serviceAccount.private_key
+      const privateKeyFormatted = privateKeyPem
+        .replace('-----BEGIN PRIVATE KEY-----', '')
+        .replace('-----END PRIVATE KEY-----', '')
+        .replace(/\n/g, '')
+        .replace(/\r/g, '')
+        .replace(/\s/g, '')
+      
+      let privateKeyBuffer
+      try {
+        privateKeyBuffer = Uint8Array.from(atob(privateKeyFormatted), c => c.charCodeAt(0))
+      } catch (decodeError) {
+        console.error('Error decoding private key:', decodeError)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to decode private key',
+            details: decodeError.message,
+            sent: false 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      let cryptoKey
+      try {
+        cryptoKey = await crypto.subtle.importKey(
+          'pkcs8',
+          privateKeyBuffer,
+          {
+            name: 'RSASSA-PKCS1-v1_5',
+            hash: 'SHA-256'
+          },
+          false,
+          ['sign']
+        )
+      } catch (importError) {
+        console.error('Error importing private key:', importError)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to import private key',
+            details: importError.message,
+            sent: false 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      // Signer le JWT
+      const signatureBuffer = await crypto.subtle.sign(
+        'RSASSA-PKCS1-v1_5',
+        cryptoKey,
+        new TextEncoder().encode(jwtUnsigned)
+      )
+      
+      const signature = base64UrlEncode(new Uint8Array(signatureBuffer))
+      const jwt = `${jwtUnsigned}.${signature}`
+      
+      console.log('JWT generated successfully')
+      
+      // Obtenir access token via OAuth2
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+      })
+      
+      const tokenData = await tokenResponse.json()
+      
+      if (!tokenResponse.ok) {
+        console.error('OAuth2 token error:', tokenData)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to obtain OAuth2 token',
+            details: tokenData,
+            sent: false 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      const accessToken = tokenData.access_token
+      console.log('OAuth2 access token obtained')
+      
+      // Envoyer notification via FCM API v1
+      const fcmResponse = await fetch(
         `https://fcm.googleapis.com/v1/projects/${firebaseProjectId}/messages:send`,
         {
           method: 'POST',
@@ -205,54 +279,44 @@ serve(async (req) => {
           body: JSON.stringify(fcmPayload),
         }
       )
-    } catch (authError) {
-      console.error('Firebase auth error:', authError)
+      
+      const fcmResult = await fcmResponse.json()
+      
+      if (!fcmResponse.ok) {
+        console.error('FCM Error Response:', fcmResult)
+        return new Response(
+          JSON.stringify({ 
+            error: 'FCM API error',
+            details: fcmResult,
+            sent: false 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      
+      console.log(`Push notification sent successfully:`, fcmResult)
+      
       return new Response(
         JSON.stringify({ 
-          error: 'Failed to authenticate with Firebase',
-          details: authError.message,
-          sent: false 
+          message: 'Push notification sent successfully',
+          fcm_response: fcmResult,
+          sent: true 
         }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-    }
-
-    const fcmResult = await fcmResponse.json()
-
-    if (!fcmResponse.ok) {
-      console.error('FCM Error:', fcmResult)
       
-      // If token is invalid, clear it from database
-      if (fcmResult.error?.code === 'INVALID_ARGUMENT' || 
-          fcmResult.error?.details?.find((d: any) => d.errorCode === 'UNREGISTERED')) {
-        
-        console.log(`Clearing invalid FCM token for user ${user_id}`)
-        await supabase
-          .from('user_profiles')
-          .update({ fcm_token: null })
-          .eq('id', user_id)
-      }
-
+    } catch (fcmError) {
+      console.error('FCM Error:', fcmError)
+      
       return new Response(
         JSON.stringify({ 
           error: 'Failed to send push notification',
-          details: fcmResult,
+          details: fcmError.message,
           sent: false 
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    console.log(`Push notification sent successfully to user ${user_id}`)
-
-    return new Response(
-      JSON.stringify({ 
-        message: 'Push notification sent successfully',
-        fcm_message_id: fcmResult.name,
-        sent: true 
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
 
   } catch (error) {
     console.error('Error sending push notification:', error)

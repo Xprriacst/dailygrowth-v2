@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+j<!DOCTYPE html>
 <html>
 <head>
     <title>Debug Utilisateur - DailyGrowth</title>
@@ -11,7 +11,7 @@
     
     <div id="result"></div>
 
-    <script type="module">
+    <script>
         // Import Firebase config from main app
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js';
@@ -29,7 +29,7 @@
         const app = initializeApp(firebaseConfig);
         const messaging = getMessaging(app);
 
-        window.checkUserSettings = async function() {
+        async function checkUserSettings() {
             const result = document.getElementById('result');
             result.innerHTML = '<p>⏳ Vérification des paramètres utilisateur...</p>';
             
@@ -71,14 +71,8 @@ WHERE email = 'expertiaen5min@gmail.com';</pre>
             }
         }
         
-        window.enableNotificationsForUser = function() {
-            alert('Utilisez les requêtes SQL affichées ci-dessus dans Supabase Dashboard');
-        }
-        
         // Auto-run on load
-        window.addEventListener('load', () => {
-            setTimeout(checkUserSettings, 1000);
-        });
+        window.addEventListener('load', checkUserSettings);
     </script>
 </body>
 </html>
