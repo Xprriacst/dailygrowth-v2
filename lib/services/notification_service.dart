@@ -630,10 +630,31 @@ class NotificationService {
           diagnosticMessage += '💡 Vérifiez la console pour plus de détails\n';
           diagnosticMessage += '🔍 Debug: fcmToken = ${fcmToken.toString()}\n';
           
-          // Try the bookmarklet approach as fallback
-          diagnosticMessage += '\n🔧 SOLUTION ALTERNATIVE:\n';
-          diagnosticMessage += 'Copiez ce code dans la barre d\'adresse Safari:\n';
-          diagnosticMessage += 'javascript:(async function(){try{const{getToken}=await import(\'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js\');const token=await getToken(window.firebaseMessaging,{vapidKey:\'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs\'});if(token){localStorage.setItem(\'fcm_token\',token);alert(\'Token: \'+token.substring(0,50)+\'...\');}}catch(e){alert(\'Erreur: \'+e.message);}})()';
+          // Try the FORCE method as fallback
+          diagnosticMessage += '\n🔧 FORCE: Tentative de génération forcée...\n';
+          try {
+            final forceToken = await _webNotificationService.forceFCMTokenGeneration();
+            if (forceToken != null && forceToken.isNotEmpty) {
+              diagnosticMessage += '🎉 FORCE: Token généré avec succès!\n';
+              diagnosticMessage += '🔑 Token FCM: ${forceToken.substring(0, 20)}...${forceToken.substring(forceToken.length - 10)}\n';
+              
+              // Auto-save forced token to database
+              try {
+                await _userService.updateFCMToken(forceToken);
+                diagnosticMessage += '✅ FORCE: Token sauvegardé en base de données\n';
+              } catch (e) {
+                diagnosticMessage += '⚠️ FORCE: Erreur sauvegarde token: $e\n';
+              }
+            } else {
+              diagnosticMessage += '❌ FORCE: Échec de la génération forcée\n';
+              diagnosticMessage += '\n🔧 SOLUTION MANUELLE:\n';
+              diagnosticMessage += '1. Ouvrez la console développeur (F12)\n';
+              diagnosticMessage += '2. Cherchez les erreurs Firebase\n';
+              diagnosticMessage += '3. Vérifiez si window.firebaseMessaging existe\n';
+            }
+          } catch (e) {
+            diagnosticMessage += '❌ FORCE: Erreur génération forcée: $e\n';
+          }
         }
       } catch (e) {
         diagnosticMessage += '❌ Erreur récupération token: $e\n';
