@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔧 Debug FCM Complet - DailyGrowth</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 15px 0; padding: 15px; border-radius: 8px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        textarea { width: 100%; height: 100px; font-family: monospace; font-size: 11px; margin: 10px 0; }
+        .token-display { word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug FCM Complet - DailyGrowth</h1>
+    
+    <div class="step">
+        <h3>🔍 Étape 1: Vérifications initiales</h3>
+        <button class="btn-primary" onclick="checkBasics()">Vérifier support de base</button>
+        <div id="basics-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>🔥 Étape 2: Initialisation Firebase</h3>
+        <button class="btn-primary" onclick="initializeFirebase()">Initialiser Firebase</button>
+        <div id="firebase-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>🔔 Étape 3: Permissions notifications</h3>
+        <button class="btn-warning" onclick="requestPermissions()">Demander permissions</button>
+        <div id="permissions-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>🚀 Étape 4: Génération token FCM</h3>
+        <button class="btn-success" onclick="generateToken()">Générer Token FCM</button>
+        <div id="token-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>💾 Étape 5: Token final</h3>
+        <button class="btn-primary" onclick="showFinalToken()">Afficher token stocké</button>
+        <div id="final-result"></div>
+    </div>
+
+    <script>
+        let firebaseApp = null;
+        let firebaseMessaging = null;
+        const vapidKey = 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs';
+
+        async function checkBasics() {
+            const result = document.getElementById('basics-result');
+            let html = '';
+
+            // Check browser support
+            html += `<p><strong>🌐 Navigateur:</strong> ${navigator.userAgent}</p>`;
+            html += `<p><strong>🔔 Support Notifications:</strong> ${'Notification' in window ? '✅ Oui' : '❌ Non'}</p>`;
+            html += `<p><strong>📱 Service Workers:</strong> ${'serviceWorker' in navigator ? '✅ Oui' : '❌ Non'}</p>`;
+            html += `<p><strong>🔒 HTTPS:</strong> ${location.protocol === 'https:' ? '✅ Oui' : '❌ Non (requis pour FCM)'}</p>`;
+
+            if ('Notification' in window) {
+                html += `<p><strong>🔔 Permission actuelle:</strong> ${Notification.permission}</p>`;
+            }
+
+            result.innerHTML = `<div class="info">${html}</div>`;
+        }
+
+        async function initializeFirebase() {
+            const result = document.getElementById('firebase-result');
+            result.innerHTML = '<p>⏳ Initialisation Firebase...</p>';
+
+            try {
+                // Import Firebase modules
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
+                const { getMessaging, isSupported } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+
+                // Check messaging support
+                const messagingSupported = await isSupported();
+                if (!messagingSupported) {
+                    result.innerHTML = '<div class="error">❌ Firebase Messaging non supporté sur cet appareil/navigateur</div>';
+                    return;
+                }
+
+                // Firebase config
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+                    authDomain: "dailygrowth-pwa.firebaseapp.com", 
+                    projectId: "dailygrowth-pwa",
+                    storageBucket: "dailygrowth-pwa.appspot.com",
+                    messagingSenderId: "443167745906",
+                    appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+                    measurementId: "G-BXJW80Y4EF"
+                };
+
+                // Initialize Firebase
+                firebaseApp = initializeApp(firebaseConfig);
+                firebaseMessaging = getMessaging(firebaseApp);
+
+                result.innerHTML = `
+                    <div class="success">
+                        <p>✅ Firebase initialisé avec succès!</p>
+                        <p><strong>Projet ID:</strong> ${firebaseConfig.projectId}</p>
+                        <p><strong>Messaging ID:</strong> ${firebaseConfig.messagingSenderId}</p>
+                        <p><strong>Support Messaging:</strong> ✅ Oui</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Erreur initialisation Firebase: ${error.message}</div>`;
+                console.error('Firebase init error:', error);
+            }
+        }
+
+        async function requestPermissions() {
+            const result = document.getElementById('permissions-result');
+            
+            if (!('Notification' in window)) {
+                result.innerHTML = '<div class="error">❌ Notifications non supportées</div>';
+                return;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                
+                switch (permission) {
+                    case 'granted':
+                        result.innerHTML = '<div class="success">✅ Permissions accordées!</div>';
+                        break;
+                    case 'denied':
+                        result.innerHTML = '<div class="error">❌ Permissions refusées</div>';
+                        break;
+                    case 'default':
+                        result.innerHTML = '<div class="warning">⚠️ Permissions pas encore accordées</div>';
+                        break;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Erreur permissions: ${error.message}</div>`;
+            }
+        }
+
+        async function generateToken() {
+            const result = document.getElementById('token-result');
+            result.innerHTML = '<p>⏳ Génération du token FCM...</p>';
+
+            if (!firebaseMessaging) {
+                result.innerHTML = '<div class="error">❌ Firebase pas initialisé. Cliquez d\'abord sur "Initialiser Firebase"</div>';
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                result.innerHTML = '<div class="error">❌ Permissions notifications requises. Cliquez d\'abord sur "Demander permissions"</div>';
+                return;
+            }
+
+            try {
+                // Import getToken
+                const { getToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+                
+                // Generate token
+                const token = await getToken(firebaseMessaging, {
+                    vapidKey: vapidKey
+                });
+
+                if (token) {
+                    // Save to localStorage
+                    localStorage.setItem('fcm_token', token);
+                    
+                    result.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Token FCM généré avec succès!</h4>
+                            <p><strong>Token (tronqué):</strong> ${token.substring(0, 50)}...${token.substring(token.length - 20)}</p>
+                            <div class="token-display">
+                                <strong>Token complet:</strong><br>
+                                <textarea readonly onclick="this.select()">${token}</textarea>
+                            </div>
+                            <h4>🔧 SQL à exécuter dans Supabase:</h4>
+                            <textarea readonly onclick="this.select()">UPDATE user_profiles SET fcm_token = '${token}', reminder_notifications_enabled = true WHERE email = 'expertiaen5min@gmail.com';</textarea>
+                        </div>
+                    `;
+                    
+                    console.log('✅ FCM Token:', token);
+                } else {
+                    result.innerHTML = '<div class="error">❌ Aucun token généré. Vérifiez la configuration Firebase.</div>';
+                }
+
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Erreur génération token: ${error.message}</div>`;
+                console.error('Token generation error:', error);
+            }
+        }
+
+        async function showFinalToken() {
+            const result = document.getElementById('final-result');
+            const token = localStorage.getItem('fcm_token');
+            
+            if (token) {
+                result.innerHTML = `
+                    <div class="success">
+                        <h4>🔑 Token FCM trouvé!</h4>
+                        <div class="token-display">
+                            <strong>Token:</strong><br>
+                            <textarea readonly onclick="this.select()">${token}</textarea>
+                        </div>
+                        <p><strong>Longueur:</strong> ${token.length} caractères</p>
+                        <p><strong>Début:</strong> ${token.substring(0, 50)}...</p>
+                        <p><strong>Fin:</strong> ...${token.substring(token.length - 20)}</p>
+                    </div>
+                `;
+            } else {
+                result.innerHTML = '<div class="warning">⚠️ Aucun token trouvé dans localStorage</div>';
+            }
+        }
+
+        // Auto-check basics on load
+        window.onload = () => {
+            checkBasics();
+        };
+    </script>
+</body>
+</html>
