@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-comp
 
 // Configuration Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
+  apiKey: "AIzaSyCdJSoFjbBqFxtxxrlRV2zc7ow_Um7dC5U",
   authDomain: "dailygrowth-pwa.firebaseapp.com",
   projectId: "dailygrowth-pwa",
   storageBucket: "dailygrowth-pwa.appspot.com",
