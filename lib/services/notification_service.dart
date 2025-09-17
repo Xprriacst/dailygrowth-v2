@@ -342,14 +342,35 @@ class NotificationService {
     try {
       final client = await SupabaseService().client;
       
+      // Get FCM token if notifications are enabled and we're on web
+      String? fcmToken;
+      if (notificationsEnabled && kIsWeb) {
+        try {
+          final webNotificationService = WebNotificationService();
+          fcmToken = await webNotificationService.getFCMToken();
+          debugPrint('📱 FCM Token récupéré: ${fcmToken?.substring(0, 20)}...');
+        } catch (e) {
+          debugPrint('⚠️ Erreur récupération token FCM: $e');
+        }
+      }
+      
+      // Update profile with FCM token
+      final updateData = {
+        'notification_time': notificationTime,
+        'notifications_enabled': notificationsEnabled,
+        'reminder_notifications_enabled': reminderNotificationsEnabled,
+      };
+      
+      if (fcmToken != null) {
+        updateData['fcm_token'] = fcmToken;
+      }
+      
       await client
           .from('user_profiles')
-          .update({
-            'notification_time': notificationTime,
-            'notifications_enabled': notificationsEnabled,
-            'reminder_notifications_enabled': reminderNotificationsEnabled,
-          })
+          .update(updateData)
           .eq('id', userId);
+
+      debugPrint('✅ Paramètres de notification mis à jour avec token FCM');
 
       // Cancel existing scheduled notifications
       await cancelUserNotifications(userId);
