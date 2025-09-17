@@ -395,49 +395,72 @@ class WebNotificationService {
     }
   }
 
-  // Generate FCM token by calling Firebase JavaScript
+  // Generate FCM token using modern Firebase v10+ API
   Future<String?> generateFCMToken() async {
     if (!kIsWeb) return null;
     
     try {
       debugPrint('🔍 Attempting to generate FCM token...');
       
-      // Call Firebase JavaScript code to generate token
+      // Use the global Firebase objects set up in index.html
       final result = js.context.callMethod('eval', ['''
         (async function() {
           try {
-            // Check if Firebase is available
-            if (typeof firebase === 'undefined') {
-              return { error: 'Firebase not loaded' };
+            // Check if Firebase objects are available globally
+            if (typeof window.firebaseApp === 'undefined' || typeof window.firebaseMessaging === 'undefined') {
+              return { error: 'Firebase not initialized. Please refresh the page.' };
             }
             
-            // Get messaging instance
-            const messaging = firebase.messaging();
+            // Request notification permission first
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+              return { error: 'Notification permission denied' };
+            }
             
-            // Get token
-            const token = await messaging.getToken({
-              vapidKey: 'BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs'
+            // Get Firebase messaging instance
+            const messaging = window.firebaseMessaging;
+            const vapidKey = window.firebaseVapidKey;
+            
+            if (!vapidKey) {
+              return { error: 'VAPID key not configured' };
+            }
+            
+            // Get token using Firebase v10+ API
+            const { getToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+            
+            const token = await getToken(messaging, {
+              vapidKey: vapidKey
             });
             
             if (token) {
               // Save to localStorage
               localStorage.setItem('fcm_token', token);
+              console.log('✅ FCM Token generated and saved:', token.substring(0, 50) + '...');
               return { success: true, token: token };
             } else {
-              return { error: 'No token generated' };
+              return { error: 'Failed to generate token. Check Firebase configuration.' };
             }
           } catch (error) {
-            return { error: error.message };
+            console.error('❌ FCM Token generation error:', error);
+            return { error: error.message || error.toString() };
           }
         })()
       ''']);
       
-      // The result is a Promise, we need to handle it
-      debugPrint('🔄 FCM token generation initiated');
+      debugPrint('🔄 FCM token generation initiated via modern API');
       
-      // Try to get from localStorage after a delay
-      await Future.delayed(Duration(seconds: 2));
-      return await getFCMToken();
+      // Wait longer for token generation to complete
+      await Future.delayed(Duration(seconds: 3));
+      
+      // Get token from localStorage
+      final token = await getFCMToken();
+      if (token != null && token.isNotEmpty) {
+        debugPrint('✅ FCM Token successfully generated: ${token.substring(0, 20)}...');
+        return token;
+      } else {
+        debugPrint('⚠️ Token generation may have failed - check browser console');
+        return null;
+      }
       
     } catch (e) {
       debugPrint('❌ Error generating FCM token: $e');

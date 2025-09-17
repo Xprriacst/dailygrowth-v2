@@ -33,11 +33,11 @@
                 // Test if Firebase is available
                 if (typeof importScripts === 'undefined') {
                     // We're in main thread, use dynamic import
-                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js');
-                    const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js');
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
+                    const { getMessaging, getToken, isSupported } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
                     
                     const firebaseConfig = {
-                        apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_UmdC5U",
+                        apiKey: "AIzaSyCdJSoFjbBqFtxxrIRV2zc7ow_Um7dC5U",
                         authDomain: "dailygrowth-pwa.firebaseapp.com",
                         projectId: "dailygrowth-pwa",
                         storageBucket: "dailygrowth-pwa.appspot.com",
@@ -45,6 +45,13 @@
                         appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
                         measurementId: "G-BXJW80Y4EF"
                     };
+
+                    // Check if messaging is supported
+                    const messagingSupported = await isSupported();
+                    if (!messagingSupported) {
+                        result.innerHTML = '<p style="color: red;">❌ Firebase Messaging non supporté sur cet appareil/navigateur</p>';
+                        return;
+                    }
 
                     const app = initializeApp(firebaseConfig);
                     const messaging = getMessaging(app);
