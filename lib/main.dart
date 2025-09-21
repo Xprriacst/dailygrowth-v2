@@ -5,6 +5,7 @@ import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/web_notification_service.dart';
+import 'services/pwa_install_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
@@ -33,6 +34,9 @@ Future<void> main() async {
     if (kIsWeb) {
       try {
         await WebNotificationService().initialize();
+        
+        // Initialize PWA install service
+        await PWAInstallService().initialize();
       } catch (e) {
         debugPrint('⚠️ Web notifications not available: $e');
       }

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA Install - DailyGrowth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #47C5FB;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1E88E5;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background-color: #47C5FB;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #1E88E5;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de l'installation PWA DailyGrowth</h1>
+        
+        <div class="instructions">
+            <h3>📱 Instructions de test</h3>
+            <p><strong>Sur mobile :</strong></p>
+            <ol>
+                <li>Ouvrez ce lien dans Chrome/Safari mobile</li>
+                <li>Attendez l'apparition de la popup d'installation (3 secondes)</li>
+                <li>Vérifiez l'affichage du banner d'installation</li>
+                <li>Testez l'installation de l'application</li>
+            </ol>
+            <p><strong>URL de test :</strong> <a href="http://localhost:8081" target="_blank">http://localhost:8081</a></p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Détection de l'environnement</h3>
+            <div id="environment-status"></div>
+            <button onclick="checkEnvironment()">Vérifier l'environnement</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Simulation d'un appareil mobile</h3>
+            <div id="mobile-status"></div>
+            <button onclick="simulateMobile()">Simuler un mobile</button>
+        </div>
+
+        <div class="test-section">
+            <h3>⚙️ Test Service Worker</h3>
+            <div id="sw-status"></div>
+            <button onclick="testServiceWorker()">Tester Service Worker</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📲 Test événement beforeinstallprompt</h3>
+            <div id="install-status"></div>
+            <button onclick="testInstallPrompt()">Déclencher l'installation</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Ouvrir l'application DailyGrowth</h3>
+            <div id="app-status"></div>
+            <a href="http://localhost:8081" target="_blank">
+                <button>Ouvrir DailyGrowth</button>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+
+        // Écouter l'événement beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt event fired');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            document.getElementById('install-status').innerHTML = 
+                '<div class="status success">✅ Événement beforeinstallprompt détecté ! L\'installation PWA est disponible.</div>';
+        });
+
+        // Écouter l'installation
+        window.addEventListener('appinstalled', (e) => {
+            console.log('App was installed');
+            document.getElementById('install-status').innerHTML = 
+                '<div class="status success">🎉 Application installée avec succès !</div>';
+        });
+
+        function checkEnvironment() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isHTTPS = location.protocol === 'https:';
+            const hasServiceWorker = 'serviceWorker' in navigator;
+            const isMobile = /android|iphone|ipad|mobile/.test(userAgent);
+            
+            let status = '<div class="status info">';
+            status += `<strong>User Agent:</strong> ${userAgent}<br>`;
+            status += `<strong>HTTPS:</strong> ${isHTTPS ? '✅' : '❌'} ${location.protocol}<br>`;
+            status += `<strong>Service Worker Support:</strong> ${hasServiceWorker ? '✅' : '❌'}<br>`;
+            status += `<strong>Mobile Device:</strong> ${isMobile ? '✅' : '❌'}<br>`;
+            status += `<strong>Screen Width:</strong> ${window.screen.width}px<br>`;
+            status += '</div>';
+            
+            document.getElementById('environment-status').innerHTML = status;
+        }
+
+        function simulateMobile() {
+            // Modifier le user agent pour simuler un mobile (pour test seulement)
+            document.getElementById('mobile-status').innerHTML = 
+                '<div class="status info">💡 Pour tester sur mobile :<br>' +
+                '1. Ouvrez Chrome DevTools (F12)<br>' +
+                '2. Cliquez sur l\'icône mobile/tablette<br>' +
+                '3. Sélectionnez un appareil mobile<br>' +
+                '4. Rechargez la page</div>';
+        }
+
+        function testServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        document.getElementById('sw-status').innerHTML = 
+                            '<div class="status success">✅ Service Worker enregistré avec succès</div>';
+                    })
+                    .catch(error => {
+                        document.getElementById('sw-status').innerHTML = 
+                            '<div class="status error">❌ Erreur Service Worker: ' + error + '</div>';
+                    });
+            } else {
+                document.getElementById('sw-status').innerHTML = 
+                    '<div class="status error">❌ Service Worker non supporté</div>';
+            }
+        }
+
+        function testInstallPrompt() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('install-status').innerHTML = 
+                            '<div class="status success">✅ Utilisateur a accepté l\'installation</div>';
+                    } else {
+                        document.getElementById('install-status').innerHTML = 
+                            '<div class="status info">ℹ️ Utilisateur a refusé l\'installation</div>';
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                document.getElementById('install-status').innerHTML = 
+                    '<div class="status error">❌ Aucun prompt d\'installation disponible.<br>' +
+                    'Essayez d\'ouvrir l\'application dans un navigateur mobile compatible.</div>';
+            }
+        }
+
+        // Vérification automatique au chargement
+        window.onload = function() {
+            checkEnvironment();
+            
+            // Instructions spécifiques selon le navigateur
+            const userAgent = navigator.userAgent.toLowerCase();
+            let browserInstructions = '';
+            
+            if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+                browserInstructions = '<p><strong>Safari iOS:</strong> Appuyez sur le bouton partage puis "Sur l\'écran d\'accueil"</p>';
+            } else if (userAgent.includes('chrome')) {
+                browserInstructions = '<p><strong>Chrome:</strong> Recherchez l\'icône d\'installation dans la barre d\'adresse</p>';
+            }
+            
+            if (browserInstructions) {
+                document.querySelector('.instructions').innerHTML += browserInstructions;
+            }
+        };
+    </script>
+</body>
+</html>
