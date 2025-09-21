@@ -61,27 +61,37 @@ serve(async (req) => {
         const [hours, minutes] = notificationTime.split(':').map(Number)
         const userNotificationTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
         
-        // Convert user's local time (France/Paris UTC+2 in summer, UTC+1 in winter) to UTC
-        // For France timezone: subtract 2 hours in summer (DST), 1 hour in winter
-        const parisDate = new Date().toLocaleString("en-US", {timeZone: "Europe/Paris"})
-        const utcDate = new Date().toLocaleString("en-US", {timeZone: "UTC"})
-        const timezoneDiff = Math.floor((new Date(parisDate).getTime() - new Date(utcDate).getTime()) / (1000 * 60 * 60))
+        // Convert user's local time (France/Paris) to UTC properly
+        // Create a date object for today at the user's notification time in Paris timezone
+        const today = new Date()
+        const parisTime = new Date(today.toLocaleString("en-US", {timeZone: "Europe/Paris"}))
+        const utcTime = new Date(today.toLocaleString("en-US", {timeZone: "UTC"}))
         
-        // Convert user's notification time to UTC
-        const utcTargetHours = (hours - timezoneDiff + 24) % 24
-        const utcTargetMinutes = utcTargetHours * 60 + minutes
-        const currentMinutes = currentHour * 60 + currentMinute
-        const timeDiff = Math.abs(currentMinutes - utcTargetMinutes)
+        // Calculate timezone offset (in minutes)
+        const timezoneOffsetMinutes = (parisTime.getTime() - utcTime.getTime()) / (1000 * 60)
         
-        // Send if within 30 minutes of target time (larger window for reliability)
-        const shouldSendNow = timeDiff <= 30
+        // Create target time in Paris
+        const targetParis = new Date()
+        targetParis.setHours(hours, minutes, 0, 0)
+        
+        // Convert to UTC by subtracting the timezone offset
+        const targetUTC = new Date(targetParis.getTime() - timezoneOffsetMinutes * 60 * 1000)
+        const utcTargetHours = targetUTC.getUTCHours()
+        const utcTargetMinutes = targetUTC.getUTCMinutes()
+        
+        const utcTargetTotalMinutes = utcTargetHours * 60 + utcTargetMinutes
+        const currentTotalMinutes = currentHour * 60 + currentMinute
+        const timeDiff = Math.abs(currentTotalMinutes - utcTargetTotalMinutes)
+        
+        // Send if within 15 minutes of target time (more precise)
+        const shouldSendNow = timeDiff <= 15
 
         if (!shouldSendNow) {
           console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime}, current ${currentTime}, diff ${timeDiff}min`)
           continue
         }
 
-        console.log(`🎯 Sending notification to user ${user.id}: target ${userNotificationTime}, current ${currentTime}`)
+        console.log(`🎯 Sending notification to user ${user.id}: target ${userNotificationTime} Paris (${utcTargetHours}:${utcTargetMinutes.toString().padStart(2, '0')} UTC), current ${currentTime} UTC, diff ${timeDiff}min`)
 
         // Check if user already has an active challenge today
         const today = new Date().toISOString().split('T')[0]
