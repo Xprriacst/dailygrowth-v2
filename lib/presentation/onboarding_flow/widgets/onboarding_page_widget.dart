@@ -23,6 +23,12 @@ class OnboardingPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Debug info
+    if (isPWATutorial) {
+      debugPrint('[DEBUG PWA PAGE] Step $step - $title');
+      debugPrint('[DEBUG PWA PAGE] Image: $imageUrl');
+    }
+    
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),

@@ -84,11 +84,17 @@ class _OnboardingFlowState extends State<OnboardingFlow>
 
   // Getter pour filtrer les pages selon la plateforme
   List<Map<String, dynamic>> get _filteredOnboardingPages {
+    // TEMPORAIRE : Toujours afficher les pages PWA pour debug
+    debugPrint('[DEBUG] kIsWeb: $kIsWeb');
+    debugPrint('[DEBUG] Total pages: ${_onboardingPages.length}');
+    
     if (kIsWeb) {
       // Sur Web, inclure toutes les pages (y compris PWA tutorial)
+      debugPrint('[DEBUG] Web - Affichage de toutes les pages PWA');
       return _onboardingPages;
     } else {
       // Sur mobile natif, exclure les pages PWA tutorial
+      debugPrint('[DEBUG] Mobile natif - Exclusion des pages PWA');
       return _onboardingPages.where((page) => page["isPWATutorial"] != true).toList();
     }
   }
