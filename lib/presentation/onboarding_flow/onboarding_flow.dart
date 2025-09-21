@@ -57,7 +57,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     },
     // PWA Installation Tutorial Pages
     {
-      "imageUrl": "assets/images/pwa_tutorial/etape_1.png",
+      "imageUrl": "assets/images/no-image.jpg",
       "title": "📲 Installer l'Application",
       "description":
           "Pour une expérience optimale, installez DailyGrowth sur votre écran d'accueil !",
