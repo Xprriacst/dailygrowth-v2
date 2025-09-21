@@ -14,8 +14,6 @@ import '../../services/user_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/gamification_service.dart';
 import '../../services/notification_service.dart';
-import '../../widgets/pwa_install_banner.dart';
-import '../../widgets/pwa_install_popup.dart';
 import './widgets/achievements_section_widget.dart';
 import './widgets/bottom_navigation_widget.dart';
 import './widgets/daily_challenge_card_widget.dart';
@@ -72,16 +70,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
   void initState() {
     super.initState();
     _checkAuthenticationAndInitialize();
-    _schedulePWAInstallPrompt();
-  }
-
-  void _schedulePWAInstallPrompt() {
-    // Afficher la popup d'installation après un délai
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        PWAInstallPopup.showIfAvailable(context);
-      }
-    });
   }
 
   Future<void> _checkAuthenticationAndInitialize() async {
@@ -377,12 +365,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                                   onNotificationTap: _handleNotificationTap),
 
                               SizedBox(height: 2.h),
-
-                              // PWA Install Banner
-                              const PWAInstallBanner(
-                                showOnlyOnMobile: true,
-                                autoHideDelay: Duration(seconds: 30),
-                              ),
 
                               // Daily Challenge Card
                               DailyChallengeCardWidget(
