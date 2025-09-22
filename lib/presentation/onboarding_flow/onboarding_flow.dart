@@ -55,25 +55,28 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "description":
           "Gagnez des badges, suivez vos séries et célébrez vos réussites avec notre système de récompenses.",
     },
-    // PWA Installation Tutorial Pages (images only)
+    // PWA Installation Tutorial Pages
     {
       "imageUrl": "assets/images/pwa_tutorial/Etape 1 avec mockup.png",
-      "title": "",
-      "description": "",
+      "title": "📲 Installer l'Application",
+      "description":
+          "Pour une expérience optimale, installez DailyGrowth sur votre écran d'accueil !",
       "isPWATutorial": true,
       "step": 1,
     },
     {
       "imageUrl": "assets/images/pwa_tutorial/Etape 2 avec mockup.png", 
-      "title": "",
-      "description": "",
+      "title": "📤 Étape 1 : Partager",
+      "description":
+          "Appuyez sur le bouton de partage dans votre navigateur Safari.",
       "isPWATutorial": true,
       "step": 2,
     },
     {
       "imageUrl": "assets/images/pwa_tutorial/Etape 3 avec mockup.png",
-      "title": "",
-      "description": "",
+      "title": "🏠 Étape 2 : Ajouter à l'écran",
+      "description":
+          "Sélectionnez 'Sur l'écran d'accueil' pour terminer l'installation.",
       "isPWATutorial": true,
       "step": 3,
     },
