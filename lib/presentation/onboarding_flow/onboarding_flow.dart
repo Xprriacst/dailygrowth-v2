@@ -57,7 +57,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     },
     // PWA Installation Tutorial Pages
     {
-      "imageUrl": "assets/images/pwa_tutorial/Etape 1 avec mockup.png",
+      "imageUrl": "assets/images/pwa_tutorial/etape_1_avec_mockup.jpg",
       "title": "📲 Installer l'Application",
       "description":
           "Pour une expérience optimale, installez DailyGrowth sur votre écran d'accueil !",
@@ -65,7 +65,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "step": 1,
     },
     {
-      "imageUrl": "assets/images/pwa_tutorial/Etape 2 avec mockup.png", 
+      "imageUrl": "assets/images/pwa_tutorial/etape_2_avec_mockup.jpg", 
       "title": "📤 Étape 1 : Partager",
       "description":
           "Appuyez sur le bouton de partage dans votre navigateur Safari.",
@@ -73,7 +73,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "step": 2,
     },
     {
-      "imageUrl": "assets/images/pwa_tutorial/Etape 3 avec mockup.png",
+      "imageUrl": "assets/images/pwa_tutorial/etape_3_avec_mockup.jpg",
       "title": "🏠 Étape 2 : Ajouter à l'écran",
       "description":
           "Sélectionnez 'Sur l'écran d'accueil' pour terminer l'installation.",
