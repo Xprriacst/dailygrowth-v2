@@ -1,5 +1,5 @@
-// Service Worker pour PWA DailyGrowth
-const CACHE_NAME = 'dailygrowth-v2-' + Date.now();
+// Service Worker pour PWA DailyGrowth - Safari Optimized
+const CACHE_NAME = 'dailygrowth-safari-v3-' + Date.now();
 const urlsToCache = [
   '/',
   '/main.dart.js',
@@ -7,7 +7,12 @@ const urlsToCache = [
   '/manifest.json',
   '/icons/Icon-192.png',
   '/icons/Icon-512.png',
-  '/favicon.png'
+  '/favicon.png',
+  // Cache des images PWA tutorial pour Safari
+  '/assets/images/pwa_tutorial/etape_1_installer.png',
+  '/assets/images/pwa_tutorial/etape_2_partager.png',
+  '/assets/images/pwa_tutorial/etape_3_ajouter.png',
+  '/assets/images/no-image.jpg'
 ];
 
 // Installation du service worker
@@ -43,12 +48,43 @@ self.addEventListener('activate', function(event) {
   self.clients.claim();
 });
 
-// Stratégie de cache : Network First avec fallback sur cache
+// Stratégie de cache : Network First avec fallback sur cache et support Safari
 self.addEventListener('fetch', function(event) {
   // Skip chrome-extension and other extension URLs
-  if (event.request.url.startsWith('chrome-extension:') || 
+  if (event.request.url.startsWith('chrome-extension:') ||
       event.request.url.startsWith('moz-extension:') ||
       event.request.url.startsWith('safari-extension:')) {
+    return;
+  }
+
+  // Gestion spécifique des images locales pour Safari
+  if (event.request.url.includes('/assets/images/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(function(response) {
+          // Si la requête réussit, mettre en cache et retourner
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME)
+              .then(function(cache) {
+                cache.put(event.request, responseClone);
+              });
+          }
+          return response;
+        })
+        .catch(function() {
+          console.log('[SW] Asset not found, trying cache:', event.request.url);
+          // En cas d'échec, utiliser le cache
+          return caches.match(event.request).then(function(cachedResponse) {
+            if (cachedResponse) {
+              console.log('[SW] Serving from cache:', event.request.url);
+              return cachedResponse;
+            }
+            // Fallback sur no-image.jpg pour Safari
+            return caches.match('/assets/images/no-image.jpg');
+          });
+        })
+    );
     return;
   }
 
