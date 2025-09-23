@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -25,13 +26,13 @@ class OnboardingPageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: kIsWeb ? 8.w : 6.w, vertical: kIsWeb ? 6.h : 4.h),
         child: Column(
           children: [
             if (isPWATutorial && step != null)
               Container(
-                margin: EdgeInsets.only(bottom: 2.h),
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                margin: EdgeInsets.only(bottom: kIsWeb ? 3.h : 2.h),
+                padding: EdgeInsets.symmetric(horizontal: kIsWeb ? 6.w : 4.w, vertical: kIsWeb ? 2.h : 1.h),
                 decoration: BoxDecoration(
                   color: AppTheme.lightTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -50,8 +51,8 @@ class OnboardingPageWidget extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 constraints: BoxConstraints(
-                  maxHeight: 35.h,
-                  minHeight: 25.h,
+                  maxHeight: kIsWeb ? 40.h : 35.h, // Plus de hauteur sur web
+                  minHeight: kIsWeb ? 30.h : 25.h, // Plus de hauteur minimum sur web
                 ),
                 child: CustomImageWidget(
                   imageUrl: imageUrl,
@@ -61,7 +62,7 @@ class OnboardingPageWidget extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: kIsWeb ? 6.h : 4.h), // Plus d'espace sur web
             Expanded(
               flex: 3,
               child: Column(
@@ -78,7 +79,7 @@ class OnboardingPageWidget extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: kIsWeb ? 3.h : 2.h), // Plus d'espace sur web
                   Flexible(
                     child: Text(
                       description,
@@ -99,4 +100,3 @@ class OnboardingPageWidget extends StatelessWidget {
       ),
     );
   }
-}
