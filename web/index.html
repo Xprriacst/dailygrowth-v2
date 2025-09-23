@@ -113,6 +113,7 @@
           navigator.serviceWorker.register('/unified-sw.js', { scope: '/' })
             .then(function(registration) {
               console.log('✅ Unified ServiceWorker registration successful');
+              window.unifiedServiceWorkerRegistration = registration;
               // Force activation sur iOS
               if (isIOS && registration.waiting) {
                 registration.waiting.postMessage({ type: 'SKIP_WAITING' });

@@ -22,6 +22,26 @@ class CustomImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if it's a local asset image
+    if (imageUrl != null && imageUrl!.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ??
+              Container(
+                width: width,
+                height: height,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported),
+              );
+        },
+      );
+    }
+
+    // For network images, use CachedNetworkImage
     return CachedNetworkImage(
       imageUrl: imageUrl ??
           'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop',

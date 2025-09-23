@@ -8,6 +8,8 @@ class OnboardingPageWidget extends StatelessWidget {
   final String title;
   final String description;
   final bool isLastPage;
+  final bool isPWATutorial;
+  final int? step;
 
   const OnboardingPageWidget({
     Key? key,
@@ -15,6 +17,8 @@ class OnboardingPageWidget extends StatelessWidget {
     required this.title,
     required this.description,
     this.isLastPage = false,
+    this.isPWATutorial = false,
+    this.step,
   }) : super(key: key);
 
   @override
@@ -24,6 +28,23 @@ class OnboardingPageWidget extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
         child: Column(
           children: [
+            if (isPWATutorial && step != null)
+              Container(
+                margin: EdgeInsets.only(bottom: 2.h),
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                decoration: BoxDecoration(
+                  color: AppTheme.lightTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Tutoriel PWA – Étape $step/3',
+                  style: AppTheme.lightTheme.textTheme.labelMedium?.copyWith(
+                    color: AppTheme.lightTheme.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             Expanded(
               flex: 5,
               child: Container(

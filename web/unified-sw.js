@@ -92,6 +92,114 @@ self.addEventListener('fetch', function(event) {
   );
 });
 
+// Gestion des notifications programmées et badges
+let scheduledNotifications = new Map();
+let periodicCheckInterval = null;
+
+const INDEXED_DB_NAME = 'DailyGrowthDB';
+const INDEXED_DB_STORE = 'notifications';
+
+async function openIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(INDEXED_DB_NAME, 1);
+
+    request.onerror = () => reject(request.error);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(INDEXED_DB_STORE)) {
+        db.createObjectStore(INDEXED_DB_STORE, { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+async function saveNotificationsToIndexedDB(data) {
+  try {
+    const db = await openIndexedDB();
+    const transaction = db.transaction([INDEXED_DB_STORE], 'readwrite');
+    const store = transaction.objectStore(INDEXED_DB_STORE);
+    store.put({ id: 'scheduled', data });
+    return new Promise((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (error) {
+    console.error('[SW] ❌ IndexedDB save error:', error);
+  }
+}
+
+async function loadNotificationsFromIndexedDB() {
+  try {
+    const db = await openIndexedDB();
+    const transaction = db.transaction([INDEXED_DB_STORE], 'readonly');
+    const store = transaction.objectStore(INDEXED_DB_STORE);
+    const request = store.get('scheduled');
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result?.data || []);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[SW] ❌ IndexedDB load error:', error);
+    return [];
+  }
+}
+
+function startPeriodicCheck() {
+  if (periodicCheckInterval) {
+    return;
+  }
+
+  periodicCheckInterval = setInterval(() => {
+    checkAndSendNotifications();
+  }, 60000);
+}
+
+async function checkAndSendNotifications() {
+  const now = new Date();
+  const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now
+    .getMinutes()
+    .toString()
+    .padStart(2, '0')}`;
+  const today = now.toDateString();
+
+  scheduledNotifications.forEach((notification, userId) => {
+    const { time, title, body, lastSent } = notification;
+    const targetTime = time.substring(0, 5);
+
+    if (currentTime === targetTime && lastSent !== today) {
+      self.registration
+        .showNotification(title, {
+          body,
+          icon: '/icons/Icon-192.png',
+          badge: '/icons/Icon-192.png',
+          tag: `daily-${userId}`,
+          data: {
+            type: 'scheduled_daily',
+            userId,
+            time,
+          },
+        })
+        .catch((error) => {
+          console.error('[SW] ❌ Failed to send scheduled notification:', error);
+        });
+
+      notification.lastSent = today;
+      scheduledNotifications.set(userId, notification);
+      saveNotificationsToIndexedDB(Array.from(scheduledNotifications.entries()));
+    }
+  });
+}
+
+async function restoreScheduledNotifications() {
+  const stored = await loadNotificationsFromIndexedDB();
+  scheduledNotifications = new Map(stored);
+
+  if (scheduledNotifications.size > 0) {
+    startPeriodicCheck();
+  }
+}
+
 // === SECTION FIREBASE CLOUD MESSAGING ===
 
 // Gérer les messages push en arrière-plan
@@ -208,35 +316,63 @@ self.addEventListener('notificationclick', (event) => {
 // Gérer les messages de l'application principale
 self.addEventListener('message', function(event) {
   const data = event.data;
-  
-  if (data && data.type === 'SET_BADGE') {
-    const count = data.count;
-    
-    // Utiliser Badge API si disponible (iOS Safari 16.4+)
-    if ('setAppBadge' in navigator) {
-      if (count > 0) {
-        navigator.setAppBadge(count);
-        console.log('[SW] Badge mis à jour:', count);
-      } else {
-        navigator.clearAppBadge();
-        console.log('[SW] Badge effacé');
+
+  if (!data || !data.type) {
+    return;
+  }
+
+  switch (data.type) {
+    case 'SET_BADGE': {
+      const count = data.count || 0;
+      if ('setAppBadge' in navigator) {
+        if (count > 0) {
+          navigator.setAppBadge(count);
+        } else {
+          navigator.clearAppBadge();
+        }
       }
+      break;
     }
-  }
-  
-  // Effacer toutes les notifications
-  else if (data && data.type === 'CLEAR_NOTIFICATIONS') {
-    self.registration.getNotifications().then((notifications) => {
-      notifications.forEach(notification => notification.close());
-      console.log('[SW] Toutes les notifications effacées');
-    });
-  }
-  
-  // Stocker le token FCM
-  else if (data && data.type === 'FCM_TOKEN') {
-    const token = data.token;
-    console.log('[SW] Token FCM reçu:', token);
+    case 'CLEAR_NOTIFICATIONS': {
+      self.registration.getNotifications().then((notifications) => {
+        notifications.forEach((notification) => notification.close());
+      });
+      break;
+    }
+    case 'SCHEDULE_NOTIFICATION': {
+      const { userId, time, title, body } = data;
+      if (!userId || !time) {
+        return;
+      }
+      scheduledNotifications.set(userId, {
+        time,
+        title,
+        body,
+        lastSent: null,
+        createdAt: new Date().toISOString(),
+      });
+      saveNotificationsToIndexedDB(Array.from(scheduledNotifications.entries()));
+      startPeriodicCheck();
+      break;
+    }
+    case 'CANCEL_NOTIFICATION': {
+      const { userId } = data;
+      if (userId && scheduledNotifications.has(userId)) {
+        scheduledNotifications.delete(userId);
+        saveNotificationsToIndexedDB(Array.from(scheduledNotifications.entries()));
+      }
+      break;
+    }
+    case 'FCM_TOKEN': {
+      const token = data.token;
+      console.log('[SW] Token FCM reçu:', token);
+      break;
+    }
+    default:
+      break;
   }
 });
+
+restoreScheduledNotifications();
 
 console.log('[SW] Service Worker unifié chargé et initialisé');

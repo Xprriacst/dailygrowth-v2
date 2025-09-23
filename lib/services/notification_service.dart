@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cron/cron.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
 
 import './supabase_service.dart';
 import './challenge_service.dart';
@@ -19,6 +20,18 @@ class NotificationService {
   FlutterLocalNotificationsPlugin? _flutterLocalNotificationsPlugin;
   final Cron _cron = Cron();
   bool _isInitialized = false;
+  bool _timeZonesInitialized = false;
+
+  Future<void> _ensureTimeZones() async {
+    if (_timeZonesInitialized) return;
+    tzdata.initializeTimeZones();
+    try {
+      tz.setLocalLocation(tz.getLocation('Europe/Paris'));
+    } catch (_) {
+      tz.setLocalLocation(tz.UTC);
+    }
+    _timeZonesInitialized = true;
+  }
 
   // Services
   final ChallengeService _challengeService = ChallengeService();
@@ -31,6 +44,7 @@ class NotificationService {
 
     // Initialize for mobile platforms
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      await _ensureTimeZones();
       _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
       const AndroidInitializationSettings initializationSettingsAndroid =
@@ -112,6 +126,7 @@ class NotificationService {
     if (_flutterLocalNotificationsPlugin == null) return;
 
     try {
+      await _ensureTimeZones();
       final timeParts = time.split(':');
       final hour = int.parse(timeParts[0]);
       final minute = int.parse(timeParts[1]);
@@ -196,7 +211,7 @@ class NotificationService {
   // Setup automated daily notifications (no content generation)
   void _setupDailyNotifications() {
     // Send daily reminders at users' preferred times
-    _cron.schedule(Schedule.parse('0 * * * *'), () async {
+    _cron.schedule(Schedule.parse('* * * * *'), () async {
       await _sendDailyReminders();
     });
   }
@@ -293,7 +308,9 @@ class NotificationService {
   Future<void> _sendDailyReminders() async {
     try {
       final client = await SupabaseService().client;
-      final currentHour = DateTime.now().hour;
+      final now = DateTime.now();
+      final currentHour = now.hour;
+      final currentMinute = now.minute;
 
       // Get users who should receive notifications at this hour
       final usersResponse = await client
@@ -307,9 +324,13 @@ class NotificationService {
       for (final user in users) {
         final notificationTime =
             user['notification_time'] as String? ?? '09:00:00';
-        final notificationHour = int.parse(notificationTime.split(':')[0]);
+        final parts = notificationTime.split(':');
+        final notificationHour = int.parse(parts.isNotEmpty ? parts[0] : '9');
+        final notificationMinute =
+            parts.length > 1 ? int.parse(parts[1]) : 0;
 
-        if (notificationHour == currentHour) {
+        if (notificationHour == currentHour &&
+            notificationMinute == currentMinute) {
           final userId = user['id'] as String;
           final userName = user['full_name'] as String? ?? 'utilisateur';
           
@@ -761,6 +782,7 @@ class NotificationService {
     if (_flutterLocalNotificationsPlugin == null) return;
     
     try {
+      await _ensureTimeZones();
       // Schedule reminder 6 hours later
       final reminderTime = DateTime.now().add(const Duration(hours: 6));
       
@@ -797,6 +819,10 @@ class NotificationService {
   Future<void> cancelUserNotifications(String userId) async {
     // For web, clear notifications via service worker
     if (kIsWeb) {
+      await _webNotificationService.sendMessageToServiceWorker({
+        'type': 'CANCEL_NOTIFICATION',
+        'userId': userId,
+      });
       await _webNotificationService.clearAllNotifications();
       return;
     }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,7 +55,36 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "description":
           "Gagnez des badges, suivez vos séries et célébrez vos réussites avec notre système de récompenses.",
     },
+    {
+      "imageUrl": "assets/images/pwa_tutorial/etape_1_installer.png",
+      "title": "📲 Installer DailyGrowth",
+      "description":
+          "Ouvrez le menu de Safari et repérez les options supplémentaires pour préparer l'installation.",
+      "isPWATutorial": true,
+      "step": 1,
+    },
+    {
+      "imageUrl": "assets/images/pwa_tutorial/etape_2_partager.png",
+      "title": "📤 Étape 2 : Partager",
+      "description":
+          "Touchez Partager pour afficher les actions disponibles et continuer l'installation.",
+      "isPWATutorial": true,
+      "step": 2,
+    },
+    {
+      "imageUrl": "assets/images/pwa_tutorial/etape_3_ajouter.png",
+      "title": "🏠 Étape 3 : Ajouter",
+      "description":
+          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application DailyGrowth à votre PWA.",
+      "isPWATutorial": true,
+      "step": 3,
+    },
   ];
+
+  List<Map<String, dynamic>> get _filteredOnboardingPages {
+    // Show all pages on all platforms
+    return _onboardingPages;
+  }
 
   @override
   void initState() {
@@ -96,13 +126,13 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       // Haptic feedback
       HapticFeedback.lightImpact();
 
-      if (_currentPage < _onboardingPages.length - 1) {
+      if (_currentPage < _filteredOnboardingPages.length - 1) {
         // Navigate to next onboarding page
         await _pageController.nextPage(
           duration: Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
-      } else if (_currentPage == _onboardingPages.length - 1) {
+      } else if (_currentPage == _filteredOnboardingPages.length - 1) {
         // Navigate to life domain selection page
         await _pageController.nextPage(
           duration: Duration(milliseconds: 300),
@@ -399,9 +429,9 @@ class _OnboardingFlowState extends State<OnboardingFlow>
 
   bool get _canProceedFromLifeDomains => _selectedLifeDomains.isNotEmpty;
 
-  bool get _isLifeDomainPage => _currentPage == _onboardingPages.length;
+  bool get _isLifeDomainPage => _currentPage == _filteredOnboardingPages.length;
 
-  bool get _isLastPage => _currentPage == _onboardingPages.length;
+  bool get _isLastPage => _currentPage == _filteredOnboardingPages.length;
 
   void _navigateToHomeDashboard() {
     if (mounted) {
@@ -412,7 +442,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
   @override
   Widget build(BuildContext context) {
     final totalPages =
-        _onboardingPages.length + 1; // +1 for life domain selection
+        _filteredOnboardingPages.length + 1; // +1 for life domain selection
 
     return Scaffold(
       backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
@@ -424,12 +454,14 @@ class _OnboardingFlowState extends State<OnboardingFlow>
               onPageChanged: _onPageChanged,
               itemCount: totalPages,
               itemBuilder: (context, index) {
-                if (index < _onboardingPages.length) {
-                  final pageData = _onboardingPages[index];
+                if (index < _filteredOnboardingPages.length) {
+                  final pageData = _filteredOnboardingPages[index];
                   return OnboardingPageWidget(
                     imageUrl: pageData["imageUrl"] as String,
                     title: pageData["title"] as String,
                     description: pageData["description"] as String,
+                    isPWATutorial: pageData["isPWATutorial"] as bool? ?? false,
+                    step: pageData["step"] as int?,
                     isLastPage: false,
                   );
                 } else {
@@ -449,7 +481,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                 if (!_isLifeDomainPage)
                   PageIndicatorWidget(
                     currentPage: _currentPage,
-                    totalPages: _onboardingPages.length,
+                    totalPages: _filteredOnboardingPages.length,
                   ),
                 SizedBox(height: 2.h),
                 NavigationControlsWidget(
