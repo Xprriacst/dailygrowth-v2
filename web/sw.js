@@ -269,12 +269,12 @@ function startPeriodicCheck() {
     return;
   }
   
-  console.log('[SW] 🚀 Starting periodic notification check (every 60s)');
+  console.log('[SW] 🚀 Starting periodic notification check (every 30s)');
   
   periodicCheckInterval = setInterval(() => {
     console.log('[SW] 🔍 Running periodic check at', new Date().toLocaleTimeString());
     checkAndSendNotifications();
-  }, 60000); // Vérifier toutes les minutes
+  }, 30000); // Vérifier toutes les 30 secondes pour plus de fiabilité
   
   console.log('[SW] ✅ Periodic check interval created successfully');
 }
