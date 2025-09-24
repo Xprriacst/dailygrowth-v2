@@ -269,14 +269,33 @@ function startPeriodicCheck() {
     return;
   }
   
-  console.log('[SW] 🚀 Starting periodic notification check (every 30s)');
+  console.log('[SW] 🚀 Starting periodic notification check (every 15s)');
   
   periodicCheckInterval = setInterval(() => {
     console.log('[SW] 🔍 Running periodic check at', new Date().toLocaleTimeString());
     checkAndSendNotifications();
-  }, 30000); // Vérifier toutes les 30 secondes pour plus de fiabilité
+  }, 15000); // Vérifier toutes les 15 secondes pour Safari
   
   console.log('[SW] ✅ Periodic check interval created successfully');
+}
+
+// Fonction pour vérifier si on est dans la fenêtre de rattrapage (5 minutes après l'heure cible)
+function isWithinCatchupWindow(currentTime, targetTime) {
+  const [currentHour, currentMin] = currentTime.split(':').map(Number);
+  const [targetHour, targetMin] = targetTime.split(':').map(Number);
+  
+  const currentMinutes = currentHour * 60 + currentMin;
+  const targetMinutes = targetHour * 60 + targetMin;
+  
+  // Vérifier si on est dans les 5 minutes après l'heure cible
+  const diff = currentMinutes - targetMinutes;
+  const isInCatchupWindow = diff > 0 && diff <= 5;
+  
+  if (isInCatchupWindow) {
+    console.log('[SW] 🔄 CATCHUP: Current', currentTime, 'is', diff, 'minutes after target', targetTime);
+  }
+  
+  return isInCatchupWindow;
 }
 
 async function checkAndSendNotifications() {
@@ -306,9 +325,14 @@ async function checkAndSendNotifications() {
       createdAt
     });
     
-    // Vérifier si c'est l'heure ET qu'on n'a pas déjà envoyé aujourd'hui
-    if (currentTime === targetTime && lastSent !== today) {
-      console.log('[SW] 🚀 SENDING scheduled notification for', userId, 'at', currentTime);
+    // Vérifier si c'est l'heure OU si on a raté la notification (dans les 5 dernières minutes)
+    const shouldSend = (currentTime === targetTime && lastSent !== today) || 
+                      (isWithinCatchupWindow(currentTime, targetTime) && lastSent !== today);
+    
+    if (shouldSend) {
+      const isCatchup = isWithinCatchupWindow(currentTime, targetTime);
+      const sendType = isCatchup ? 'CATCHUP' : 'SCHEDULED';
+      console.log(`[SW] 🚀 SENDING ${sendType} notification for`, userId, 'at', currentTime, isCatchup ? `(was ${targetTime})` : '');
       
       // Envoyer la notification
       self.registration.showNotification(title, {
