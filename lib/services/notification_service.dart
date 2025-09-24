@@ -210,10 +210,39 @@ class NotificationService {
 
   // Setup automated daily notifications (no content generation)
   void _setupDailyNotifications() {
-    // Send daily reminders at users' preferred times
-    _cron.schedule(Schedule.parse('* * * * *'), () async {
-      await _sendDailyReminders();
-    });
+    // Note: Daily notifications are now scheduled individually per user
+    // when they update their settings, not via a global cron job
+    debugPrint('📅 Daily notifications setup - individual scheduling per user');
+    
+    // Initialize existing user notifications if any
+    _initializeExistingNotifications();
+  }
+
+  // Initialize notifications for current user if they have settings
+  Future<void> _initializeExistingNotifications() async {
+    try {
+      final client = await SupabaseService().client;
+      final user = client.auth.currentUser;
+      
+      if (user != null) {
+        final settings = await getUserNotificationSettings(user.id);
+        if (settings != null && settings['notifications_enabled'] == true) {
+          final notificationTime = settings['notification_time'] as String? ?? '09:00:00';
+          
+          debugPrint('🔄 Reinitializing existing notifications for user ${user.id} at $notificationTime');
+          
+          // Reschedule the daily notification
+          await scheduleDailyNotification(
+            userId: user.id,
+            time: notificationTime,
+            title: '🎯 Votre défi quotidien vous attend !',
+            body: 'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Could not initialize existing notifications: $e');
+    }
   }
 
   Future<void> _generateDailyContentForAllUsers() async {
@@ -305,53 +334,8 @@ class NotificationService {
     }
   }
 
-  Future<void> _sendDailyReminders() async {
-    try {
-      final client = await SupabaseService().client;
-      final now = DateTime.now();
-      final currentHour = now.hour;
-      final currentMinute = now.minute;
-
-      // Get users who should receive notifications at this hour
-      final usersResponse = await client
-          .from('user_profiles')
-          .select('id, full_name, notification_time, notifications_enabled, reminder_notifications_enabled')
-          .eq('status', 'active')
-          .eq('notifications_enabled', true);
-
-      final users = List<Map<String, dynamic>>.from(usersResponse);
-
-      for (final user in users) {
-        final notificationTime =
-            user['notification_time'] as String? ?? '09:00:00';
-        final parts = notificationTime.split(':');
-        final notificationHour = int.parse(parts.isNotEmpty ? parts[0] : '9');
-        final notificationMinute =
-            parts.length > 1 ? int.parse(parts[1]) : 0;
-
-        if (notificationHour == currentHour &&
-            notificationMinute == currentMinute) {
-          final userId = user['id'] as String;
-          final userName = user['full_name'] as String? ?? 'utilisateur';
-          
-          // Send simple reminder notification (no generation)
-          await sendInstantNotification(
-            title: '🎯 Votre défi quotidien vous attend !',
-            body: 'Bonjour $userName, connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
-            payload: 'daily_reminder:$userId',
-          );
-          
-          // Schedule optional reminder if enabled
-          final reminderEnabled = user['reminder_notifications_enabled'] as bool? ?? false;
-          if (reminderEnabled) {
-            await _scheduleOptionalReminder(userId, userName);
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Failed to send daily reminders: $e');
-    }
-  }
+  // Note: _sendDailyReminders removed - now using native scheduled notifications
+  // Each user gets their own scheduled notification when they update settings
 
   // Update user notification preferences
   Future<void> updateNotificationSettings({
@@ -598,6 +582,30 @@ class NotificationService {
     }
   }
 
+  // Debug: Check scheduled notifications
+  Future<void> debugScheduledNotifications() async {
+    if (kIsWeb) {
+      debugPrint('📱 Web: Scheduled notifications handled by service worker');
+      return;
+    }
+    
+    if (_flutterLocalNotificationsPlugin == null) {
+      debugPrint('❌ Notification plugin not initialized');
+      return;
+    }
+
+    try {
+      final pendingNotifications = await _flutterLocalNotificationsPlugin!.pendingNotificationRequests();
+      debugPrint('📅 Scheduled notifications count: ${pendingNotifications.length}');
+      
+      for (final notification in pendingNotifications) {
+        debugPrint('📅 Notification ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error checking scheduled notifications: $e');
+    }
+  }
+
   // Test notification for debugging avec diagnostic iOS dans l'UI
   Future<String> triggerTestNotification() async {
     String diagnosticMessage = '';
@@ -705,6 +713,9 @@ class NotificationService {
       
       diagnosticMessage += '\n✅ TESTS RÉALISÉS:\n';
       
+      // Check scheduled notifications first
+      await debugScheduledNotifications();
+      
       // Test basic notification
       try {
         await _webNotificationService.showNotification(
@@ -751,13 +762,17 @@ class NotificationService {
     } else {
       diagnosticMessage += '📱 Plateforme: Mobile\n';
       
+      // Check scheduled notifications
+      await debugScheduledNotifications();
+      
       try {
         await sendInstantNotification(
           title: '🧪 Test DailyGrowth',
           body: 'Test mobile réussi !',
           payload: 'test_notification',
         );
-        diagnosticMessage += '✅ Notification mobile envoyée';
+        diagnosticMessage += '✅ Notification mobile envoyée\n';
+        diagnosticMessage += 'Vérifiez les logs pour les notifications programmées';
       } catch (e) {
         diagnosticMessage += '❌ Erreur mobile: $e';
       }
