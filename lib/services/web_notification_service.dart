@@ -459,10 +459,15 @@ class WebNotificationService {
             console.log('📱 Step 4: Importing Firebase messaging and generating token...');
             const { getToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
             console.log('✅ Firebase messaging imported');
-            
-            console.log('🔄 Calling getToken...');
+
+            const registration = window.unifiedServiceWorkerRegistration 
+              || await navigator.serviceWorker.getRegistration('/unified-sw.js')
+              || await navigator.serviceWorker.ready;
+
+            console.log('🔄 Calling getToken with unified service worker...');
             const token = await getToken(messaging, {
-              vapidKey: vapidKey
+              vapidKey: vapidKey,
+              serviceWorkerRegistration: registration
             });
             
             if (token) {
@@ -526,8 +531,13 @@ class WebNotificationService {
             window.forceFCMGeneration = async function() {
               try {
                 const { getToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+                const registration = window.unifiedServiceWorkerRegistration 
+                  || await navigator.serviceWorker.getRegistration('/unified-sw.js')
+                  || await navigator.serviceWorker.ready;
+
                 const token = await getToken(window.firebaseMessaging, {
-                  vapidKey: window.firebaseVapidKey
+                  vapidKey: window.firebaseVapidKey,
+                  serviceWorkerRegistration: registration
                 });
                 
                 if (token) {

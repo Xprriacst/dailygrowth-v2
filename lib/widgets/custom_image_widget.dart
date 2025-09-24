@@ -22,30 +22,29 @@ class CustomImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String finalImageUrl = imageUrl ??
-        'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop';
-    
-    // Check if it's a local asset
-    if (finalImageUrl.startsWith('assets/')) {
+    // Check if it's a local asset image
+    if (imageUrl != null && imageUrl!.startsWith('assets/')) {
       return Image.asset(
-        finalImageUrl,
+        imageUrl!,
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (context, error, stackTrace) =>
-            errorWidget ??
-            Image.asset(
-              "assets/images/no-image.jpg",
-              fit: fit,
-              width: width,
-              height: height,
-            ),
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ??
+              Container(
+                width: width,
+                height: height,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image_not_supported),
+              );
+        },
       );
     }
-    
-    // Use CachedNetworkImage for network images
+
+    // For network images, use CachedNetworkImage
     return CachedNetworkImage(
-      imageUrl: finalImageUrl,
+      imageUrl: imageUrl ??
+          'https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=2940&auto=format&fit=crop',
       width: width,
       height: height,
       fit: fit,

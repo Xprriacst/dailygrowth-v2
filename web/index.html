@@ -110,27 +110,19 @@
         const delay = isIOS ? 2000 : 1000; // Plus de délai sur iOS
         
         setTimeout(function() {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          navigator.serviceWorker.register('/unified-sw.js', { scope: '/' })
             .then(function(registration) {
-              console.log('✅ ServiceWorker registration successful');
+              console.log('✅ Unified ServiceWorker registration successful');
+              window.unifiedServiceWorkerRegistration = registration;
               // Force activation sur iOS
               if (isIOS && registration.waiting) {
                 registration.waiting.postMessage({ type: 'SKIP_WAITING' });
               }
             })
             .catch(function(error) {
-              console.log('❌ ServiceWorker registration failed: ', error);
+              console.log('❌ Unified ServiceWorker registration failed: ', error);
             });
         }, delay);
-
-        // Register Firebase ServiceWorker
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-          .then(function(registration) {
-            console.log('✅ Firebase ServiceWorker registration successful');
-          })
-          .catch(function(error) {
-            console.log('❌ Firebase ServiceWorker registration failed: ', error);
-          });
       });
     }
   </script>

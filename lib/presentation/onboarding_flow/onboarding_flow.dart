@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
@@ -55,48 +55,35 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "description":
           "Gagnez des badges, suivez vos séries et célébrez vos réussites avec notre système de récompenses.",
     },
-    // PWA Installation Tutorial Pages
     {
-      "imageUrl": "assets/images/pwa_tutorial/etape_1_avec_mockup.jpg",
-      "title": "📲 Installer l'Application",
+      "imageUrl": "assets/images/pwa_tutorial/etape_1_installer.png",
+      "title": "📲 Installer DailyGrowth",
       "description":
-          "Pour une expérience optimale, installez DailyGrowth sur votre écran d'accueil !",
+          "Ouvrez le menu de Safari et repérez les options supplémentaires pour préparer l'installation.",
       "isPWATutorial": true,
       "step": 1,
     },
     {
-      "imageUrl": "assets/images/pwa_tutorial/etape_2_avec_mockup.jpg", 
-      "title": "📤 Étape 1 : Partager",
+      "imageUrl": "assets/images/pwa_tutorial/etape_2_partager.png",
+      "title": "📤 Étape 2 : Partager",
       "description":
-          "Appuyez sur le bouton de partage dans votre navigateur Safari.",
+          "Touchez Partager pour afficher les actions disponibles et continuer l'installation.",
       "isPWATutorial": true,
       "step": 2,
     },
     {
-      "imageUrl": "assets/images/pwa_tutorial/etape_3_avec_mockup.jpg",
-      "title": "🏠 Étape 2 : Ajouter à l'écran",
+      "imageUrl": "assets/images/pwa_tutorial/etape_3_ajouter.png",
+      "title": "🏠 Étape 3 : Ajouter",
       "description":
-          "Sélectionnez 'Sur l'écran d'accueil' pour terminer l'installation.",
+          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application DailyGrowth à votre PWA.",
       "isPWATutorial": true,
       "step": 3,
     },
   ];
 
-  // Getter pour filtrer les pages selon la plateforme
   List<Map<String, dynamic>> get _filteredOnboardingPages {
-    // TEMPORAIRE : Toujours afficher les pages PWA pour debug
-    debugPrint('[DEBUG] kIsWeb: $kIsWeb');
-    debugPrint('[DEBUG] Total pages: ${_onboardingPages.length}');
-    
-    if (kIsWeb) {
-      // Sur Web, inclure toutes les pages (y compris PWA tutorial)
-      debugPrint('[DEBUG] Web - Affichage de toutes les pages PWA');
-      return _onboardingPages;
-    } else {
-      // Sur mobile natif, exclure les pages PWA tutorial
-      debugPrint('[DEBUG] Mobile natif - Exclusion des pages PWA');
-      return _onboardingPages.where((page) => page["isPWATutorial"] != true).toList();
-    }
+    // Show all pages on all platforms
+    return _onboardingPages;
   }
 
   @override
@@ -473,9 +460,9 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                     imageUrl: pageData["imageUrl"] as String,
                     title: pageData["title"] as String,
                     description: pageData["description"] as String,
-                    isLastPage: false,
                     isPWATutorial: pageData["isPWATutorial"] as bool? ?? false,
                     step: pageData["step"] as int?,
+                    isLastPage: false,
                   );
                 } else {
                   // Life domain selection page

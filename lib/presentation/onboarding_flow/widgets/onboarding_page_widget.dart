@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
@@ -23,85 +24,45 @@ class OnboardingPageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Debug info
-    if (isPWATutorial) {
-      debugPrint('[DEBUG PWA PAGE] Step $step - $title');
-      debugPrint('[DEBUG PWA PAGE] Image: $imageUrl');
-    }
-    
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: kIsWeb ? 8.w : 6.w, vertical: kIsWeb ? 6.h : 4.h),
         child: Column(
           children: [
-            // PWA Tutorial Step Indicator
-            if (isPWATutorial && step != null) ...[
+            if (isPWATutorial && step != null)
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                margin: EdgeInsets.only(bottom: 2.h),
+                margin: EdgeInsets.only(bottom: kIsWeb ? 3.h : 2.h),
+                padding: EdgeInsets.symmetric(horizontal: kIsWeb ? 6.w : 4.w, vertical: kIsWeb ? 2.h : 1.h),
                 decoration: BoxDecoration(
-                  color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                  color: AppTheme.lightTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppTheme.lightTheme.colorScheme.primary,
-                    width: 2,
-                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.phone_iphone,
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                      size: 20,
-                    ),
-                    SizedBox(width: 2.w),
-                    Text(
-                      'Tutoriel Installation - Étape $step/3',
-                      style: AppTheme.lightTheme.textTheme.labelMedium?.copyWith(
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Tutoriel PWA – Étape $step/3',
+                  style: AppTheme.lightTheme.textTheme.labelMedium?.copyWith(
+                    color: AppTheme.lightTheme.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ],
-            
             Expanded(
               flex: 5,
               child: Container(
                 width: double.infinity,
                 constraints: BoxConstraints(
-                  maxHeight: 35.h,
-                  minHeight: 25.h,
+                  maxHeight: kIsWeb ? 40.h : 35.h, // Plus de hauteur sur web
+                  minHeight: kIsWeb ? 30.h : 25.h, // Plus de hauteur minimum sur web
                 ),
-                decoration: isPWATutorial ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ) : null,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(isPWATutorial ? 14 : 0),
-                  child: CustomImageWidget(
-                    imageUrl: imageUrl,
-                    width: double.infinity,
-                    height: double.infinity,
-                    fit: BoxFit.contain,
-                  ),
+                child: CustomImageWidget(
+                  imageUrl: imageUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: kIsWeb ? 6.h : 4.h), // Plus d'espace sur web
             Expanded(
               flex: 3,
               child: Column(
@@ -118,7 +79,7 @@ class OnboardingPageWidget extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: kIsWeb ? 3.h : 2.h), // Plus d'espace sur web
                   Flexible(
                     child: Text(
                       description,
