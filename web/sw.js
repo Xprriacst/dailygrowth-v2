@@ -57,6 +57,11 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
+  // Skip non-GET requests to avoid "Request method is not GET" errors
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // Gestion spécifique des images locales pour Safari
   if (event.request.url.includes('/assets/images/')) {
     event.respondWith(
@@ -334,23 +339,33 @@ async function checkAndSendNotifications() {
       const sendType = isCatchup ? 'CATCHUP' : 'SCHEDULED';
       console.log(`[SW] 🚀 SENDING ${sendType} notification for`, userId, 'at', currentTime, isCatchup ? `(was ${targetTime})` : '');
       
-      // Envoyer la notification
-      self.registration.showNotification(title, {
-        body: body,
-        icon: '/icons/Icon-192.png',
-        badge: '/icons/Icon-192.png',
-        tag: `daily-${userId}`,
-        requireInteraction: false,
-        data: {
-          type: 'scheduled_daily',
-          userId: userId,
-          time: time
-        }
-      }).then(() => {
-        console.log('[SW] ✅ Notification sent successfully for', userId);
-      }).catch((error) => {
-        console.error('[SW] ❌ Failed to send notification for', userId, ':', error);
-      });
+      // Vérifier les permissions avant d'envoyer
+      if ('Notification' in self && Notification.permission === 'granted') {
+        console.log('[SW] ✅ Notification permission granted, sending notification...');
+        
+        // Envoyer la notification
+        self.registration.showNotification(title, {
+          body: body,
+          icon: '/icons/Icon-192.png',
+          badge: '/icons/Icon-192.png',
+          tag: `daily-${userId}`,
+          requireInteraction: false,
+          renotify: true,
+          silent: false,
+          data: {
+            type: 'scheduled_daily',
+            userId: userId,
+            time: time
+          }
+        }).then(() => {
+          console.log('[SW] ✅ Notification sent successfully for', userId);
+        }).catch((error) => {
+          console.error('[SW] ❌ Failed to send notification for', userId, ':', error);
+        });
+      } else {
+        console.error('[SW] ❌ Notification permission not granted. Current permission:', 
+          'Notification' in self ? Notification.permission : 'Notification API not available');
+      }
       
       // Marquer comme envoyé aujourd'hui
       notification.lastSent = today;
