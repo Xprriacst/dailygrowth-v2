@@ -60,6 +60,10 @@
   <!-- Development environment variables (local only) -->
   <script src="env.js"></script>
 
+  <!-- Firebase SDK compat for Service Worker and Dart access -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+
   <!-- Firebase Configuration -->
   <script type="module">
     // Import Firebase v9 modules (compatible with older versions)
@@ -77,9 +81,17 @@
       measurementId: "G-BXJW80Y4EF"
     };
 
-    // Initialize Firebase
+    // Initialize Firebase (modern v9+)
     const app = initializeApp(firebaseConfig);
     const messaging = getMessaging(app);
+
+    // Initialize Firebase compat for Dart/Service Worker access
+    if (typeof firebase !== 'undefined') {
+      // Initialize compat if not already done
+      if (firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    }
 
     // Store Firebase objects globally
     window.firebaseApp = app;
