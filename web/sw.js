@@ -266,7 +266,13 @@ function updateAppBadge(count) {
 // MESSAGE HANDLING
 // =============================================================================
 self.addEventListener('message', async function(event) {
-  const data = event.data;
+  let data = event.data;
+  
+  // Handle Dart-to-JS encapsulation (data might be wrapped in {o: actualData})
+  if (data && data.o && typeof data.o === 'object') {
+    data = data.o;
+  }
+  
   console.log('[SW] 📨 Message received:', data?.type || 'unknown', data);
   
   switch (data?.type) {
