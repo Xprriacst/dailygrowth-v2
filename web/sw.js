@@ -1,5 +1,6 @@
 // Service Worker pour PWA DailyGrowth - Safari Optimized
-const CACHE_NAME = 'dailygrowth-safari-v3-' + Date.now();
+const CACHE_VERSION = 'v3.2.0';
+const CACHE_NAME = 'dailygrowth-safari-' + CACHE_VERSION;
 const urlsToCache = [
   '/',
   '/main.dart.js',
@@ -201,6 +202,7 @@ async function loadFromIndexedDB() {
 
 self.addEventListener('message', async function(event) {
   const data = event.data;
+  console.log('[SW] 📨 Message received:', data?.type || 'unknown', data);
   
   if (data && data.type === 'SET_BADGE') {
     const count = data.count;
