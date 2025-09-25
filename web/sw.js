@@ -254,6 +254,28 @@ self.addEventListener('message', async function(event) {
     // Démarrer le système de vérification périodique
     console.log('[SW] 🕐 Starting periodic check system...');
     startPeriodicCheck();
+    
+    // Vérification immédiate pour debug + test de permission
+    console.log('[SW] 🚀 Running immediate check after scheduling...');
+    console.log('[SW] 🔐 Current notification permission:', 
+      'Notification' in self ? Notification.permission : 'API not available');
+    
+    // Test immédiat de notification
+    if ('Notification' in self && Notification.permission === 'granted') {
+      console.log('[SW] 🧪 Sending immediate test notification...');
+      self.registration.showNotification('Test notification', {
+        body: 'Si vous voyez ceci, les notifications fonctionnent !',
+        tag: 'test-notification',
+        requireInteraction: false
+      }).then(() => {
+        console.log('[SW] ✅ Test notification sent successfully');
+      }).catch(e => {
+        console.error('[SW] ❌ Test notification failed:', e);
+      });
+    }
+    
+    setTimeout(() => checkAndSendNotifications(), 1000);
+    
     console.log('[SW] ✅ SCHEDULE_NOTIFICATION processing complete');
   }
   
