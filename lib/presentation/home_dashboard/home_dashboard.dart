@@ -106,6 +106,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       setState(() {
         _isLoadingData = false;
       });
+      
+      // Still show permission dialog even if services failed to initialize
+      _schedulePermissionDialog();
     }
   }
 
