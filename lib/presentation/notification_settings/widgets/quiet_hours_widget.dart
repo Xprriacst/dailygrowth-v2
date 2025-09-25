@@ -31,7 +31,7 @@ class QuietHoursWidget extends StatelessWidget {
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(3.w),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+          color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -70,7 +70,7 @@ class QuietHoursWidget extends StatelessWidget {
                 activeColor: AppTheme.lightTheme.colorScheme.primary,
                 inactiveThumbColor: AppTheme.lightTheme.colorScheme.outline,
                 inactiveTrackColor: AppTheme.lightTheme.colorScheme.outline
-                    .withValues(alpha: 0.3),
+                    .withOpacity(0.3),
               ),
             ],
           ),
@@ -100,7 +100,7 @@ class QuietHoursWidget extends StatelessWidget {
               padding: EdgeInsets.all(3.w),
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.primary
-                    .withValues(alpha: 0.1),
+                    .withOpacity(0.1),
                 borderRadius: BorderRadius.circular(2.w),
               ),
               child: Row(

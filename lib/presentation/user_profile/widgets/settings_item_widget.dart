@@ -37,7 +37,7 @@ class SettingsItemWidget extends StatelessWidget {
                   height: 10.w,
                   decoration: BoxDecoration(
                     color: AppTheme.lightTheme.colorScheme.primary
-                        .withValues(alpha: 0.1),
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: CustomIconWidget(
@@ -94,7 +94,7 @@ class SettingsItemWidget extends StatelessWidget {
             child: Divider(
               height: 1,
               color: AppTheme.lightTheme.colorScheme.outline
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
             ),
           ),
       ],

@@ -66,7 +66,7 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
             height: 0.5.h,
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -129,13 +129,13 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.lightTheme.colorScheme.primary
-                                .withValues(alpha: 0.1)
+                                .withOpacity(0.1)
                             : Colors.transparent,
                         border: Border.all(
                           color: isSelected
                               ? AppTheme.lightTheme.colorScheme.primary
                               : AppTheme.lightTheme.colorScheme.outline
-                                  .withValues(alpha: 0.3),
+                                  .withOpacity(0.3),
                           width: isSelected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -150,7 +150,7 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
                                   ? AppTheme.lightTheme.colorScheme.primary
                                   : AppTheme
                                       .lightTheme.colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.1),
+                                      .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: CustomIconWidget(

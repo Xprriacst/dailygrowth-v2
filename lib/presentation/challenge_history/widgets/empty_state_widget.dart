@@ -25,7 +25,7 @@ class EmptyStateWidget extends StatelessWidget {
               height: 30.h,
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.primary
-                    .withValues(alpha: 0.05),
+                    .withOpacity(0.05),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -34,14 +34,14 @@ class EmptyStateWidget extends StatelessWidget {
                   CustomIconWidget(
                     iconName: 'timeline',
                     color: AppTheme.lightTheme.colorScheme.primary
-                        .withValues(alpha: 0.3),
+                        .withOpacity(0.3),
                     size: 80,
                   ),
                   SizedBox(height: 2.h),
                   CustomIconWidget(
                     iconName: 'star',
                     color: AppTheme.lightTheme.colorScheme.tertiary
-                        .withValues(alpha: 0.4),
+                        .withOpacity(0.4),
                     size: 24,
                   ),
                 ],

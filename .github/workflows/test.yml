@@ -30,11 +30,8 @@ jobs:
     - name: Analyze code
       run: flutter analyze
       
-    - name: Run unit tests with coverage
-      run: flutter test --coverage test/unit/
-      
-    - name: Run integration tests
-      run: flutter test test/integration/
+    - name: Run all tests with coverage
+      run: flutter test --coverage test/
       
     - name: Generate coverage report
       run: |

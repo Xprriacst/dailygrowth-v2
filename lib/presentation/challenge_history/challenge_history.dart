@@ -317,7 +317,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
                   border: Border(
                     bottom: BorderSide(
                       color: AppTheme.lightTheme.colorScheme.outline
-                          .withValues(alpha: 0.1),
+                          .withOpacity(0.1),
                       width: 1,
                     ),
                   ),
@@ -333,7 +333,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: AppTheme.lightTheme.colorScheme.outline
-                                .withValues(alpha: 0.2),
+                                .withOpacity(0.2),
                             width: 1,
                           ),
                         ),
@@ -365,7 +365,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
               //     border: Border(
               //       bottom: BorderSide(
               //         color: AppTheme.lightTheme.colorScheme.outline
-              //             .withValues(alpha: 0.1),
+              //             .withOpacity(0.1),
               //         width: 1,
               //       ),
               //     ),
@@ -529,7 +529,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
             CustomIconWidget(
               iconName: 'search_off',
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               size: 60,
             ),
             SizedBox(height: 3.h),
@@ -545,7 +545,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
               'Essayez de modifier vos critères de recherche ou vos filtres',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.7),
+                        .withOpacity(0.7),
                   ),
               textAlign: TextAlign.center,
             ),
@@ -586,7 +586,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
               height: 0.5.h,
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.outline
-                    .withValues(alpha: 0.3),
+                    .withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

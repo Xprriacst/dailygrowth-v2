@@ -31,14 +31,14 @@ class InspirationalQuoteCardWidget extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.1),
-              AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.05),
+              AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.1),
+              AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.05),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.2),
+                AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -69,7 +69,7 @@ class InspirationalQuoteCardWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppTheme.lightTheme.colorScheme.tertiary
-                          .withValues(alpha: 0.1),
+                          .withOpacity(0.1),
                     ),
                     child: CustomIconWidget(
                       iconName: 'share',
@@ -116,7 +116,7 @@ class InspirationalQuoteCardWidget extends StatelessWidget {
                 'Appuyez longuement pour partager',
                 style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
                   color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.7),
+                      .withOpacity(0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),

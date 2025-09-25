@@ -29,7 +29,7 @@ class TimePickerWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(3.w),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+                AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
             width: 1,
           ),
         ),

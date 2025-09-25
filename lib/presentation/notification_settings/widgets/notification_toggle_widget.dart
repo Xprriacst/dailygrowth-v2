@@ -29,7 +29,7 @@ class NotificationToggleWidget extends StatelessWidget {
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(3.w),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+          color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -69,7 +69,7 @@ class NotificationToggleWidget extends StatelessWidget {
                     activeColor: AppTheme.lightTheme.colorScheme.primary,
                     inactiveThumbColor: AppTheme.lightTheme.colorScheme.outline,
                     inactiveTrackColor: AppTheme.lightTheme.colorScheme.outline
-                        .withValues(alpha: 0.3),
+                        .withOpacity(0.3),
                   ),
             ],
           ),

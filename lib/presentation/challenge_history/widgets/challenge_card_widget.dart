@@ -34,7 +34,7 @@ class ChallengeCardWidget extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
         decoration: BoxDecoration(
           color:
-              AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.1),
+              AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -75,15 +75,15 @@ class ChallengeCardWidget extends StatelessWidget {
             border: Border.all(
               color: isCompleted
                   ? AppTheme.lightTheme.colorScheme.tertiary
-                      .withValues(alpha: 0.3)
+                      .withOpacity(0.3)
                   : AppTheme.lightTheme.colorScheme.outline
-                      .withValues(alpha: 0.2),
+                      .withOpacity(0.2),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: AppTheme.lightTheme.colorScheme.shadow
-                    .withValues(alpha: 0.05),
+                    .withOpacity(0.05),
                 blurRadius: 8,
                 offset: Offset(0, 2),
               ),
@@ -97,7 +97,7 @@ class ChallengeCardWidget extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(2.w),
                     decoration: BoxDecoration(
-                      color: _getDomainColor(domain).withValues(alpha: 0.1),
+                      color: _getDomainColor(domain).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: CustomIconWidget(
@@ -157,7 +157,7 @@ class ChallengeCardWidget extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         decoration: BoxDecoration(
           color:
-              AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.1),
+              AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -184,7 +184,7 @@ class ChallengeCardWidget extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         decoration: BoxDecoration(
           color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-              .withValues(alpha: 0.1),
+              .withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -227,7 +227,7 @@ class ChallengeCardWidget extends StatelessWidget {
               height: 0.5.h,
               decoration: BoxDecoration(
                 color: AppTheme.lightTheme.colorScheme.outline
-                    .withValues(alpha: 0.3),
+                    .withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

@@ -27,20 +27,20 @@ class LifeDomainCardWidget extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1)
+              ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
               : AppTheme.lightTheme.colorScheme.surface,
           border: Border.all(
             color: isSelected
                 ? AppTheme.lightTheme.colorScheme.primary
                 : AppTheme.lightTheme.colorScheme.outline
-                    .withValues(alpha: 0.3),
+                    .withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: AppTheme.lightTheme.colorScheme.shadow
-                  .withValues(alpha: 0.05),
+                  .withOpacity(0.05),
               blurRadius: 4,
               offset: Offset(0, 2),
             ),
@@ -54,7 +54,7 @@ class LifeDomainCardWidget extends StatelessWidget {
                 color: isSelected
                     ? AppTheme.lightTheme.colorScheme.primary
                     : AppTheme.lightTheme.colorScheme.primary
-                        .withValues(alpha: 0.1),
+                        .withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: CustomIconWidget(

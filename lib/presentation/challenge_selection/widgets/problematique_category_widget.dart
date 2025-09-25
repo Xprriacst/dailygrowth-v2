@@ -27,10 +27,10 @@ class ProblematiqueCategory extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
           decoration: BoxDecoration(
-            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+            color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
+              color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
               width: 1,
             ),
           ),

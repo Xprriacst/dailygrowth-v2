@@ -72,7 +72,7 @@ class _WeeklyChartWidgetState extends State<WeeklyChartWidget> {
                                       ? Colors.white
                                       : AppTheme
                                           .lightTheme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
+                                          .withOpacity(0.5),
                                   size: 4.w))),
                       SizedBox(width: 2.w),
                       GestureDetector(
@@ -105,7 +105,7 @@ class _WeeklyChartWidgetState extends State<WeeklyChartWidget> {
                                       ? Colors.white
                                       : AppTheme
                                           .lightTheme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
+                                          .withOpacity(0.5),
                                   size: 4.w))),
                     ]),
                   ])),
@@ -131,7 +131,7 @@ class _WeeklyChartWidgetState extends State<WeeklyChartWidget> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
+                                  color: Colors.black.withOpacity(0.05),
                                   blurRadius: 8,
                                   offset: Offset(0, 2)),
                             ]),
@@ -142,7 +142,7 @@ class _WeeklyChartWidgetState extends State<WeeklyChartWidget> {
                                   fontWeight: FontWeight.w500,
                                   color: AppTheme
                                       .lightTheme.colorScheme.onSurface
-                                      .withValues(alpha: 0.7))),
+                                      .withOpacity(0.7))),
                           SizedBox(height: 2.h),
                           Expanded(
                               child: BarChart(BarChartData(
@@ -200,8 +200,7 @@ class _WeeklyChartWidgetState extends State<WeeklyChartWidget> {
                                                                 .lightTheme
                                                                 .colorScheme
                                                                 .onSurface
-                                                                .withValues(
-                                                                    alpha: 0.6),
+                                                                .withOpacity(0.6),
                                                             fontWeight:
                                                                 FontWeight.w500,
                                                             fontSize: 11.sp)));

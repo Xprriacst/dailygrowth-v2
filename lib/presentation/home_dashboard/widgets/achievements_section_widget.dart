@@ -66,7 +66,7 @@ class AchievementsSectionWidget extends StatelessWidget {
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+          color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -74,7 +74,7 @@ class AchievementsSectionWidget extends StatelessWidget {
           CustomIconWidget(
             iconName: 'emoji_events',
             color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                .withValues(alpha: 0.5),
+                .withOpacity(0.5),
             size: 12.w,
           ),
           SizedBox(height: 2.h),
@@ -99,14 +99,14 @@ class AchievementsSectionWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.05),
+                AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
         ],
         border: Border.all(
           color:
-              AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.2),
+              AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.2),
         ),
       ),
       child: Row(
@@ -121,7 +121,7 @@ class AchievementsSectionWidget extends StatelessWidget {
                 colors: [
                   AppTheme.lightTheme.colorScheme.tertiary,
                   AppTheme.lightTheme.colorScheme.tertiary
-                      .withValues(alpha: 0.7),
+                      .withOpacity(0.7),
                 ],
               ),
             ),
@@ -165,7 +165,7 @@ class AchievementsSectionWidget extends StatelessWidget {
             achievement['date'] as String? ?? '',
             style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                  .withValues(alpha: 0.7),
+                  .withOpacity(0.7),
             ),
           ),
         ],

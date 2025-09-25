@@ -70,12 +70,12 @@ class _StreakCounterWidgetState extends State<StreakCounterWidget>
               ? [
                   AppTheme.lightTheme.colorScheme.primary,
                   AppTheme.lightTheme.colorScheme.primary
-                      .withValues(alpha: 0.8),
+                      .withOpacity(0.8),
                 ]
               : [
                   AppTheme.lightTheme.colorScheme.surface,
                   AppTheme.lightTheme.colorScheme.surface
-                      .withValues(alpha: 0.9),
+                      .withOpacity(0.9),
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -84,8 +84,8 @@ class _StreakCounterWidgetState extends State<StreakCounterWidget>
         boxShadow: [
           BoxShadow(
             color: widget.isActive
-                ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.1),
+                ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3)
+                : Colors.black.withOpacity(0.1),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -108,7 +108,7 @@ class _StreakCounterWidgetState extends State<StreakCounterWidget>
                         color: widget.isActive
                             ? Colors.orange[600]!
                             : AppTheme.lightTheme.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
+                                .withOpacity(0.6),
                         size: 8.w,
                       ),
                     ),
@@ -135,9 +135,9 @@ class _StreakCounterWidgetState extends State<StreakCounterWidget>
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: widget.isActive
-                  ? Colors.white.withValues(alpha: 0.9)
+                  ? Colors.white.withOpacity(0.9)
                   : AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.7),
+                      .withOpacity(0.7),
             ),
           ),
         ],

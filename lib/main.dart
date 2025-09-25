@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
@@ -69,10 +70,10 @@ class _MyAppState extends State<MyApp> {
         try {
           debugPrint('Auth state changed: ${data.event}');
 
-          if (data.event == 'signedIn' || data.event == 'tokenRefreshed') {
+          if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
             debugPrint('User signed in successfully via deep link or normal flow');
             // Navigation will be handled by individual screens or AuthGuard
-          } else if (data.event == 'signedOut') {
+          } else if (data.event == AuthChangeEvent.signedOut) {
             debugPrint('User signed out');
           }
         } catch (e) {

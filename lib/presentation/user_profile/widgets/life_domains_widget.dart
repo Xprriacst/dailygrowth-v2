@@ -54,11 +54,11 @@ class LifeDomainsWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color: AppTheme.lightTheme.colorScheme.primary
-                      .withValues(alpha: 0.1),
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: AppTheme.lightTheme.colorScheme.primary
-                        .withValues(alpha: 0.3),
+                        .withOpacity(0.3),
                   ),
                 ),
                 child: Text(
