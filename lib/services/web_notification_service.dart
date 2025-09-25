@@ -240,28 +240,15 @@ class WebNotificationService {
     try {
       debugPrint('🔑 Getting FCM token (web)');
       
-      if (js.context.hasProperty('firebase')) {
-        var messaging = js_util.callMethod(js.context['firebase'], 'messaging', []);
-        
-        // Get token with VAPID key
-        var tokenPromise = js_util.callMethod(messaging, 'getToken', [js_util.jsify({
-          'vapidKey': 'BK8nJ9nGpY3GGhxJ1m0-7qh1DjQc9dOZGQ0VrT-GhzCWrBkP4n4qg6bNQdZFqz-3Gi9nJ_dO5l-7zZlg3l9sZ0M'
-        })]);
-        
-        var token = await js_util.promiseToFuture(tokenPromise);
-        
-        if (token != null) {
-          _fcmToken = token.toString();
-          debugPrint('🔑 FCM Token récupéré: ${_fcmToken!.substring(0, 20)}...');
-          return _fcmToken;
-        } else {
-          debugPrint('⚠️ No FCM token available');
-          return null;
-        }
-      } else {
-        debugPrint('⚠️ Firebase not available for FCM token');
-        return 'web-fcm-token-placeholder';
+      // Try to get FCM token from localStorage (saved by Firebase JS)
+      final token = html.window.localStorage['fcm_token'];
+      if (token != null && token.isNotEmpty) {
+        debugPrint('🔑 FCM Token récupéré: ${token.substring(0, 20)}...');
+        return token;
       }
+      
+      debugPrint('⚠️ No FCM token in localStorage');
+      return null;
     } catch (e) {
       debugPrint('❌ Error getting FCM token: $e');
       return null;
@@ -269,30 +256,113 @@ class WebNotificationService {
   }
 
   Future<String?> generateFCMToken() async {
-    return await getFCMToken();
+    if (!kIsWeb) return null;
+    
+    try {
+      debugPrint('🔍 Attempting to generate FCM token...');
+      
+      // Use JavaScript eval for token generation (working approach from development)
+      final result = js.context.callMethod('eval', ['''
+        (function() {
+          console.log('🔥 Starting FCM token generation...');
+          
+          if (window.firebaseApp && window.firebaseMessaging && window.firebaseVapidKey) {
+            console.log('✅ All Firebase objects present');
+            
+            return window.firebaseMessaging.getToken({
+              vapidKey: window.firebaseVapidKey
+            }).then(function(token) {
+              if (token) {
+                console.log('🔑 FCM Token generated:', token.substring(0, 20) + '...');
+                localStorage.setItem('fcm_token', token);
+                return token;
+              } else {
+                console.log('⚠️ No registration token available');
+                return null;
+              }
+            }).catch(function(error) {
+              console.error('❌ Error generating token:', error);
+              return null;
+            });
+          } else {
+            console.log('❌ Firebase objects missing');
+            return Promise.resolve(null);
+          }
+        })()
+      ''']);
+      
+      if (result != null) {
+        final token = await js_util.promiseToFuture(result);
+        if (token != null && token.toString().isNotEmpty) {
+          debugPrint('✅ FCM Token successfully generated: ${token.toString().substring(0, 20)}...');
+          return token.toString();
+        }
+      }
+      
+      debugPrint('⚠️ Token generation failed');
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error generating FCM token: $e');
+      return null;
+    }
   }
 
   Future<String?> forceFCMTokenGeneration() async {
     if (!kIsWeb) return null;
     
     try {
-      debugPrint('🔑 Force generating FCM token (web)');
+      debugPrint('🚀 FORCE: Attempting to generate FCM token...');
       
-      if (js.context.hasProperty('firebase')) {
-        var messaging = js_util.callMethod(js.context['firebase'], 'messaging', []);
-        
-        // Delete existing token first
-        await js_util.promiseToFuture(js_util.callMethod(messaging, 'deleteToken', []));
-        debugPrint('🗑️ Old FCM token deleted');
-        
-        // Generate new token
-        return await getFCMToken();
-      } else {
-        debugPrint('⚠️ Firebase not available for FCM token generation');
-        return 'web-fcm-token-forced';
+      // Clear existing token first
+      html.window.localStorage.remove('fcm_token');
+      
+      // Generate new token with force flag
+      final result = js.context.callMethod('eval', ['''
+        (function() {
+          console.log('🚀 FORCE FCM Token Generation Started');
+          
+          if (window.firebaseApp && window.firebaseMessaging && window.firebaseVapidKey) {
+            console.log('✅ All Firebase objects present');
+            
+            // Delete existing registration first
+            return window.firebaseMessaging.deleteToken().then(function() {
+              console.log('🗑️ Old token deleted');
+              
+              return window.firebaseMessaging.getToken({
+                vapidKey: window.firebaseVapidKey
+              }).then(function(token) {
+                if (token) {
+                  console.log('🎉 FORCE: New FCM Token generated:', token.substring(0, 20) + '...');
+                  localStorage.setItem('fcm_token', token);
+                  return token;
+                } else {
+                  console.log('⚠️ FORCE: No token available');
+                  return null;
+                }
+              });
+            }).catch(function(error) {
+              console.error('❌ FORCE: Error:', error);
+              return null;
+            });
+          } else {
+            console.log('❌ FORCE: Firebase objects missing');
+            return Promise.resolve(null);
+          }
+        })()
+      ''']);
+      
+      if (result != null) {
+        final token = await js_util.promiseToFuture(result);
+        if (token != null && token.toString().isNotEmpty) {
+          debugPrint('🎉 FORCE: FCM Token successfully generated: ${token.toString().substring(0, 20)}...');
+          return token.toString();
+        }
       }
+      
+      debugPrint('⚠️ FORCE: Token generation failed');
+      return null;
     } catch (e) {
-      debugPrint('❌ Error force generating FCM token: $e');
+      debugPrint('❌ FORCE: Error generating FCM token: $e');
       return null;
     }
   }
@@ -369,27 +439,26 @@ class WebNotificationService {
     try {
       debugPrint('📨 Sending message to service worker: $message');
       
-      // Get service worker registration
-      var serviceWorkerContainer = js_util.getProperty(html.window.navigator, 'serviceWorker');
-      if (serviceWorkerContainer != null) {
-        var registration = await js_util.promiseToFuture(
-          js_util.callMethod(serviceWorkerContainer, 'ready', [])
-        );
-        
-        if (registration != null) {
-          var activeWorker = js_util.getProperty(registration, 'active');
-          if (activeWorker != null) {
-            js_util.callMethod(activeWorker, 'postMessage', [js_util.jsify(message)]);
-            debugPrint('📨 Message sent to service worker successfully');
+      // Simple approach using JavaScript eval (working method from development)
+      js.context.callMethod('eval', ['''
+        (function() {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(function(registration) {
+              if (registration.active) {
+                registration.active.postMessage(${js.context['JSON'].callMethod('stringify', [js_util.jsify(message)])});
+                console.log('📨 Message sent to service worker successfully');
+              } else {
+                console.log('⚠️ No active service worker found');
+              }
+            }).catch(function(error) {
+              console.error('❌ Error sending message to service worker:', error);
+            });
           } else {
-            debugPrint('⚠️ No active service worker found');
+            console.log('⚠️ Service worker not supported');
           }
-        } else {
-          debugPrint('⚠️ Service worker not registered');
-        }
-      } else {
-        debugPrint('⚠️ Service worker not supported');
-      }
+        })()
+      ''']);
+      
     } catch (e) {
       debugPrint('❌ Error sending message to service worker: $e');
     }
