@@ -154,62 +154,63 @@ class WebNotificationService {
   }
 
   Future<void> showChallengeNotification({
-    required String title,
-    required String body,
+    String? title,
+    String? body,
     String? icon,
     Map<String, dynamic>? data,
     String? challengeName,
     String? challengeId,
   }) async {
     await showNotification(
-      title: title,
-      body: body,
+      title: title ?? challengeName ?? 'Nouveau défi',
+      body: body ?? 'Un nouveau défi vous attend !',
       icon: icon,
       data: data,
     );
   }
 
   Future<void> showReminderNotification({
-    required String title,
-    required String body,
+    String? title,
+    String? body,
     String? icon,
     Map<String, dynamic>? data,
     String? userName,
   }) async {
     await showNotification(
-      title: title,
-      body: body,
+      title: title ?? 'Rappel DailyGrowth',
+      body: body ?? 'N\'oubliez pas votre défi du jour ${userName ?? ''}!',
       icon: icon,
       data: data,
     );
   }
 
   Future<void> showAchievementNotification({
-    required String title,
-    required String body,
+    String? title,
+    String? body,
     String? icon,
     Map<String, dynamic>? data,
     String? achievementName,
     String? description,
+    int? pointsEarned,
   }) async {
     await showNotification(
-      title: title,
-      body: body,
+      title: title ?? 'Succès débloqué !',
+      body: body ?? description ?? achievementName ?? 'Félicitations pour votre progression ! ${pointsEarned != null ? '+$pointsEarned points' : ''}',
       icon: icon,
       data: data,
     );
   }
 
   Future<void> showStreakNotification({
-    required String title,
-    required String body,
+    String? title,
+    String? body,
     String? icon,
     Map<String, dynamic>? data,
     int? streakCount,
   }) async {
     await showNotification(
-      title: title,
-      body: body,
+      title: title ?? 'Série en cours !',
+      body: body ?? 'Vous avez ${streakCount ?? 0} jours consécutifs !',
       icon: icon,
       data: data,
     );
