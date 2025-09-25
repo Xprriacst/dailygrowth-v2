@@ -40,8 +40,9 @@ class WebNotificationService {
       // Initialize Firebase in the main thread (for foreground messages)
       await _initializeFirebase();
       
-      // Request notification permission
-      _permission = await requestPermission();
+      // Check current permission without requesting (avoid user gesture error)
+      _permission = html.Notification.permission;
+      debugPrint('🔔 Current notification permission: $_permission');
       
       _isInitialized = true;
       debugPrint('✅ WebNotificationService initialized with Firebase FCM');
@@ -440,12 +441,16 @@ class WebNotificationService {
       debugPrint('📨 Sending message to service worker: $message');
       
       // Simple approach using JavaScript eval (working method from development)
+      final messageJson = js.context['JSON'].callMethod('stringify', [js_util.jsify(message)]);
       js.context.callMethod('eval', ['''
         (function() {
+          var message = $messageJson;
+          console.log('📨 About to send message:', message);
+          
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(function(registration) {
               if (registration.active) {
-                registration.active.postMessage(${js.context['JSON'].callMethod('stringify', [js_util.jsify(message)])});
+                registration.active.postMessage(message);
                 console.log('📨 Message sent to service worker successfully');
               } else {
                 console.log('⚠️ No active service worker found');
