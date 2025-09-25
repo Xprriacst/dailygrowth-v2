@@ -41,14 +41,24 @@ class WebNotificationService {
       await _initializeFirebase();
       
       // Check current permission without requesting (avoid user gesture error)
-      _permission = html.Notification.permission;
-      debugPrint('🔔 Current notification permission: $_permission');
+      if (_isNotificationSupported()) {
+        _permission = html.Notification.permission;
+        debugPrint('🔔 Current notification permission: $_permission');
+      } else {
+        _permission = 'denied';
+        debugPrint('⚠️ Notifications not supported on this browser');
+      }
       
       _isInitialized = true;
       debugPrint('✅ WebNotificationService initialized with Firebase FCM');
     } catch (e) {
       debugPrint('❌ Failed to initialize WebNotificationService: $e');
     }
+  }
+
+  Future<bool> shouldShowPermissionDialog() async {
+    if (!kIsWeb) return false;
+    return _permission == 'default' && _isNotificationSupported();
   }
 
   Future<void> _initializeFirebase() async {

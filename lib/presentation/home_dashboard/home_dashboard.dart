@@ -14,6 +14,8 @@ import '../../services/user_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/gamification_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/web_notification_service.dart';
+import '../../widgets/notification_permission_dialog.dart';
 import './widgets/achievements_section_widget.dart';
 import './widgets/bottom_navigation_widget.dart';
 import './widgets/daily_challenge_card_widget.dart';
@@ -96,6 +98,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       setState(() {
         _isLoadingData = false;
       });
+
+      // Show notification permission dialog if needed (after UI is ready)
+      _schedulePermissionDialog();
     } catch (e) {
       debugPrint('Failed to initialize services: $e');
       setState(() {
@@ -712,6 +717,35 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     // Auto-dismiss après 2 secondes
     Timer(const Duration(seconds: 2), () {
       overlayEntry.remove();
+    });
+  }
+
+  /// Schedule the notification permission dialog to show after the UI is fully rendered
+  void _schedulePermissionDialog() {
+    // Wait a bit for the UI to settle, then show the dialog if needed
+    Timer(const Duration(milliseconds: 1500), () async {
+      if (!mounted) return;
+      
+      try {
+        final webNotificationService = WebNotificationService();
+        final shouldShow = await webNotificationService.shouldShowPermissionDialog();
+        
+        if (shouldShow && mounted) {
+          await NotificationPermissionDialog.showIfNeeded(
+            context,
+            onPermissionGranted: () {
+              debugPrint('🎉 User granted notification permission from home dialog');
+              // Optionally refresh notification settings or update UI
+            },
+            onPermissionDenied: () {
+              debugPrint('😔 User denied notification permission from home dialog');
+              // Could show alternative engagement strategy
+            },
+          );
+        }
+      } catch (e) {
+        debugPrint('❌ Error checking/showing permission dialog: $e');
+      }
     });
   }
 }
