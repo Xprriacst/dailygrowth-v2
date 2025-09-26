@@ -373,11 +373,18 @@ class WebNotificationService {
       ]);
 
       if (result != null) {
-        final token = await js_util.promiseToFuture(result);
-        if (token != null && token.toString().isNotEmpty) {
+        dynamic resolvedResult;
+        try {
+          resolvedResult = await js_util.promiseToFuture(result);
+        } catch (_) {
+          resolvedResult = result;
+        }
+
+        if (resolvedResult != null && resolvedResult.toString().isNotEmpty) {
+          final tokenString = resolvedResult.toString();
           debugPrint(
-              '✅ FCM Token successfully generated: ${token.toString().substring(0, 20)}...');
-          return token.toString();
+              '✅ FCM Token successfully generated: ${tokenString.substring(0, 20)}...');
+          return tokenString;
         }
       }
 
@@ -465,11 +472,18 @@ class WebNotificationService {
       ]);
 
       if (result != null) {
-        final token = await js_util.promiseToFuture(result);
-        if (token != null && token.toString().isNotEmpty) {
+        dynamic resolvedResult;
+        try {
+          resolvedResult = await js_util.promiseToFuture(result);
+        } catch (_) {
+          resolvedResult = result;
+        }
+
+        if (resolvedResult != null && resolvedResult.toString().isNotEmpty) {
+          final tokenString = resolvedResult.toString();
           debugPrint(
-              '🎉 FORCE: FCM Token successfully generated: ${token.toString().substring(0, 20)}...');
-          return token.toString();
+              '🎉 FORCE: FCM Token successfully generated: ${tokenString.substring(0, 20)}...');
+          return tokenString;
         }
       }
 
