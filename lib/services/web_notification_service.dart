@@ -345,7 +345,9 @@ class WebNotificationService {
                 return null;
               }
 
-              const token = await window.firebaseMessaging.getToken({
+              const { getToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+
+              const token = await getToken(window.firebaseMessaging, {
                 vapidKey: window.firebaseVapidKey,
                 serviceWorkerRegistration: registration
               });
@@ -430,8 +432,10 @@ class WebNotificationService {
               return null;
             }
 
+            const { getToken, deleteToken } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js');
+
             try {
-              await window.firebaseMessaging.deleteToken({
+              await deleteToken(window.firebaseMessaging, {
                 serviceWorkerRegistration: registration
               });
               console.log("🗑️ FORCE: Existing token deleted");
@@ -439,7 +443,7 @@ class WebNotificationService {
               console.warn("⚠️ FORCE: Unable to delete existing token", deleteError);
             }
 
-            const token = await window.firebaseMessaging.getToken({
+            const token = await getToken(window.firebaseMessaging, {
               vapidKey: window.firebaseVapidKey,
               serviceWorkerRegistration: registration
             });
