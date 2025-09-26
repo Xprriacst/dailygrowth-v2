@@ -335,13 +335,16 @@ async function handleScheduleNotification(data) {
     console.error('[SW] ❌ Error saving fallback notifications:', e);
   }
   
-  // Start periodic check for fallback
+  // Start periodic check for fallback even if Firebase is available.
+  // Firebase push will still take priority, but this guarantees a local reminder
+  // if no remote push is sent at the scheduled time.
   if (!firebaseInitialized) {
     console.log('[SW] 🔄 Firebase not available, starting local fallback system');
-    startPeriodicCheck();
   } else {
     console.log('[SW] ✅ Firebase available, push notifications preferred over local fallback');
   }
+
+  startPeriodicCheck();
 }
 
 function handleCancelNotification(data) {
