@@ -14,7 +14,10 @@ serve(async (req) => {
 
   try {
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseUrl = Deno.env.get('PROJECT_URL') ?? Deno.env.get('SUPABASE_URL')
+    if (!supabaseUrl) {
+      throw new Error('Missing Supabase URL in environment (PROJECT_URL)')
+    }
     const supabaseServiceKey = Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     if (!supabaseServiceKey) {
       throw new Error('Missing service role key in environment (SERVICE_ROLE_KEY)')
