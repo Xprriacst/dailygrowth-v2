@@ -58,6 +58,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
   DateTimeRange? _selectedDateRange;
   bool _showBackToTop = false;
   bool _isLoading = false;
+  bool _isRefreshing = false;
   String _userId = '';
 
   // Real data from database instead of mock data

@@ -31,6 +31,7 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateMixin {
   int _currentBottomNavIndex = 0;
   bool _isChallengeCompleted = false;
+  bool _isRefreshing = false;
   bool _isLoadingData = true;
 
   // Real user data from database

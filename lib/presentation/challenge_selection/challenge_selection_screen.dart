@@ -26,6 +26,7 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
   ChallengeProblematique? _selectedProblematique;
   Map<String, dynamic>? _generatedChallenges;
   bool _isGenerating = false;
+  String? _errorMessage;
   
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
