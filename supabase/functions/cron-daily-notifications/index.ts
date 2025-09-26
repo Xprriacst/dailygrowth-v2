@@ -33,7 +33,10 @@ serve(async (req) => {
 
     // Call the main daily notifications function
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseServiceKey = Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (!supabaseServiceKey) {
+      throw new Error('Missing service role key in environment (SERVICE_ROLE_KEY)')
+    }
     
     const response = await fetch(`${supabaseUrl}/functions/v1/send-daily-notifications`, {
       method: 'POST',
