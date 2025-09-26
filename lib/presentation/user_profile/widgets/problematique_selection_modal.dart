@@ -27,7 +27,7 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
     _selectedProblematique = widget.selectedProblematique;
   }
 
-  // Mapping des catégories vers des icônes
+  // Mapping des catégories vers des icônes (gardé pour compatibilité mais on utilisera les emojis)
   String getCategoryIcon(String category) {
     switch (category) {
       case 'Mental & émotionnel':
@@ -109,82 +109,121 @@ class _ProblematiqueSelectionModalState extends State<ProblematiqueSelectionModa
           SizedBox(height: 4.h),
           Expanded(
             child: ListView.builder(
-              itemCount: ChallengeProblematique.allProblematiques.length,
-              itemBuilder: (context, index) {
-                final problematique = ChallengeProblematique.allProblematiques[index];
-                final isSelected = _selectedProblematique == problematique.description;
-                final categoryIcon = getCategoryIcon(problematique.category);
-
-                return Container(
-                  margin: EdgeInsets.only(bottom: 2.h),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedProblematique = problematique.description;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: EdgeInsets.all(4.w),
+              itemCount: ChallengeProblematique.allCategories.length,
+              itemBuilder: (context, categoryIndex) {
+                final category = ChallengeProblematique.allCategories[categoryIndex];
+                final problematiques = ChallengeProblematique.getByCategory(category);
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // En-tête de catégorie
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                      margin: EdgeInsets.only(bottom: 2.h, top: categoryIndex > 0 ? 3.h : 0),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.lightTheme.colorScheme.primary
-                                .withOpacity(0.1)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.lightTheme.colorScheme.primary
-                              : AppTheme.lightTheme.colorScheme.outline
-                                  .withOpacity(0.3),
-                          width: isSelected ? 2 : 1,
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                            AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
+                          width: 1,
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 12.w,
-                            height: 12.w,
+                      child: Text(
+                        category,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    
+                    // Liste des problématiques de cette catégorie
+                    ...problematiques.map((problematique) {
+                      final isSelected = _selectedProblematique == problematique.description;
+                      
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 2.h),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _selectedProblematique = problematique.description;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppTheme.lightTheme.colorScheme.primary
-                                  : AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant
-                                      .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: CustomIconWidget(
-                              iconName: categoryIcon,
-                              color: isSelected
-                                  ? AppTheme.lightTheme.colorScheme.onPrimary
-                                  : AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant,
-                              size: 6.w,
-                            ),
-                          ),
-                          SizedBox(width: 4.w),
-                          Expanded(
-                            child: Text(
-                              problematique.title,
-                              style: AppTheme.lightTheme.textTheme.bodyLarge
-                                  ?.copyWith(
-                                fontWeight: FontWeight.w500,
+                                      .withOpacity(0.1)
+                                  : Colors.transparent,
+                              border: Border.all(
                                 color: isSelected
                                     ? AppTheme.lightTheme.colorScheme.primary
-                                    : AppTheme.lightTheme.colorScheme.onSurface,
+                                    : AppTheme.lightTheme.colorScheme.outline
+                                        .withOpacity(0.3),
+                                width: isSelected ? 2 : 1,
                               ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 12.w,
+                                  height: 12.w,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
+                                        : AppTheme
+                                            .lightTheme.colorScheme.onSurfaceVariant
+                                            .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      problematique.emoji,
+                                      style: TextStyle(
+                                        fontSize: 20.sp,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 4.w),
+                                Expanded(
+                                  child: Text(
+                                    problematique.title,
+                                    style: AppTheme.lightTheme.textTheme.bodyLarge
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: isSelected
+                                          ? AppTheme.lightTheme.colorScheme.primary
+                                          : AppTheme.lightTheme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: AppTheme.lightTheme.colorScheme.primary,
+                                    size: 6.w,
+                                  ),
+                              ],
                             ),
                           ),
-                          if (isSelected)
-                            CustomIconWidget(
-                              iconName: 'check_circle',
-                              color: AppTheme.lightTheme.colorScheme.primary,
-                              size: 6.w,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
                 );
               },
             ),
