@@ -12,61 +12,62 @@ serve(async (req) => {
   }
 
   try {
-    // Check authorization header (allow anon key for testing)
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ 
-          code: 401, 
-          message: 'Missing authorization header',
-          hint: 'Add Authorization: Bearer YOUR_SUPABASE_KEY' 
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-    // Get the current time in various timezones
     const now = new Date()
     console.log(`🕐 Cron job triggered at: ${now.toISOString()}`)
 
-    // Call the main daily notifications function
     const supabaseUrl = Deno.env.get('PROJECT_URL') ?? Deno.env.get('SUPABASE_URL')
     if (!supabaseUrl) {
       throw new Error('Missing Supabase URL in environment (PROJECT_URL)')
     }
-    const supabaseServiceKey = Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (!supabaseServiceKey) {
+
+    const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (!serviceRoleKey) {
       throw new Error('Missing service role key in environment (SERVICE_ROLE_KEY)')
     }
-    
+
+    console.log('📧 Triggering send-daily-notifications edge function...')
+
     const response = await fetch(`${supabaseUrl}/functions/v1/send-daily-notifications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Authorization': `Bearer ${serviceRoleKey}`,
       },
       body: JSON.stringify({
         trigger: 'cron',
-        timestamp: now.toISOString()
-      })
+        timestamp: now.toISOString(),
+      }),
     })
 
     const result = await response.json()
 
-    console.log(`📊 Cron job result:`, result)
+    if (!response.ok) {
+      console.error('❌ Cron job error:', result)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: result,
+          timestamp: now.toISOString(),
+        }),
+        {
+          status: response.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
+
+    console.log('📊 Cron job result:', result)
 
     return new Response(
       JSON.stringify({
         success: true,
         timestamp: now.toISOString(),
-        result: result
+        result,
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
 
   } catch (error) {

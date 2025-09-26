@@ -38,6 +38,12 @@ let periodicCheckInterval = null;
 let messaging = null;
 let firebaseInitialized = false;
 
+// Detect push capability to decide whether local fallback should run
+const pushApiSupported = 'PushManager' in self && typeof self.registration !== 'undefined' && !!self.registration.pushManager;
+const fallbackEnabled = !pushApiSupported;
+
+console.log('[SW] 🧭 Push API supported:', pushApiSupported, '| Fallback enabled:', fallbackEnabled);
+
 // =============================================================================
 // FIREBASE INITIALIZATION
 // =============================================================================
@@ -312,6 +318,17 @@ self.addEventListener('message', async function(event) {
 // =============================================================================
 async function handleScheduleNotification(data) {
   const { userId, time, title, body } = data;
+
+  if (!fallbackEnabled) {
+    console.log('[SW] ⏭️ Push supported, ignoring fallback scheduling for', userId);
+    return;
+  }
+
+  if (firebaseInitialized) {
+    console.log('[SW] ✅ Firebase available, skipping local fallback scheduling for', userId);
+    return;
+  }
+
   console.log('[SW] 📅 Scheduling fallback notification:', {
     userId, time, title: title?.substring(0, 30) + '...'
   });
@@ -335,20 +352,17 @@ async function handleScheduleNotification(data) {
     console.error('[SW] ❌ Error saving fallback notifications:', e);
   }
   
-  // Start periodic check for fallback even if Firebase is available.
-  // Firebase push will still take priority, but this guarantees a local reminder
-  // if no remote push is sent at the scheduled time.
-  if (!firebaseInitialized) {
-    console.log('[SW] 🔄 Firebase not available, starting local fallback system');
-  } else {
-    console.log('[SW] ✅ Firebase available, push notifications preferred over local fallback');
-  }
-
+  console.log('[SW] 🔄 Firebase not available, starting local fallback system');
   startPeriodicCheck();
 }
 
 function handleCancelNotification(data) {
   const { userId } = data;
+
+  if (!fallbackEnabled) {
+    return;
+  }
+
   scheduledNotifications.delete(userId);
   console.log('[SW] ❌ Cancelled fallback notification for:', userId);
 }
@@ -357,6 +371,11 @@ function handleCancelNotification(data) {
 // PERIODIC CHECK (FALLBACK ONLY)
 // =============================================================================
 function startPeriodicCheck() {
+  if (!fallbackEnabled) {
+    console.log('[SW] ⏭️ Fallback disabled, periodic check will not start');
+    return;
+  }
+
   if (periodicCheckInterval) {
     console.log('[SW] ⏰ Periodic check already running');
     return;
@@ -371,6 +390,10 @@ function startPeriodicCheck() {
 }
 
 async function checkAndSendFallbackNotifications() {
+  if (!fallbackEnabled) {
+    return;
+  }
+
   const now = new Date();
   const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   const today = now.toDateString();
@@ -507,6 +530,21 @@ async function restoreScheduledNotifications() {
   
   try {
     const stored = await loadFromIndexedDB();
+
+    if (!fallbackEnabled) {
+      if (stored && stored.length > 0) {
+        scheduledNotifications = new Map();
+        console.log('[SW] ⏭️ Fallback disabled (push supported); clearing stored fallback notifications');
+        try {
+          await saveToIndexedDB([]);
+        } catch (cleanupError) {
+          console.error('[SW] ❌ Error clearing stored fallback notifications:', cleanupError);
+        }
+      } else {
+        console.log('[SW] ⏭️ Fallback disabled (push supported); nothing to restore');
+      }
+      return;
+    }
     
     if (stored) {
       scheduledNotifications = new Map(stored);
