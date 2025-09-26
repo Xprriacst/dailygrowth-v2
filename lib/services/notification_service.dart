@@ -354,6 +354,7 @@ class NotificationService {
 
       // Get FCM token if notifications are enabled and we're on web
       String? fcmToken;
+      final timezoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
       if (notificationsEnabled && kIsWeb) {
         try {
           final webNotificationService = WebNotificationService();
@@ -386,6 +387,7 @@ class NotificationService {
         'notification_time': notificationTime,
         'notifications_enabled': notificationsEnabled,
         'reminder_notifications_enabled': reminderNotificationsEnabled,
+        'notification_timezone_offset_minutes': timezoneOffsetMinutes,
       };
 
       if (fcmToken != null) {

@@ -30,7 +30,7 @@ serve(async (req) => {
     // We'll check each user's timezone and notification time individually
     const { data: users, error: usersError } = await supabase
       .from('user_profiles')
-      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time')
+      .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time, notification_timezone_offset_minutes, last_notification_sent_at')
       .eq('notifications_enabled', true)
       .not('fcm_token', 'is', null)
 
@@ -58,39 +58,45 @@ serve(async (req) => {
         // Parse user's preferred notification time
         const notificationTime = user.notification_time || '09:00:00'
         const [hours, minutes] = notificationTime.split(':').map(Number)
-        const userNotificationTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-        
-        // Convert user's local time (France/Paris) to UTC properly
-        // Create a date object for today at the user's notification time in Paris timezone
-        const today = new Date()
-        const parisTime = new Date(today.toLocaleString("en-US", {timeZone: "Europe/Paris"}))
-        const utcTime = new Date(today.toLocaleString("en-US", {timeZone: "UTC"}))
-        
-        // Calculate timezone offset (in minutes)
-        const timezoneOffsetMinutes = (parisTime.getTime() - utcTime.getTime()) / (1000 * 60)
-        
-        // Create target time in Paris
-        const targetParis = new Date()
-        targetParis.setHours(hours, minutes, 0, 0)
-        
-        // Convert to UTC by subtracting the timezone offset
-        const targetUTC = new Date(targetParis.getTime() - timezoneOffsetMinutes * 60 * 1000)
-        const utcTargetHours = targetUTC.getUTCHours()
-        const utcTargetMinutes = targetUTC.getUTCMinutes()
-        
-        const utcTargetTotalMinutes = utcTargetHours * 60 + utcTargetMinutes
+        const userNotificationTime = `${hours.toString().padStart(2, '0')}:${minutes
+          .toString()
+          .padStart(2, '0')}`
+
+        const defaultOffsetMinutes = (() => {
+          const parisTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+          const utcTime = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))
+          return Math.round((parisTime.getTime() - utcTime.getTime()) / (1000 * 60))
+        })()
+
+        const timezoneOffsetMinutes = typeof user.notification_timezone_offset_minutes === 'number'
+          ? user.notification_timezone_offset_minutes
+          : defaultOffsetMinutes
+
+        const targetLocalMinutes = hours * 60 + minutes
+        const targetUtcMinutes = ((targetLocalMinutes - timezoneOffsetMinutes) % 1440 + 1440) % 1440
         const currentTotalMinutes = currentHour * 60 + currentMinute
-        const timeDiff = Math.abs(currentTotalMinutes - utcTargetTotalMinutes)
-        
-        // Send if within 15 minutes of target time (more precise)
-        const shouldSendNow = timeDiff <= 15
+        const rawDiff = Math.abs(currentTotalMinutes - targetUtcMinutes)
+        const diffMinutes = Math.min(rawDiff, 1440 - rawDiff)
+
+        // Send only when we're within a one-minute window of the desired time
+        const shouldSendNow = diffMinutes === 0
 
         if (!shouldSendNow) {
-          console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime}, current ${currentTime}, diff ${timeDiff}min`)
+          console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime} (offset ${timezoneOffsetMinutes} min), current ${currentTime}, diff ${diffMinutes}min`)
           continue
         }
 
-        console.log(`🎯 Sending notification to user ${user.id}: target ${userNotificationTime} Paris (${utcTargetHours}:${utcTargetMinutes.toString().padStart(2, '0')} UTC), current ${currentTime} UTC, diff ${timeDiff}min`)
+        if (user.last_notification_sent_at) {
+          const lastSent = new Date(user.last_notification_sent_at)
+          const lastSentDate = lastSent.toISOString().split('T')[0]
+          const todayDate = now.toISOString().split('T')[0]
+          if (lastSentDate === todayDate) {
+            console.log(`⏸️ Notification already sent today for user ${user.id}, skipping`)
+            continue
+          }
+        }
+
+        console.log(`🎯 Sending notification to user ${user.id}: target ${userNotificationTime} (offset ${timezoneOffsetMinutes} min), current ${currentTime} UTC`)
 
         // Check if user already has an active challenge today
         const today = new Date().toISOString().split('T')[0]
@@ -139,6 +145,11 @@ serve(async (req) => {
         if (fcmResponse.ok) {
           notificationsSent++
           console.log(`Daily notification sent to user ${user.id}`)
+
+          await supabase
+            .from('user_profiles')
+            .update({ last_notification_sent_at: new Date().toISOString() })
+            .eq('id', user.id)
         } else {
           console.error(`Failed to send notification to user ${user.id}:`, fcmResult)
           
