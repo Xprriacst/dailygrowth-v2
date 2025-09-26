@@ -37,7 +37,8 @@ class NotificationService {
   final ChallengeService _challengeService = ChallengeService();
   final QuoteService _quoteService = QuoteService();
   final UserService _userService = UserService();
-  final WebNotificationService _webNotificationService = WebNotificationService();
+  final WebNotificationService _webNotificationService =
+      WebNotificationService();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -89,7 +90,6 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-
     if (Platform.isAndroid) {
       await _flutterLocalNotificationsPlugin!
           .resolvePlatformSpecificImplementation<
@@ -122,7 +122,7 @@ class NotificationService {
       await _scheduleWebNotification(userId, time, title, body);
       return;
     }
-    
+
     if (_flutterLocalNotificationsPlugin == null) return;
 
     try {
@@ -183,7 +183,7 @@ class NotificationService {
       );
       return;
     }
-    
+
     if (_flutterLocalNotificationsPlugin == null) return;
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -213,7 +213,7 @@ class NotificationService {
     // Note: Daily notifications are now scheduled individually per user
     // when they update their settings, not via a global cron job
     debugPrint('📅 Daily notifications setup - individual scheduling per user');
-    
+
     // Initialize existing user notifications if any
     _initializeExistingNotifications();
   }
@@ -223,20 +223,23 @@ class NotificationService {
     try {
       final client = await SupabaseService().client;
       final user = client.auth.currentUser;
-      
+
       if (user != null) {
         final settings = await getUserNotificationSettings(user.id);
         if (settings != null && settings['notifications_enabled'] == true) {
-          final notificationTime = settings['notification_time'] as String? ?? '09:00:00';
-          
-          debugPrint('🔄 Reinitializing existing notifications for user ${user.id} at $notificationTime');
-          
+          final notificationTime =
+              settings['notification_time'] as String? ?? '09:00:00';
+
+          debugPrint(
+              '🔄 Reinitializing existing notifications for user ${user.id} at $notificationTime');
+
           // Reschedule the daily notification
           await scheduleDailyNotification(
             userId: user.id,
             time: notificationTime,
             title: '🎯 Votre défi quotidien vous attend !',
-            body: 'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+            body:
+                'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
           );
         }
       }
@@ -294,10 +297,11 @@ class NotificationService {
         userId: userId,
         lifeDomain: lifeDomain,
       );
-      
+
       if (newChallenge != null) {
-        debugPrint('✅ Daily micro-challenge generated for user $userId: ${newChallenge['nom']}');
-        
+        debugPrint(
+            '✅ Daily micro-challenge generated for user $userId: ${newChallenge['nom']}');
+
         // Send notification about the new challenge
         await sendInstantNotification(
           title: '🎯 Nouveau micro-défi généré !',
@@ -305,11 +309,12 @@ class NotificationService {
           payload: 'new_challenge:$userId',
         );
       } else {
-        debugPrint('⚠️ No new challenge generated for user $userId (may already exist for today)');
+        debugPrint(
+            '⚠️ No new challenge generated for user $userId (may already exist for today)');
       }
     } catch (e) {
       debugPrint('Failed to generate micro-challenge for user $userId: $e');
-      
+
       // Fallback to generic challenge creation
       await _challengeService.createChallenge(
           userId: userId,
@@ -346,50 +351,65 @@ class NotificationService {
   }) async {
     try {
       final client = await SupabaseService().client;
-      
+
       // Get FCM token if notifications are enabled and we're on web
       String? fcmToken;
       if (notificationsEnabled && kIsWeb) {
         try {
           final webNotificationService = WebNotificationService();
           fcmToken = await webNotificationService.getFCMToken();
-          debugPrint('📱 FCM Token récupéré: ${fcmToken?.substring(0, 20)}...');
+
+          if (fcmToken == null || fcmToken.isEmpty) {
+            debugPrint(
+                '🔄 Aucun token FCM en cache, tentative de génération...');
+            fcmToken = await webNotificationService.generateFCMToken();
+          }
+
+          if (fcmToken != null && fcmToken.isNotEmpty) {
+            debugPrint(
+                '📱 FCM Token récupéré: ${fcmToken.substring(0, 20)}...');
+            await webNotificationService.sendMessageToServiceWorker({
+              'type': 'FCM_TOKEN',
+              'token': fcmToken,
+            });
+          } else {
+            debugPrint(
+                '⚠️ Impossible de récupérer ou générer un token FCM pour le web');
+          }
         } catch (e) {
           debugPrint('⚠️ Erreur récupération token FCM: $e');
         }
       }
-      
+
       // Update profile with FCM token
       final updateData = {
         'notification_time': notificationTime,
         'notifications_enabled': notificationsEnabled,
         'reminder_notifications_enabled': reminderNotificationsEnabled,
       };
-      
+
       if (fcmToken != null) {
         updateData['fcm_token'] = fcmToken;
       }
-      
-      await client
-          .from('user_profiles')
-          .update(updateData)
-          .eq('id', userId);
+
+      await client.from('user_profiles').update(updateData).eq('id', userId);
 
       debugPrint('✅ Paramètres de notification mis à jour avec token FCM');
 
       // Cancel existing scheduled notifications
       await cancelUserNotifications(userId);
-      
+
       // Schedule new daily notification if enabled
       if (notificationsEnabled) {
         await scheduleDailyNotification(
           userId: userId,
           time: notificationTime,
           title: '🎯 Votre défi quotidien vous attend !',
-          body: 'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+          body:
+              'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
         );
       }
-      
+
       debugPrint('✅ Notification settings updated for user $userId');
     } catch (e) {
       debugPrint('❌ Failed to update notification settings: $e');
@@ -398,16 +418,18 @@ class NotificationService {
   }
 
   // Get user notification settings
-  Future<Map<String, dynamic>?> getUserNotificationSettings(String userId) async {
+  Future<Map<String, dynamic>?> getUserNotificationSettings(
+      String userId) async {
     try {
       final client = await SupabaseService().client;
-      
+
       final response = await client
           .from('user_profiles')
-          .select('notification_time, notifications_enabled, reminder_notifications_enabled')
+          .select(
+              'notification_time, notifications_enabled, reminder_notifications_enabled')
           .eq('id', userId)
           .maybeSingle();
-          
+
       return response;
     } catch (e) {
       debugPrint('❌ Failed to get notification settings: $e');
@@ -488,7 +510,8 @@ class NotificationService {
         body = 'Extraordinaire ! Un mois complet de croissance personnelle !';
       } else if (streakCount == 100) {
         title = '💎 Série de 100 jours !';
-        body = 'Légendaire ! Vous êtes un véritable champion de la croissance !';
+        body =
+            'Légendaire ! Vous êtes un véritable champion de la croissance !';
       } else if (streakCount % 10 == 0) {
         title = '🚀 Série de $streakCount jours !';
         body = 'Fantastique ! Continuez sur cette belle lancée !';
@@ -505,19 +528,19 @@ class NotificationService {
   Future<void> generateAndNotifyNewMicroChallenge(String userId) async {
     try {
       debugPrint('🔄 Generating new micro-challenge for user: $userId');
-      
+
       // Generate new micro-challenge using the challenge service
       final newChallenge = await _challengeService.generateTodayChallenge(
         userId: userId,
         lifeDomain: 'developpement',
       );
-      
+
       if (newChallenge != null) {
         final challengeName = newChallenge['nom'] as String? ?? 'Nouveau défi';
         final challengeMission = newChallenge['mission'] as String? ?? '';
-        
+
         debugPrint('✅ New micro-challenge generated: $challengeName');
-        
+
         // Send notification about the new challenge
         if (kIsWeb) {
           await _webNotificationService.showChallengeNotification(
@@ -531,16 +554,16 @@ class NotificationService {
             payload: 'new_challenge:$userId',
           );
         }
-        
+
         // Schedule reminder notification if enabled
         final settings = await getUserNotificationSettings(userId);
-        if (settings != null && settings['reminder_notifications_enabled'] == true) {
+        if (settings != null &&
+            settings['reminder_notifications_enabled'] == true) {
           // Reminder functionality can be added here if needed
         }
-        
       } else {
         debugPrint('⚠️ No new challenge generated for user $userId');
-        
+
         // Send a motivational notification instead
         await sendInstantNotification(
           title: '💪 Continuez votre progression !',
@@ -550,7 +573,7 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('❌ Error generating micro-challenge for user $userId: $e');
-      
+
       // Send error notification
       await sendInstantNotification(
         title: '🔄 Nouveau contenu en préparation',
@@ -561,9 +584,10 @@ class NotificationService {
   }
 
   // Schedule web notification using service worker for persistence
-  Future<void> _scheduleWebNotification(String userId, String time, String title, String body) async {
+  Future<void> _scheduleWebNotification(
+      String userId, String time, String title, String body) async {
     debugPrint('📅 Scheduling persistent web notification for $time');
-    
+
     try {
       // Send to service worker for persistent scheduling
       await _webNotificationService.sendMessageToServiceWorker({
@@ -573,10 +597,10 @@ class NotificationService {
         'title': title,
         'body': body,
       });
-      
-      debugPrint('✅ Notification scheduled in service worker - will trigger daily at $time');
+
+      debugPrint(
+          '✅ Notification scheduled in service worker - will trigger daily at $time');
       debugPrint('ℹ️ No need to keep app open - service worker handles it');
-      
     } catch (e) {
       debugPrint('❌ Failed to schedule web notification: $e');
     }
@@ -588,18 +612,21 @@ class NotificationService {
       debugPrint('📱 Web: Scheduled notifications handled by service worker');
       return;
     }
-    
+
     if (_flutterLocalNotificationsPlugin == null) {
       debugPrint('❌ Notification plugin not initialized');
       return;
     }
 
     try {
-      final pendingNotifications = await _flutterLocalNotificationsPlugin!.pendingNotificationRequests();
-      debugPrint('📅 Scheduled notifications count: ${pendingNotifications.length}');
-      
+      final pendingNotifications =
+          await _flutterLocalNotificationsPlugin!.pendingNotificationRequests();
+      debugPrint(
+          '📅 Scheduled notifications count: ${pendingNotifications.length}');
+
       for (final notification in pendingNotifications) {
-        debugPrint('📅 Notification ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}');
+        debugPrint(
+            '📅 Notification ID: ${notification.id}, Title: ${notification.title}, Body: ${notification.body}');
       }
     } catch (e) {
       debugPrint('❌ Error checking scheduled notifications: $e');
@@ -609,10 +636,10 @@ class NotificationService {
   // Test notification for debugging avec diagnostic iOS dans l'UI
   Future<String> triggerTestNotification() async {
     String diagnosticMessage = '';
-    
+
     if (kIsWeb) {
       diagnosticMessage += '🌐 Plateforme: Web\n';
-      
+
       // Diagnostic iOS détaillé
       try {
         final userAgent = kIsWeb ? 'Web Platform' : 'Mobile Platform';
@@ -625,17 +652,17 @@ class NotificationService {
       } catch (e) {
         diagnosticMessage += '❌ Erreur diagnostic: $e\n';
       }
-      
+
       // Check permission status first
       final permission = _webNotificationService.permissionStatus;
       diagnosticMessage += '🔔 Permissions: $permission\n';
-      
+
       // First request permissions if needed
       if (permission != 'granted') {
         diagnosticMessage += '⚠️ Demande de permissions...\n';
         final newPermission = await _webNotificationService.requestPermission();
         diagnosticMessage += '🔔 Nouvelles permissions: $newPermission\n';
-        
+
         if (newPermission != 'granted') {
           diagnosticMessage += '\n❌ PROBLÈME DÉTECTÉ:\n';
           diagnosticMessage += '• Permissions refusées\n';
@@ -649,24 +676,26 @@ class NotificationService {
       }
 
       diagnosticMessage += '\n🔧 DEBUG TOKEN FCM:\n';
-      
+
       // Now that we have permissions, try to get/generate FCM token
       try {
         // First try to get existing token
         var fcmToken = await _webNotificationService.getFCMToken();
-        
+
         if (fcmToken == null) {
-          diagnosticMessage += '🔍 Permissions OK, génération du token FCM...\n';
-          
+          diagnosticMessage +=
+              '🔍 Permissions OK, génération du token FCM...\n';
+
           // Try to generate FCM token via JavaScript - now that we have permissions
           fcmToken = await _webNotificationService.generateFCMToken();
         }
-        
+
         if (fcmToken != null && fcmToken.isNotEmpty) {
-          diagnosticMessage += '🔑 Token FCM: ${fcmToken.substring(0, 20)}...${fcmToken.substring(fcmToken.length - 10)}\n';
+          diagnosticMessage +=
+              '🔑 Token FCM: ${fcmToken.substring(0, 20)}...${fcmToken.substring(fcmToken.length - 10)}\n';
           diagnosticMessage += '📋 Token complet disponible dans la console\n';
           debugPrint('🔑 FCM Token complet: $fcmToken');
-          
+
           // Auto-save token to database
           try {
             await _userService.updateFCMToken(fcmToken);
@@ -679,19 +708,23 @@ class NotificationService {
           diagnosticMessage += '⚠️ IMPOSSIBLE DE GÉNÉRER LE TOKEN FCM\n';
           diagnosticMessage += '💡 Vérifiez la console pour plus de détails\n';
           diagnosticMessage += '🔍 Debug: fcmToken = ${fcmToken.toString()}\n';
-          
+
           // Try the FORCE method as fallback
-          diagnosticMessage += '\n🔧 FORCE: Tentative de génération forcée...\n';
+          diagnosticMessage +=
+              '\n🔧 FORCE: Tentative de génération forcée...\n';
           try {
-            final forceToken = await _webNotificationService.forceFCMTokenGeneration();
+            final forceToken =
+                await _webNotificationService.forceFCMTokenGeneration();
             if (forceToken != null && forceToken.isNotEmpty) {
               diagnosticMessage += '🎉 FORCE: Token généré avec succès!\n';
-              diagnosticMessage += '🔑 Token FCM: ${forceToken.substring(0, 20)}...${forceToken.substring(forceToken.length - 10)}\n';
-              
+              diagnosticMessage +=
+                  '🔑 Token FCM: ${forceToken.substring(0, 20)}...${forceToken.substring(forceToken.length - 10)}\n';
+
               // Auto-save forced token to database
               try {
                 await _userService.updateFCMToken(forceToken);
-                diagnosticMessage += '✅ FORCE: Token sauvegardé en base de données\n';
+                diagnosticMessage +=
+                    '✅ FORCE: Token sauvegardé en base de données\n';
               } catch (e) {
                 diagnosticMessage += '⚠️ FORCE: Erreur sauvegarde token: $e\n';
               }
@@ -700,7 +733,8 @@ class NotificationService {
               diagnosticMessage += '\n🔧 SOLUTION MANUELLE:\n';
               diagnosticMessage += '1. Ouvrez la console développeur (F12)\n';
               diagnosticMessage += '2. Cherchez les erreurs Firebase\n';
-              diagnosticMessage += '3. Vérifiez si window.firebaseMessaging existe\n';
+              diagnosticMessage +=
+                  '3. Vérifiez si window.firebaseMessaging existe\n';
             }
           } catch (e) {
             diagnosticMessage += '❌ FORCE: Erreur génération forcée: $e\n';
@@ -710,24 +744,27 @@ class NotificationService {
         diagnosticMessage += '❌ Erreur récupération token: $e\n';
         debugPrint('❌ Erreur FCM Token: $e');
       }
-      
+
       diagnosticMessage += '\n✅ TESTS RÉALISÉS:\n';
-      
+
       // Check scheduled notifications first
       await debugScheduledNotifications();
-      
+
       // Test basic notification
       try {
         await _webNotificationService.showNotification(
           title: '🧪 Test DailyGrowth',
           body: 'Notification de test réussie !',
-          data: {'test': true, 'timestamp': DateTime.now().millisecondsSinceEpoch},
+          data: {
+            'test': true,
+            'timestamp': DateTime.now().millisecondsSinceEpoch
+          },
         );
         diagnosticMessage += '• Notification immédiate: ✅\n';
       } catch (e) {
         diagnosticMessage += '• Notification immédiate: ❌ $e\n';
       }
-      
+
       // Test challenge notification
       try {
         await Future.delayed(const Duration(seconds: 1));
@@ -738,33 +775,33 @@ class NotificationService {
       } catch (e) {
         diagnosticMessage += '• Notification défi: ❌ $e\n';
       }
-      
+
       // Test de notification programmée
       try {
         final testTime = DateTime.now().add(const Duration(minutes: 1));
-        final timeString = '${testTime.hour.toString().padLeft(2, '0')}:${testTime.minute.toString().padLeft(2, '0')}:00';
-        
+        final timeString =
+            '${testTime.hour.toString().padLeft(2, '0')}:${testTime.minute.toString().padLeft(2, '0')}:00';
+
         await _scheduleWebNotification(
-          'test_user',
-          timeString,
-          '⏰ Test Programmé',
-          'Notification programmée pour ${testTime.hour}:${testTime.minute}'
-        );
-        diagnosticMessage += '• Notification programmée (${testTime.hour}:${testTime.minute}): ✅\n';
+            'test_user',
+            timeString,
+            '⏰ Test Programmé',
+            'Notification programmée pour ${testTime.hour}:${testTime.minute}');
+        diagnosticMessage +=
+            '• Notification programmée (${testTime.hour}:${testTime.minute}): ✅\n';
       } catch (e) {
         diagnosticMessage += '• Notification programmée: ❌ $e\n';
       }
-      
+
       diagnosticMessage += '\n🎯 RÉSULTAT:\n';
       diagnosticMessage += 'Tests terminés avec succès !\n';
       diagnosticMessage += 'Attendez 1 minute pour la notification programmée.';
-      
     } else {
       diagnosticMessage += '📱 Plateforme: Mobile\n';
-      
+
       // Check scheduled notifications
       await debugScheduledNotifications();
-      
+
       try {
         await sendInstantNotification(
           title: '🧪 Test DailyGrowth',
@@ -772,12 +809,13 @@ class NotificationService {
           payload: 'test_notification',
         );
         diagnosticMessage += '✅ Notification mobile envoyée\n';
-        diagnosticMessage += 'Vérifiez les logs pour les notifications programmées';
+        diagnosticMessage +=
+            'Vérifiez les logs pour les notifications programmées';
       } catch (e) {
         diagnosticMessage += '❌ Erreur mobile: $e';
       }
     }
-    
+
     return diagnosticMessage;
   }
 
@@ -793,14 +831,14 @@ class NotificationService {
       });
       return;
     }
-    
+
     if (_flutterLocalNotificationsPlugin == null) return;
-    
+
     try {
       await _ensureTimeZones();
       // Schedule reminder 6 hours later
       final reminderTime = DateTime.now().add(const Duration(hours: 6));
-      
+
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
               'challenge_reminders', 'Challenge Reminders',
@@ -823,8 +861,9 @@ class NotificationService {
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           payload: 'reminder:$userId');
-          
-      debugPrint('📅 Optional reminder scheduled for $reminderTime for user $userName');
+
+      debugPrint(
+          '📅 Optional reminder scheduled for $reminderTime for user $userName');
     } catch (e) {
       debugPrint('Failed to schedule optional reminder notification: $e');
     }
@@ -841,7 +880,7 @@ class NotificationService {
       await _webNotificationService.clearAllNotifications();
       return;
     }
-    
+
     if (_flutterLocalNotificationsPlugin == null) return;
 
     await _flutterLocalNotificationsPlugin!.cancel(userId.hashCode);
