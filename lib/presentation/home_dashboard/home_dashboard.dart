@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/auth_guard.dart';
@@ -20,7 +19,6 @@ import './widgets/achievements_section_widget.dart';
 import './widgets/bottom_navigation_widget.dart';
 import './widgets/daily_challenge_card_widget.dart';
 import './widgets/greeting_header_widget.dart';
-import './widgets/inspirational_quote_card_widget.dart';
 import './widgets/weekly_progress_widget.dart';
 
 class HomeDashboard extends StatefulWidget {
@@ -33,7 +31,6 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateMixin {
   int _currentBottomNavIndex = 0;
   bool _isChallengeCompleted = false;
-  bool _isRefreshing = false;
   bool _isLoadingData = true;
 
   // Real user data from database
@@ -244,15 +241,15 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   Future<void> _loadRecentAchievements() async {
     try {
-      if (_userId == null) {
-        debugPrint('⚠️ User ID is null, skipping achievements load');
+      if (_userId.isEmpty) {
+        debugPrint('⚠️ User ID is empty, skipping achievements load');
         setState(() {
           _recentAchievements = [];
         });
         return;
       }
 
-      final achievements = await _userService.getUserAchievements(_userId!);
+      final achievements = await _userService.getUserAchievements(_userId);
 
       setState(() {
         _recentAchievements = achievements
@@ -276,8 +273,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   Future<void> _loadWeeklyProgress() async {
     try {
-      if (_userId == null) {
-        debugPrint('⚠️ User ID is null, skipping weekly progress load');
+      if (_userId.isEmpty) {
+        debugPrint('⚠️ User ID is empty, skipping weekly progress load');
         setState(() {
           _weeklyData = [];
           _weeklyCompletionRate = 0.0;
@@ -285,7 +282,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         return;
       }
 
-      final weeklyProgress = await _progressService.getWeeklyProgress(_userId!);
+      final weeklyProgress = await _progressService.getWeeklyProgress(_userId);
 
       final completedDays =
           weeklyProgress.where((day) => day['completed'] as bool? ?? false).length;
@@ -305,28 +302,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     }
   }
 
-  String _getLifeDomainName(String domain) {
-    switch (domain) {
-      case 'sante':
-        return 'santé';
-      case 'relations':
-        return 'relations';
-      case 'carriere':
-        return 'carrière';
-      case 'finances':
-        return 'finances';
-      case 'developpement':
-        return 'développement personnel';
-      case 'spiritualite':
-        return 'spiritualité';
-      case 'loisirs':
-        return 'loisirs';
-      case 'famille':
-        return 'famille';
-      default:
-        return 'développement personnel';
-    }
-  }
 
   String _formatDate(String dateTime) {
     final date = DateTime.parse(dateTime);
@@ -487,17 +462,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     }
   }
 
-  void _handleQuoteShare() {
-    final String shareText =
-        '"${_inspirationalQuote['quote']}" - ${_inspirationalQuote['author']}';
-
-    // In a real app, you would use share_plus package
-    // Share.share(shareText);
-
-    // For now, copy to clipboard
-    Clipboard.setData(ClipboardData(text: shareText));
-    _showToast('Citation copiée dans le presse-papiers');
-  }
 
   void _handleProfileTap() {
     Navigator.pushNamed(context, '/user-profile');
