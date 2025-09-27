@@ -84,8 +84,8 @@ serve(async (req) => {
         const rawDiff = Math.abs(currentTotalMinutes - targetUtcMinutes)
         const diffMinutes = Math.min(rawDiff, 1440 - rawDiff)
 
-        // Send only when we're within a one-minute window of the desired time
-        const shouldSendNow = diffMinutes === 0
+        // Send when we're within a 10-minute window of the desired time (very flexible for testing)
+        const shouldSendNow = diffMinutes <= 10
 
         if (!shouldSendNow) {
           console.log(`⏭️ Skipping user ${user.id}: target ${userNotificationTime} (offset ${timezoneOffsetMinutes} min), current ${currentTime}, diff ${diffMinutes}min`)
