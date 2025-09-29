@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Système Notifications Complet</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .log { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #1e4620; border-left: 4px solid #4caf50; }
+        .error { background: #4a1515; border-left: 4px solid #f44336; }
+        .info { background: #1e3a5f; border-left: 4px solid #2196f3; }
+        .warning { background: #4a3c1e; border-left: 4px solid #ff9800; }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background: #007acc; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #005a9e; }
+        #logs { margin-top: 20px; }
+        .section { margin: 20px 0; padding: 20px; background: #2d2d30; border-radius: 5px; }
+        h2 { color: #569cd6; }
+        pre { background: #1e1e1e; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Système Notifications DailyGrowth</h1>
+    
+    <div class="section">
+        <h2>📊 Informations Système</h2>
+        <div id="system-info">
+            <strong>Heure actuelle locale:</strong> <span id="local-time"></span><br>
+            <strong>Heure actuelle UTC:</strong> <span id="utc-time"></span><br>
+            <strong>Timezone offset:</strong> <span id="timezone-offset"></span> minutes<br>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Tests Disponibles</h2>
+        <button onclick="checkUserConfig()">1. Vérifier Config Utilisateur</button>
+        <button onclick="checkCronJob()">2. État Cron Job</button>
+        <button onclick="testTimeCalculation()">3. Test Calcul Temps</button>
+        <button onclick="triggerCronManual()">4. Déclencher Cron Manuellement</button>
+        <button onclick="resetLastNotification()">5. Reset last_notification_sent_at</button>
+        <button onclick="setTestTime()">6. Définir Heure Test (+5min)</button>
+        <button onclick="runFullDiagnostic()">🚀 DIAGNOSTIC COMPLET</button>
+    </div>
+
+    <div id="logs"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://hekdcsulxrukfturuone.supabase.co';
+        const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDA1MTIwNCwiZXhwIjoyMDY5NjI3MjA0fQ.sEy3z7nvaQ-k9KrXUa47ATyfRrEtvmzdxusgfjVPylk';
+        const TEST_EMAIL = 'expertiaen5min@gmail.com';
+
+        function updateSystemInfo() {
+            const now = new Date();
+            document.getElementById('local-time').textContent = now.toLocaleString('fr-FR');
+            document.getElementById('utc-time').textContent = now.toISOString();
+            const offset = -now.getTimezoneOffset();
+            document.getElementById('timezone-offset').textContent = offset;
+        }
+
+        function log(message, type = 'info') {
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('fr-FR');
+            logDiv.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            document.getElementById('logs').appendChild(logDiv);
+            logDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function checkUserConfig() {
+            log('🔍 Vérification configuration utilisateur...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?email=eq.${TEST_EMAIL}&select=*`, {
+                    headers: {
+                        'apikey': SERVICE_ROLE_KEY,
+                        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    log(`❌ Utilisateur ${TEST_EMAIL} introuvable`, 'error');
+                    return;
+                }
+
+                const user = data[0];
+                log(`✅ Utilisateur trouvé: ${user.email}`, 'success');
+                log(`<pre>${JSON.stringify({
+                    id: user.id,
+                    notifications_enabled: user.notifications_enabled,
+                    notification_time: user.notification_time,
+                    timezone_offset: user.notification_timezone_offset_minutes,
+                    last_sent: user.last_notification_sent_at,
+                    has_fcm_token: !!user.fcm_token
+                }, null, 2)}</pre>`, 'info');
+
+                // Analyser la situation
+                if (!user.notifications_enabled) {
+                    log('⚠️ PROBLÈME: notifications_enabled = false', 'warning');
+                }
+                if (!user.fcm_token) {
+                    log('⚠️ PROBLÈME: Pas de FCM token', 'warning');
+                }
+                if (user.last_notification_sent_at) {
+                    const lastSent = new Date(user.last_notification_sent_at);
+                    const today = new Date().toISOString().split('T')[0];
+                    const lastSentDate = lastSent.toISOString().split('T')[0];
+                    
+                    if (lastSentDate === today) {
+                        log('🚨 PROBLÈME TROUVÉ: Notification déjà envoyée aujourd\'hui!', 'error');
+                        log('➡️ Aucune nouvelle notification ne sera envoyée jusqu\'à demain', 'error');
+                        log(`Dernière notification: ${lastSent.toLocaleString('fr-FR')}`, 'info');
+                    } else {
+                        log(`✅ Dernière notification: ${lastSent.toLocaleString('fr-FR')} (OK pour aujourd'hui)`, 'success');
+                    }
+                }
+
+                return user;
+
+            } catch (error) {
+                log(`❌ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testTimeCalculation() {
+            log('🧮 Test calcul horaire...', 'info');
+            
+            const user = await checkUserConfig();
+            if (!user) return;
+
+            const now = new Date();
+            const currentHour = now.getUTCHours();
+            const currentMinute = now.getUTCMinutes();
+            const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+
+            log(`⏰ Heure actuelle UTC: ${currentTime}`, 'info');
+
+            if (!user.notification_time) {
+                log('❌ notification_time non défini', 'error');
+                return;
+            }
+
+            const [notifHour, notifMinute] = user.notification_time.split(':').map(Number);
+            const timezoneOffset = user.notification_timezone_offset_minutes || 120;
+
+            log(`🎯 Heure notification configurée: ${user.notification_time} (local)`, 'info');
+            log(`🌍 Timezone offset: ${timezoneOffset} minutes (UTC+${timezoneOffset/60})`, 'info');
+
+            // Calcul comme dans l'Edge Function
+            const targetLocalMinutes = notifHour * 60 + notifMinute;
+            const targetUtcMinutes = ((targetLocalMinutes - timezoneOffset) % 1440 + 1440) % 1440;
+            const targetUtcHour = Math.floor(targetUtcMinutes / 60);
+            const targetUtcMinute = targetUtcMinutes % 60;
+            const targetUtcTime = `${targetUtcHour.toString().padStart(2, '0')}:${targetUtcMinute.toString().padStart(2, '0')}`;
+
+            log(`📍 Heure cible en UTC: ${targetUtcTime}`, 'info');
+
+            const currentTotalMinutes = currentHour * 60 + currentMinute;
+            const rawDiff = Math.abs(currentTotalMinutes - targetUtcMinutes);
+            const diffMinutes = Math.min(rawDiff, 1440 - rawDiff);
+
+            log(`⏱️ Différence actuelle: ${diffMinutes} minutes`, 'info');
+
+            const windowSize = 10; // Taille actuelle de la fenêtre
+            if (diffMinutes <= windowSize) {
+                log(`✅ DANS LA FENÊTRE (≤${windowSize} min) - Notification devrait être envoyée!`, 'success');
+            } else {
+                log(`⏭️ HORS FENÊTRE (>${windowSize} min) - Notification sera skippée`, 'warning');
+                log(`➡️ Prochaine opportunité: cron dans ${15 - (new Date().getMinutes() % 15)} minutes`, 'info');
+            }
+        }
+
+        async function triggerCronManual() {
+            log('🚀 Déclenchement manuel du cron...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/cron-daily-notifications`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`
+                    },
+                    body: JSON.stringify({
+                        trigger: 'manual-test',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    log(`❌ Erreur HTTP ${response.status}`, 'error');
+                    log(`<pre>${JSON.stringify(result, null, 2)}</pre>`, 'error');
+                    return;
+                }
+
+                log('✅ Cron déclenché avec succès', 'success');
+                log(`<pre>${JSON.stringify(result, null, 2)}</pre>`, 'success');
+
+                if (result.result?.notifications_sent > 0) {
+                    log(`🎉 ${result.result.notifications_sent} notification(s) envoyée(s)!`, 'success');
+                } else {
+                    log('⚠️ Aucune notification envoyée - vérifier les logs', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function resetLastNotification() {
+            log('🔄 Réinitialisation last_notification_sent_at...', 'info');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?email=eq.${TEST_EMAIL}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SERVICE_ROLE_KEY,
+                        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        last_notification_sent_at: null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                log('✅ last_notification_sent_at réinitialisé à NULL', 'success');
+                log('➡️ Les notifications quotidiennes peuvent maintenant être envoyées', 'success');
+
+            } catch (error) {
+                log(`❌ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function setTestTime() {
+            log('⏰ Configuration heure de test (actuelle + 5 minutes)...', 'info');
+            
+            const now = new Date();
+            const testTime = new Date(now.getTime() + 5 * 60 * 1000);
+            const hours = testTime.getHours().toString().padStart(2, '0');
+            const minutes = testTime.getMinutes().toString().padStart(2, '0');
+            const timeString = `${hours}:${minutes}:00`;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?email=eq.${TEST_EMAIL}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SERVICE_ROLE_KEY,
+                        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        notification_time: timeString,
+                        notification_timezone_offset_minutes: 120, // UTC+2 France
+                        last_notification_sent_at: null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                log(`✅ Heure de test configurée: ${timeString} (heure locale)`, 'success');
+                log('✅ last_notification_sent_at réinitialisé', 'success');
+                log('➡️ La notification devrait arriver dans ~5 minutes', 'success');
+
+            } catch (error) {
+                log(`❌ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function runFullDiagnostic() {
+            log('═══════════════════════════════════════════════════', 'info');
+            log('🚀 DIAGNOSTIC COMPLET DU SYSTÈME DE NOTIFICATIONS', 'info');
+            log('═══════════════════════════════════════════════════', 'info');
+            
+            await new Promise(r => setTimeout(r, 500));
+            await checkUserConfig();
+            
+            await new Promise(r => setTimeout(r, 1000));
+            await testTimeCalculation();
+            
+            log('═══════════════════════════════════════════════════', 'info');
+            log('✅ DIAGNOSTIC TERMINÉ', 'success');
+            log('═══════════════════════════════════════════════════', 'info');
+        }
+
+        // Mise à jour automatique de l'heure
+        updateSystemInfo();
+        setInterval(updateSystemInfo, 1000);
+
+        // Auto-run au chargement
+        setTimeout(() => {
+            log('🎬 Démarrage automatique du diagnostic...', 'info');
+            runFullDiagnostic();
+        }, 1000);
+    </script>
+</body>
+</html>
