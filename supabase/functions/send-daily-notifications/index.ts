@@ -49,6 +49,22 @@ serve(async (req) => {
     }
 
     console.log(`Found ${users?.length || 0} users with notifications enabled`)
+    
+    if (!users || users.length === 0) {
+      console.log('⚠️ NO USERS FOUND - returning early')
+      return new Response(
+        JSON.stringify({
+          message: 'No users with notifications enabled',
+          notifications_sent: 0,
+          users_processed: 0,
+          timestamp: now.toISOString()
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     let notificationsSent = 0
     const errors: any[] = []
@@ -62,13 +78,22 @@ serve(async (req) => {
     // Helper function to log notification attempts
     const logNotificationAttempt = async (logData: any) => {
       try {
-        await supabase.from('notification_logs').insert(logData)
+        console.log('📝 Attempting to log notification attempt...', logData)
+        const { error: logError } = await supabase.from('notification_logs').insert(logData)
+        if (logError) {
+          console.error('❌ Failed to insert log:', logError)
+        } else {
+          console.log('✅ Log inserted successfully')
+        }
       } catch (error) {
-        console.error('Failed to log notification attempt:', error)
+        console.error('❌ Exception logging notification attempt:', error)
       }
     }
 
+    console.log(`🔄 Processing ${users.length} users...`)
+
     for (const user of users || []) {
+      console.log(`\n👤 Processing user ${user.id}...`)
       let skipReason: string | null = null
       let notificationSent = false
       
