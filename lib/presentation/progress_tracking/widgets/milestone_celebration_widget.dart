@@ -75,7 +75,7 @@ class _MilestoneCelebrationWidgetState extends State<MilestoneCelebrationWidget>
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withValues(alpha: 0.8),
+      color: Colors.black.withOpacity(0.8),
       child: Stack(
         children: [
           // Confetti animation
@@ -98,7 +98,7 @@ class _MilestoneCelebrationWidgetState extends State<MilestoneCelebrationWidget>
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
+                            color: Colors.black.withOpacity(0.3),
                             blurRadius: 20,
                             offset: Offset(0, 8),
                           ),
@@ -123,7 +123,7 @@ class _MilestoneCelebrationWidgetState extends State<MilestoneCelebrationWidget>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.yellow.withValues(alpha: 0.4),
+                                  color: Colors.yellow.withOpacity(0.4),
                                   blurRadius: 16,
                                   offset: Offset(0, 4),
                                 ),
@@ -170,7 +170,7 @@ class _MilestoneCelebrationWidgetState extends State<MilestoneCelebrationWidget>
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w400,
                               color: AppTheme.lightTheme.colorScheme.onSurface
-                                  .withValues(alpha: 0.8),
+                                  .withOpacity(0.8),
                             ),
                           ),
 

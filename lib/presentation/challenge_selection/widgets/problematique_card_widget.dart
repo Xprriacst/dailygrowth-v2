@@ -26,15 +26,15 @@ class ProblematiqueCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.5.h),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.05),
+          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2),
+            color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.08),
+              color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),

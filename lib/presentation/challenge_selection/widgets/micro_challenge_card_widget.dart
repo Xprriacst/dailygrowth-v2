@@ -101,20 +101,20 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
         return Container(
           decoration: BoxDecoration(
             color: _isCompleted 
-                ? Colors.green.withValues(alpha: 0.1)
+                ? Colors.green.withOpacity(0.1)
                 : AppTheme.lightTheme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _isCompleted 
-                  ? Colors.green.withValues(alpha: 0.3)
-                  : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+                  ? Colors.green.withOpacity(0.3)
+                  : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
               width: _isCompleted ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: _isCompleted 
-                    ? Colors.green.withValues(alpha: 0.2)
-                    : AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1),
+                    ? Colors.green.withOpacity(0.2)
+                    : AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
                 blurRadius: _isCompleted ? 12 : 8,
                 offset: const Offset(0, 4),
               ),
@@ -145,7 +145,7 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                           boxShadow: [
                             BoxShadow(
                               color: (_isCompleted ? Colors.green : AppTheme.lightTheme.colorScheme.primary)
-                                  .withValues(alpha: 0.3),
+                                  .withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -199,14 +199,14 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                                 Icon(
                                   Icons.access_time,
                                   size: 4.w,
-                                  color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                  color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
                                 ),
                                 SizedBox(width: 1.w),
                                 Text(
                                   '${widget.dureeEstimee} min',
                                   style: TextStyle(
                                     fontSize: 12.sp,
-                                    color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                    color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
                                   ),
                                 ),
                               ],
@@ -221,7 +221,7 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                         duration: const Duration(milliseconds: 300),
                         child: Icon(
                           Icons.keyboard_arrow_down,
-                          color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
                           size: 6.w,
                         ),
                       ),
@@ -239,7 +239,7 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Divider(
-                        color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+                        color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
                         height: 2.h,
                       ),
 
@@ -248,10 +248,10 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                         width: double.infinity,
                         padding: EdgeInsets.all(3.w),
                         decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.05),
+                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2),
+                            color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
                           ),
                         ),
                         child: Column(
@@ -285,10 +285,10 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                         width: double.infinity,
                         padding: EdgeInsets.all(3.w),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.05),
+                          color: Colors.blue.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue.withValues(alpha: 0.2),
+                            color: Colors.blue.withOpacity(0.2),
                           ),
                         ),
                         child: Column(
@@ -322,10 +322,10 @@ class _MicroChallengeCardState extends State<MicroChallengeCard>
                           width: double.infinity,
                           padding: EdgeInsets.all(3.w),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.05),
+                            color: Colors.orange.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.2),
+                              color: Colors.orange.withOpacity(0.2),
                             ),
                           ),
                           child: Column(

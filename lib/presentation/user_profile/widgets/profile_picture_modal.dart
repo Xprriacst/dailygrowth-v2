@@ -31,7 +31,7 @@ class ProfilePictureModal extends StatelessWidget {
             height: 0.5.h,
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -111,7 +111,7 @@ class ProfilePictureModal extends StatelessWidget {
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
           border: Border.all(
-            color: color.withValues(alpha: 0.2),
+            color: color.withOpacity(0.2),
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -121,7 +121,7 @@ class ProfilePictureModal extends StatelessWidget {
               width: 12.w,
               height: 12.w,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: CustomIconWidget(

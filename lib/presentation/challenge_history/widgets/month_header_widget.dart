@@ -20,11 +20,11 @@ class MonthHeaderWidget extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.95),
+        color: AppTheme.lightTheme.colorScheme.surface.withOpacity(0.95),
         border: Border(
           bottom: BorderSide(
             color:
-                AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.1),
+                AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1),
             width: 1,
           ),
         ),
@@ -56,7 +56,7 @@ class MonthHeaderWidget extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.primary
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

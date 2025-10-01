@@ -54,22 +54,22 @@ class AchievementGridWidget extends StatelessWidget {
                   color: isUnlocked
                       ? AppTheme.lightTheme.colorScheme.surface
                       : AppTheme.lightTheme.colorScheme.surface
-                          .withValues(alpha: 0.7),
+                          .withOpacity(0.7),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isUnlocked
                         ? AppTheme.lightTheme.colorScheme.primary
-                            .withValues(alpha: 0.3)
+                            .withOpacity(0.3)
                         : AppTheme.lightTheme.colorScheme.outline
-                            .withValues(alpha: 0.3),
+                            .withOpacity(0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isUnlocked
                           ? AppTheme.lightTheme.colorScheme.primary
-                              .withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.05),
+                              .withOpacity(0.1)
+                          : Colors.black.withOpacity(0.05),
                       blurRadius: 8,
                       offset: Offset(0, 2),
                     ),
@@ -89,9 +89,9 @@ class AchievementGridWidget extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isUnlocked
                                   ? AppTheme.lightTheme.colorScheme.primary
-                                      .withValues(alpha: 0.1)
+                                      .withOpacity(0.1)
                                   : AppTheme.lightTheme.colorScheme.outline
-                                      .withValues(alpha: 0.1),
+                                      .withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: CustomIconWidget(
@@ -99,7 +99,7 @@ class AchievementGridWidget extends StatelessWidget {
                               color: isUnlocked
                                   ? AppTheme.lightTheme.colorScheme.primary
                                   : AppTheme.lightTheme.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
+                                      .withOpacity(0.4),
                               size: 6.w,
                             ),
                           ),
@@ -123,7 +123,7 @@ class AchievementGridWidget extends StatelessWidget {
                                   iconName: 'lock',
                                   color: AppTheme
                                       .lightTheme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6),
+                                      .withOpacity(0.6),
                                   size: 2.w,
                                 ),
                               ),
@@ -142,7 +142,7 @@ class AchievementGridWidget extends StatelessWidget {
                           color: isUnlocked
                               ? AppTheme.lightTheme.colorScheme.onSurface
                               : AppTheme.lightTheme.colorScheme.onSurface
-                                  .withValues(alpha: 0.6),
+                                  .withOpacity(0.6),
                         ),
                       ),
                       SizedBox(height: 1.h),
@@ -162,7 +162,7 @@ class AchievementGridWidget extends StatelessWidget {
                               value: progress,
                               backgroundColor: AppTheme
                                   .lightTheme.colorScheme.outline
-                                  .withValues(alpha: 0.2),
+                                  .withOpacity(0.2),
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 AppTheme.lightTheme.colorScheme.primary,
                               ),
@@ -174,7 +174,7 @@ class AchievementGridWidget extends StatelessWidget {
                                 fontSize: 10.sp,
                                 fontWeight: FontWeight.w500,
                                 color: AppTheme.lightTheme.colorScheme.onSurface
-                                    .withValues(alpha: 0.7),
+                                    .withOpacity(0.7),
                               ),
                             ),
                           ],
@@ -228,7 +228,7 @@ class AchievementGridWidget extends StatelessWidget {
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
                   color: AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.8),
+                      .withOpacity(0.8),
                 ),
               ),
               SizedBox(height: 2.h),
@@ -249,7 +249,7 @@ class AchievementGridWidget extends StatelessWidget {
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w400,
                     color: AppTheme.lightTheme.colorScheme.onSurface
-                        .withValues(alpha: 0.7),
+                        .withOpacity(0.7),
                   ),
                 ),
             ],

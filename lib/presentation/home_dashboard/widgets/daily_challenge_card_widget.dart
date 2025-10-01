@@ -75,14 +75,14 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                 colors: [
                   AppTheme.lightTheme.colorScheme.surface,
                   AppTheme.lightTheme.colorScheme.surface
-                      .withValues(alpha: 0.8),
+                      .withOpacity(0.8),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.lightTheme.colorScheme.shadow
-                      .withValues(alpha: 0.1),
+                      .withOpacity(0.1),
                   blurRadius: 12,
                   offset: Offset(0, 4),
                 ),
@@ -90,9 +90,9 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
               border: Border.all(
                 color: widget.isCompleted
                     ? AppTheme.lightTheme.colorScheme.tertiary
-                        .withValues(alpha: 0.3)
+                        .withOpacity(0.3)
                     : AppTheme.lightTheme.colorScheme.outline
-                        .withValues(alpha: 0.2),
+                        .withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -107,7 +107,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppTheme.lightTheme.colorScheme.primary
-                            .withValues(alpha: 0.1),
+                            .withOpacity(0.1),
                       ),
                       child: CustomIconWidget(
                         iconName: 'emoji_events',
@@ -176,7 +176,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                           color: (widget.isCompleted
                                   ? AppTheme.lightTheme.colorScheme.tertiary
                                   : AppTheme.lightTheme.colorScheme.primary)
-                              .withValues(alpha: 0.3),
+                              .withOpacity(0.3),
                           blurRadius: 8,
                           offset: Offset(0, 2),
                         ),

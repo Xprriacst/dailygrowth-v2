@@ -49,15 +49,15 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 border: Border.all(
                   color: _isSearchActive
                       ? AppTheme.lightTheme.colorScheme.primary
-                          .withValues(alpha: 0.3)
+                          .withOpacity(0.3)
                       : AppTheme.lightTheme.colorScheme.outline
-                          .withValues(alpha: 0.2),
+                          .withOpacity(0.2),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.lightTheme.colorScheme.shadow
-                        .withValues(alpha: 0.05),
+                        .withOpacity(0.05),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),
@@ -72,7 +72,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                   hintText: 'Rechercher dans l\'historique...',
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.6),
+                            .withOpacity(0.6),
                       ),
                   prefixIcon: Padding(
                     padding: EdgeInsets.all(3.w),
@@ -81,7 +81,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                       color: _isSearchActive
                           ? AppTheme.lightTheme.colorScheme.primary
                           : AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.6),
+                              .withOpacity(0.6),
                       size: 20,
                     ),
                   ),
@@ -98,7 +98,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                               iconName: 'clear',
                               color: AppTheme
                                   .lightTheme.colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.6),
+                                  .withOpacity(0.6),
                               size: 18,
                             ),
                           ),
@@ -124,13 +124,13 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: AppTheme.lightTheme.colorScheme.outline
-                      .withValues(alpha: 0.2),
+                      .withOpacity(0.2),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.lightTheme.colorScheme.shadow
-                        .withValues(alpha: 0.05),
+                        .withOpacity(0.05),
                     blurRadius: 8,
                     offset: Offset(0, 2),
                   ),

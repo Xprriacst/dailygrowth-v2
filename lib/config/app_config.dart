@@ -28,8 +28,8 @@ class AppConfig {
       throw Exception('SUPABASE_ANON_KEY not properly configured');
     }
     
-    print('✅ App configuration validated successfully');
-    print('📱 Platform: ${isMobile ? 'Mobile' : 'Web'}');
-    print('🌍 Environment: ${isProduction ? 'Production' : 'Development'}');
+    // Configuration validated successfully
+    // Platform: ${isMobile ? 'Mobile' : 'Web'}
+    // Environment: ${isProduction ? 'Production' : 'Development'}
   }
 }

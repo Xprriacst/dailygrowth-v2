@@ -211,7 +211,7 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                       'Problématique: ${_selectedProblematique?.title}',
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -232,10 +232,10 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                       width: double.infinity,
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+                        color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
+                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
                         ),
                       ),
                       child: Column(
@@ -265,7 +265,7 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                             'Niveau détecté: ${_generatedChallenges!['niveau_detecte'] ?? 'Non défini'}',
                             style: TextStyle(
                               fontSize: 14.sp,
-                              color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.8),
+                              color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.8),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -274,7 +274,7 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withValues(alpha: 0.2),
+                                color: Colors.orange.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(

@@ -261,26 +261,26 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
               padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.5.h),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.15)
+                    ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.15)
                     : isDisabled
-                        ? AppTheme.lightTheme.colorScheme.surface.withValues(alpha: 0.5)
+                        ? AppTheme.lightTheme.colorScheme.surface.withOpacity(0.5)
                         : AppTheme.lightTheme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected 
                       ? AppTheme.lightTheme.colorScheme.primary
                       : isDisabled
-                          ? AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.1)
-                          : AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+                          ? AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1)
+                          : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isSelected 
-                        ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2)
+                        ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2)
                         : isDisabled
-                            ? AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.02)
-                            : AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.08),
+                            ? AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.02)
+                            : AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.08),
                     blurRadius: isSelected ? 12 : 8,
                     offset: const Offset(0, 2),
                     spreadRadius: isSelected ? 1 : 0,
@@ -295,7 +295,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                     padding: EdgeInsets.all(isSelected ? 1.w : 0),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1)
+                          ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -366,15 +366,15 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
-                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.05),
+                AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05),
               ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2),
+              color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
               width: 1,
             ),
           ),
@@ -383,7 +383,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
               Container(
                 padding: EdgeInsets.all(1.w),
                 decoration: BoxDecoration(
-                  color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2),
+                  color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -448,8 +448,8 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
-                    AppTheme.lightTheme.colorScheme.secondary.withValues(alpha: 0.05),
+                    AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                    AppTheme.lightTheme.colorScheme.secondary.withOpacity(0.05),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -457,7 +457,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+                    color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -471,7 +471,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                       Container(
                         padding: EdgeInsets.all(2.w),
                         decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.2),
+                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -498,7 +498,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                     'Sélectionnez la problématique principale sur laquelle vous souhaitez travailler. Nous générerons des défis personnalisés pour vous aider à progresser.',
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
                       height: 1.4,
                     ),
                   ),
@@ -507,10 +507,10 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                       decoration: BoxDecoration(
-                        color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+                        color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
+                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
                         ),
                       ),
                       child: Text(
@@ -545,14 +545,14 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                   color: AppTheme.lightTheme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+                    color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
                       size: 20.sp,
                     ),
                     SizedBox(width: 3.w),
@@ -561,7 +561,7 @@ class _ImprovedLifeDomainSelectionWidgetState extends State<ImprovedLifeDomainSe
                         'Sélectionnez une problématique pour continuer',
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                     ),

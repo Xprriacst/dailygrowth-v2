@@ -24,7 +24,7 @@ class SettingsSectionWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.05),
+                AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),

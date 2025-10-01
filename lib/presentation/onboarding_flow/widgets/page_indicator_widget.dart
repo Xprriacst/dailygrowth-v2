@@ -29,7 +29,7 @@ class PageIndicatorWidget extends StatelessWidget {
             color: currentPage == index
                 ? AppTheme.lightTheme.colorScheme.primary
                 : AppTheme.lightTheme.colorScheme.outline
-                    .withValues(alpha: 0.3),
+                    .withOpacity(0.3),
             borderRadius: BorderRadius.circular(4),
           ),
         ),

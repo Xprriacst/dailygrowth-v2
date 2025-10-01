@@ -24,7 +24,7 @@ class AdminStatsWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1),
+                AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -75,10 +75,10 @@ class AdminStatsWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withValues(alpha: 0.3),
+          color: color.withOpacity(0.3),
           width: 1,
         ),
       ),

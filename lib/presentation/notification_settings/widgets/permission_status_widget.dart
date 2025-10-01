@@ -21,13 +21,13 @@ class PermissionStatusWidget extends StatelessWidget {
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         color: isGranted
-            ? AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.1)
-            : AppTheme.lightTheme.colorScheme.error.withValues(alpha: 0.1),
+            ? AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.1)
+            : AppTheme.lightTheme.colorScheme.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(3.w),
         border: Border.all(
           color: isGranted
-              ? AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.3)
-              : AppTheme.lightTheme.colorScheme.error.withValues(alpha: 0.3),
+              ? AppTheme.lightTheme.colorScheme.tertiary.withOpacity(0.3)
+              : AppTheme.lightTheme.colorScheme.error.withOpacity(0.3),
           width: 1,
         ),
       ),

@@ -39,7 +39,7 @@ class BottomNavigationWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1),
+                AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
             blurRadius: 12,
             offset: Offset(0, -2),
           ),
@@ -67,7 +67,7 @@ class BottomNavigationWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.lightTheme.colorScheme.primary
-                            .withValues(alpha: 0.1)
+                            .withOpacity(0.1)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),

@@ -33,7 +33,7 @@ class GreetingHeaderWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.lightTheme.colorScheme.primary
-                    .withValues(alpha: 0.1),
+                    .withOpacity(0.1),
                 border: Border.all(
                   color: AppTheme.lightTheme.colorScheme.primary,
                   width: 2,
@@ -99,7 +99,7 @@ class GreetingHeaderWidget extends StatelessWidget {
           //       boxShadow: [
           //         BoxShadow(
           //           color: AppTheme.lightTheme.colorScheme.shadow
-          //               .withValues(alpha: 0.1),
+          //               .withOpacity(0.1),
           //           blurRadius: 8,
           //           offset: Offset(0, 2),
           //         ),

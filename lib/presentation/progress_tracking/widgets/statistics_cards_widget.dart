@@ -99,12 +99,12 @@ class StatisticsCardsWidget extends StatelessWidget {
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -118,7 +118,7 @@ class StatisticsCardsWidget extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(2.w),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: CustomIconWidget(
@@ -146,7 +146,7 @@ class StatisticsCardsWidget extends StatelessWidget {
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: AppTheme.lightTheme.colorScheme.onSurface
-                  .withValues(alpha: 0.8),
+                  .withOpacity(0.8),
             ),
           ),
           Text(
@@ -155,7 +155,7 @@ class StatisticsCardsWidget extends StatelessWidget {
               fontSize: 10.sp,
               fontWeight: FontWeight.w400,
               color: AppTheme.lightTheme.colorScheme.onSurface
-                  .withValues(alpha: 0.6),
+                  .withOpacity(0.6),
             ),
           ),
         ],

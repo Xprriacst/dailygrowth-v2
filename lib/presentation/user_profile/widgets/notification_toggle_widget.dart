@@ -53,7 +53,7 @@ class NotificationToggleWidget extends StatelessWidget {
             inactiveThumbColor:
                 AppTheme.lightTheme.colorScheme.onSurfaceVariant,
             inactiveTrackColor: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                .withValues(alpha: 0.3),
+                .withOpacity(0.3),
           ),
         ],
       ),

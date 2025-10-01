@@ -69,7 +69,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
             height: 0.5.h,
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.outline
-                  .withValues(alpha: 0.3),
+                  .withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -181,14 +181,14 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.lightTheme.colorScheme.primary
-                      .withValues(alpha: 0.1)
+                      .withOpacity(0.1)
                   : AppTheme.lightTheme.colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected
                     ? AppTheme.lightTheme.colorScheme.primary
                     : AppTheme.lightTheme.colorScheme.outline
-                        .withValues(alpha: 0.3),
+                        .withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -220,14 +220,14 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
             decoration: BoxDecoration(
               color: isSelected
                   ? AppTheme.lightTheme.colorScheme.primary
-                      .withValues(alpha: 0.1)
+                      .withOpacity(0.1)
                   : AppTheme.lightTheme.colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isSelected
                     ? AppTheme.lightTheme.colorScheme.primary
                     : AppTheme.lightTheme.colorScheme.outline
-                        .withValues(alpha: 0.3),
+                        .withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -277,7 +277,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+                AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -298,7 +298,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
                       color: _selectedDateRange != null
                           ? AppTheme.lightTheme.colorScheme.onSurface
                           : AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.6),
+                              .withOpacity(0.6),
                     ),
               ),
             ),

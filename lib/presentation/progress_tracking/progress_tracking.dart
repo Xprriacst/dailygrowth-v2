@@ -191,7 +191,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                     colors: [
                                   AppTheme.lightTheme.colorScheme.primary,
                                   AppTheme.lightTheme.colorScheme.primary
-                                      .withValues(alpha: 0.8),
+                                      .withOpacity(0.8),
                                 ])),
                             child: Column(children: [
                               Text('Votre Progression',
@@ -207,7 +207,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                   padding: EdgeInsets.all(3.w),
                                   decoration: BoxDecoration(
                                       color:
-                                          Colors.white.withValues(alpha: 0.2),
+                                          Colors.white.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(16)),
                                   child: Column(children: [
                                     Row(
@@ -234,9 +234,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                                         .textTheme.bodyLarge
                                                         ?.copyWith(
                                                             color: Colors.white
-                                                                .withValues(
-                                                                    alpha:
-                                                                        0.9))),
+                                                                .withOpacity(0.9))),
                                               ]),
                                           Column(
                                               crossAxisAlignment:
@@ -261,9 +259,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                                           ?.copyWith(
                                                               color: Colors
                                                                   .white
-                                                                  .withValues(
-                                                                      alpha:
-                                                                          0.8))),
+                                                                  .withOpacity(0.8))),
                                               ]),
                                         ]),
                                     if (_userLevel['points_for_next_level'] !=
@@ -275,7 +271,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                                   0.0) /
                                               100,
                                           backgroundColor: Colors.white
-                                              .withValues(alpha: 0.3),
+                                              .withOpacity(0.3),
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
                                                   Colors.white)),
@@ -406,11 +402,11 @@ class _ProgressTrackingState extends State<ProgressTracking>
                     padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
                         color: AppTheme.lightTheme.colorScheme.tertiary
-                            .withValues(alpha: 0.1),
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                             color: AppTheme.lightTheme.colorScheme.tertiary
-                                .withValues(alpha: 0.3))),
+                                .withOpacity(0.3))),
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -461,7 +457,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                   boxShadow: [
                     BoxShadow(
                         color: AppTheme.lightTheme.colorScheme.shadow
-                            .withValues(alpha: 0.1),
+                            .withOpacity(0.1),
                         blurRadius: 8,
                         offset: Offset(0, 2)),
                   ]),
@@ -501,7 +497,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                     boxShadow: [
                       BoxShadow(
                           color: AppTheme.lightTheme.colorScheme.shadow
-                              .withValues(alpha: 0.1),
+                              .withOpacity(0.1),
                           blurRadius: 8,
                           offset: Offset(0, 2)),
                     ]),
@@ -535,7 +531,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                         ? AppTheme
                                             .lightTheme.colorScheme.tertiary
                                         : AppTheme.lightTheme.colorScheme.outline
-                                            .withValues(alpha: 0.2),
+                                            .withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(8),
                                     border: isToday
                                         ? Border.all(
@@ -577,7 +573,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                         padding: EdgeInsets.all(3.w),
                         decoration: BoxDecoration(
                             color: AppTheme.lightTheme.colorScheme.primary
-                                .withValues(alpha: 0.1),
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12)),
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,7 +599,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                         padding: EdgeInsets.all(3.w),
                         decoration: BoxDecoration(
                             color: AppTheme.lightTheme.colorScheme.tertiary
-                                .withValues(alpha: 0.1),
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12)),
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,7 +662,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                       boxShadow: [
                         BoxShadow(
                             color: AppTheme.lightTheme.colorScheme.shadow
-                                .withValues(alpha: 0.1),
+                                .withOpacity(0.1),
                             blurRadius: 8,
                             offset: Offset(0, 2)),
                       ]),
@@ -694,7 +690,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                 0.0,
                             backgroundColor: AppTheme
                                 .lightTheme.colorScheme.outline
-                                .withValues(alpha: 0.2),
+                                .withOpacity(0.2),
                             valueColor: AlwaysStoppedAnimation<Color>(
                                 AppTheme.lightTheme.colorScheme.primary)),
                         SizedBox(height: 0.5.h),
@@ -757,13 +753,13 @@ class _ProgressTrackingState extends State<ProgressTracking>
                           boxShadow: [
                             BoxShadow(
                                 color: AppTheme.lightTheme.colorScheme.shadow
-                                    .withValues(alpha: 0.1),
+                                    .withOpacity(0.1),
                                 blurRadius: 8,
                                 offset: Offset(0, 2)),
                           ],
                           border: Border.all(
                               color: _getBadgeColor(badge['rarity'] ?? 'common')
-                                  .withValues(alpha: 0.3),
+                                  .withOpacity(0.3),
                               width: 2)),
                       child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -773,7 +769,7 @@ class _ProgressTrackingState extends State<ProgressTracking>
                                 decoration: BoxDecoration(
                                     color: _getBadgeColor(
                                             badge['rarity'] ?? 'common')
-                                        .withValues(alpha: 0.1),
+                                        .withOpacity(0.1),
                                     shape: BoxShape.circle),
                                 child: CustomIconWidget(
                                     iconName: badge['icon'] ?? 'emoji_events',

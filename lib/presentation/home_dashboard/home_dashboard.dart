@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/auth_guard.dart';
@@ -14,11 +13,12 @@ import '../../services/user_service.dart';
 import '../../services/progress_service.dart';
 import '../../services/gamification_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/web_notification_service.dart';
+import '../../widgets/notification_permission_dialog.dart';
 import './widgets/achievements_section_widget.dart';
 import './widgets/bottom_navigation_widget.dart';
 import './widgets/daily_challenge_card_widget.dart';
 import './widgets/greeting_header_widget.dart';
-import './widgets/inspirational_quote_card_widget.dart';
 import './widgets/weekly_progress_widget.dart';
 
 class HomeDashboard extends StatefulWidget {
@@ -96,11 +96,17 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       setState(() {
         _isLoadingData = false;
       });
+
+      // Show notification permission dialog if needed (after UI is ready)
+      _schedulePermissionDialog();
     } catch (e) {
       debugPrint('Failed to initialize services: $e');
       setState(() {
         _isLoadingData = false;
       });
+      
+      // Still show permission dialog even if services failed to initialize
+      _schedulePermissionDialog();
     }
   }
 
@@ -236,15 +242,15 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   Future<void> _loadRecentAchievements() async {
     try {
-      if (_userId == null) {
-        debugPrint('⚠️ User ID is null, skipping achievements load');
+      if (_userId.isEmpty) {
+        debugPrint('⚠️ User ID is empty, skipping achievements load');
         setState(() {
           _recentAchievements = [];
         });
         return;
       }
 
-      final achievements = await _userService.getUserAchievements(_userId!);
+      final achievements = await _userService.getUserAchievements(_userId);
 
       setState(() {
         _recentAchievements = achievements
@@ -268,8 +274,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   Future<void> _loadWeeklyProgress() async {
     try {
-      if (_userId == null) {
-        debugPrint('⚠️ User ID is null, skipping weekly progress load');
+      if (_userId.isEmpty) {
+        debugPrint('⚠️ User ID is empty, skipping weekly progress load');
         setState(() {
           _weeklyData = [];
           _weeklyCompletionRate = 0.0;
@@ -277,7 +283,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         return;
       }
 
-      final weeklyProgress = await _progressService.getWeeklyProgress(_userId!);
+      final weeklyProgress = await _progressService.getWeeklyProgress(_userId);
 
       final completedDays =
           weeklyProgress.where((day) => day['completed'] as bool? ?? false).length;
@@ -297,28 +303,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     }
   }
 
-  String _getLifeDomainName(String domain) {
-    switch (domain) {
-      case 'sante':
-        return 'santé';
-      case 'relations':
-        return 'relations';
-      case 'carriere':
-        return 'carrière';
-      case 'finances':
-        return 'finances';
-      case 'developpement':
-        return 'développement personnel';
-      case 'spiritualite':
-        return 'spiritualité';
-      case 'loisirs':
-        return 'loisirs';
-      case 'famille':
-        return 'famille';
-      default:
-        return 'développement personnel';
-    }
-  }
 
   String _formatDate(String dateTime) {
     final date = DateTime.parse(dateTime);
@@ -479,17 +463,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     }
   }
 
-  void _handleQuoteShare() {
-    final String shareText =
-        '"${_inspirationalQuote['quote']}" - ${_inspirationalQuote['author']}';
-
-    // In a real app, you would use share_plus package
-    // Share.share(shareText);
-
-    // For now, copy to clipboard
-    Clipboard.setData(ClipboardData(text: shareText));
-    _showToast('Citation copiée dans le presse-papiers');
-  }
 
   void _handleProfileTap() {
     Navigator.pushNamed(context, '/user-profile');
@@ -712,6 +685,35 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     // Auto-dismiss après 2 secondes
     Timer(const Duration(seconds: 2), () {
       overlayEntry.remove();
+    });
+  }
+
+  /// Schedule the notification permission dialog to show after the UI is fully rendered
+  void _schedulePermissionDialog() {
+    // Wait a bit for the UI to settle, then show the dialog if needed
+    Timer(const Duration(milliseconds: 1500), () async {
+      if (!mounted) return;
+      
+      try {
+        final webNotificationService = WebNotificationService();
+        final shouldShow = await webNotificationService.shouldShowPermissionDialog();
+        
+        if (shouldShow && mounted) {
+          await NotificationPermissionDialog.showIfNeeded(
+            context,
+            onPermissionGranted: () {
+              debugPrint('🎉 User granted notification permission from home dialog');
+              // Optionally refresh notification settings or update UI
+            },
+            onPermissionDenied: () {
+              debugPrint('😔 User denied notification permission from home dialog');
+              // Could show alternative engagement strategy
+            },
+          );
+        }
+      } catch (e) {
+        debugPrint('❌ Error checking/showing permission dialog: $e');
+      }
     });
   }
 }

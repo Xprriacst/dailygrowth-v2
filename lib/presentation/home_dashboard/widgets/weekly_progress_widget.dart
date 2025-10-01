@@ -24,7 +24,7 @@ class WeeklyProgressWidget extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                AppTheme.lightTheme.colorScheme.shadow.withValues(alpha: 0.1),
+                AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
             blurRadius: 12,
             offset: Offset(0, 4),
           ),
@@ -54,7 +54,7 @@ class WeeklyProgressWidget extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   color: AppTheme.lightTheme.colorScheme.primary
-                      .withValues(alpha: 0.1),
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -75,7 +75,7 @@ class WeeklyProgressWidget extends StatelessWidget {
             height: 1.h,
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.outline
-                  .withValues(alpha: 0.2),
+                  .withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: FractionallySizedBox(
@@ -137,9 +137,9 @@ class WeeklyProgressWidget extends StatelessWidget {
                 ? AppTheme.lightTheme.colorScheme.tertiary
                 : isToday
                     ? AppTheme.lightTheme.colorScheme.primary
-                        .withValues(alpha: 0.2)
+                        .withOpacity(0.2)
                     : AppTheme.lightTheme.colorScheme.outline
-                        .withValues(alpha: 0.1),
+                        .withOpacity(0.1),
             border: isToday
                 ? Border.all(
                     color: AppTheme.lightTheme.colorScheme.primary,
