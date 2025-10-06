@@ -226,4 +226,49 @@ class UserService {
       throw Exception('Erreur lors de l\'ajout du succès: $error');
     }
   }
+
+  // Get progress statistics by problematique
+  // Returns a map with completion count and percentage for each problematique
+  Future<Map<String, Map<String, dynamic>>> getProgressByProblematique(
+      String userId) async {
+    try {
+      const int MAX_CHALLENGES_PER_PROBLEMATIQUE = 50;
+
+      // Get all completed micro-challenges for this user, grouped by problematique
+      final response = await _client
+          .from('user_micro_challenges')
+          .select('problematique')
+          .eq('user_id', userId)
+          .eq('is_used_as_daily', true);
+
+      // Count challenges per problematique
+      final Map<String, int> challengeCounts = {};
+      
+      for (var challenge in response) {
+        final problematique = challenge['problematique'] as String? ?? 'Non défini';
+        challengeCounts[problematique] = (challengeCounts[problematique] ?? 0) + 1;
+      }
+
+      // Calculate percentages and create result map
+      final Map<String, Map<String, dynamic>> result = {};
+      
+      for (var entry in challengeCounts.entries) {
+        final completed = entry.value;
+        final percentage = (completed / MAX_CHALLENGES_PER_PROBLEMATIQUE * 100).clamp(0, 100);
+        
+        result[entry.key] = {
+          'completed': completed,
+          'total': MAX_CHALLENGES_PER_PROBLEMATIQUE,
+          'percentage': percentage.toInt(),
+          'remaining': MAX_CHALLENGES_PER_PROBLEMATIQUE - completed,
+        };
+      }
+
+      debugPrint('📊 Progress by problematique: $result');
+      return result;
+    } catch (error) {
+      debugPrint('⚠️ Error fetching progress by problematique: $error');
+      throw Exception('Erreur lors de la récupération de la progression: $error');
+    }
+  }
 }
