@@ -18,6 +18,7 @@ import './widgets/profile_header_widget.dart';
 import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
 import './widgets/settings_section_widget.dart';
+import './widgets/problematique_progress_widget.dart';
 import '../settings/notification_settings_widget.dart';
 
 import 'package:universal_html/html.dart' as html;
@@ -275,7 +276,8 @@ class _UserProfileState extends State<UserProfile> {
                                 onEditTap: _showLifeDomainsModal),
                             ]),
 
-
+                          // Progress by Problematique Section
+                          const ProblematiqueProgressWidget(),
 
                           // Support Section
                           SettingsSectionWidget(
