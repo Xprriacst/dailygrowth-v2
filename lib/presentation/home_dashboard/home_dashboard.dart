@@ -429,17 +429,28 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           _currentStreak += 1; // Optimistic update
         });
 
-        // Generate personalized congratulations message
-        try {
-          final motivationalMessage =
-              await _challengeService.generateMotivationalMessage(
-            userId: _userId,
-            challengeTitle: _dailyChallenge['title'] as String,
-            streakCount: _currentStreak,
-          );
-          _showToast(motivationalMessage);
-        } catch (e) {
-          _showToast('Félicitations ! Défi accompli ! 🎉');
+        // Get total completed challenges to check milestones
+        final totalChallenges = await _getTotalCompletedChallenges(_userId);
+
+        // Check if this is a milestone moment
+        final isMilestone = _shouldShowCelebrationPopup(_currentStreak, totalChallenges);
+
+        if (isMilestone) {
+          // Show beautiful popup for milestones
+          try {
+            final motivationalMessage =
+                await _challengeService.generateMotivationalMessage(
+              userId: _userId,
+              challengeTitle: _dailyChallenge['title'] as String,
+              streakCount: _currentStreak,
+            );
+            _showBeautifulSuccessMessage(motivationalMessage);
+          } catch (e) {
+            _showBeautifulSuccessMessage('Félicitations ! Défi accompli ! 🎉');
+          }
+        } else {
+          // Show discrete notification for regular completions
+          _showDiscreteNotification('Défi complété ! 🎯', isSuccess: true);
         }
 
         // Reload achievements and weekly progress to show updates
@@ -456,11 +467,44 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           _isChallengeCompleted = false;
         });
 
-        _showToast('Défi marqué comme non terminé');
+        _showDiscreteNotification('Défi marqué comme non terminé', isSuccess: false);
       }
     } catch (e) {
-      _showToast('Erreur lors de la mise à jour du défi');
+      _showDiscreteNotification('Erreur lors de la mise à jour du défi', isSuccess: false);
     }
+  }
+
+  /// Récupère le nombre total de défis complétés par l'utilisateur
+  Future<int> _getTotalCompletedChallenges(String userId) async {
+    try {
+      final response = await Supabase.instance.client
+          .from('challenge_history')
+          .select('id')
+          .eq('user_id', userId);
+      
+      return response.length;
+    } catch (e) {
+      debugPrint('Erreur lors du comptage des défis: $e');
+      return 0;
+    }
+  }
+
+  /// Détermine si une popup de célébration doit être affichée
+  /// Retourne true seulement pour les jalons importants
+  bool _shouldShowCelebrationPopup(int streakCount, int totalChallenges) {
+    // 🔥 Jalons de série (streak)
+    // Affiche popup pour les séries importantes
+    if ([3, 7, 14, 30].contains(streakCount)) {
+      return true;
+    }
+    
+    // 📈 Paliers de progression totale
+    // Affiche popup pour les jalons de défis complétés
+    if ([5, 10, 25, 50].contains(totalChallenges)) {
+      return true;
+    }
+    
+    return false;
   }
 
 
