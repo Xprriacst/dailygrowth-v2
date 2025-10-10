@@ -91,8 +91,16 @@ class ChallengeService {
     String difficulty = 'medium',
   }) async {
     try {
+      debugPrint('');
+      debugPrint('═══════════════════════════════════════════════');
+      debugPrint('🎯 [generateTodayChallenge] CALLED');
+      debugPrint('📍 User ID: $userId');
+      debugPrint('📍 Life Domain: $lifeDomain');
+      debugPrint('📍 Difficulty: $difficulty');
+      debugPrint('═══════════════════════════════════════════════');
+      debugPrint('');
+      
       // Générer directement un nouveau défi via n8n (pas de vérification de stock)
-      debugPrint('🎯 Generating today\'s challenge via n8n');
       final newChallenge = await _generateNewMicroChallengeViaAI(userId, lifeDomain);
       
       Map<String, String> challengeData;
@@ -445,15 +453,21 @@ class ChallengeService {
   // Generate new micro-challenge via n8n when no unused challenges available
   Future<Map<String, dynamic>?> _generateNewMicroChallengeViaAI(String userId, String lifeDomain) async {
     try {
+      debugPrint('🔍 [CHALLENGE SERVICE] Starting _generateNewMicroChallengeViaAI');
+      debugPrint('🔍 [CHALLENGE SERVICE] User ID: $userId');
+      debugPrint('🔍 [CHALLENGE SERVICE] Life Domain: $lifeDomain');
+      
       final n8nService = N8nChallengeService();
       final userService = UserService();
       
       // Get user profile to determine problematique
       final userProfile = await userService.getUserProfile(userId);
       if (userProfile == null) {
-        debugPrint('❌ No user profile found for challenge generation');
+        debugPrint('❌ [CHALLENGE SERVICE] No user profile found for challenge generation');
         return null;
       }
+      
+      debugPrint('✅ [CHALLENGE SERVICE] User profile loaded');
       
       // Get number of completed challenges
       final completedChallenges = await _client
@@ -465,22 +479,27 @@ class ChallengeService {
       
       final nombreDefisReleves = completedChallenges.count ?? 0;
       
+      debugPrint('📊 [CHALLENGE SERVICE] Défis complétés: $nombreDefisReleves');
+      
       // Get user's selected problematique (single selection)
       String problematique = lifeDomain;
       if (userProfile['selected_problematiques'] != null) {
         final problematiques = List<String>.from(userProfile['selected_problematiques']);
+        debugPrint('🔍 [CHALLENGE SERVICE] Selected problematiques: $problematiques');
         if (problematiques.isNotEmpty) {
           problematique = problematiques.first; // Use the single selected problematique
         }
       } else if (userProfile['selected_life_domains'] != null) {
         // Fallback to domain if no specific problematique
         final domains = List<String>.from(userProfile['selected_life_domains']);
+        debugPrint('🔍 [CHALLENGE SERVICE] Selected life domains: $domains');
         if (domains.isNotEmpty) {
           problematique = domains.first;
         }
       }
       
-      debugPrint('🎯 Generating new challenge for: $problematique (completed: $nombreDefisReleves)');
+      debugPrint('🎯 [CHALLENGE SERVICE] Final problematique: "$problematique"');
+      debugPrint('🚀 [CHALLENGE SERVICE] Calling n8n webhook...');
       
       // Generate single challenge via n8n
       final result = await n8nService.generateSingleMicroChallengeWithFallback(
@@ -488,6 +507,8 @@ class ChallengeService {
         nombreDefisReleves: nombreDefisReleves,
         userId: userId,
       );
+      
+      debugPrint('✅ [CHALLENGE SERVICE] N8n webhook returned result');
       
       // Get the generated challenge from database
       final generatedChallenge = await _client

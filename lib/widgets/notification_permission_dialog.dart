@@ -144,7 +144,7 @@ class NotificationPermissionDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Autoriser les notifications',
+                      'Autoriser',
                       style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

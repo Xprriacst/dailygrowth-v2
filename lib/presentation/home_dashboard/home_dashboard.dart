@@ -140,10 +140,17 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   Future<void> _loadTodayChallenge() async {
     try {
+      debugPrint('');
+      debugPrint('🔵 [HOME DASHBOARD] _loadTodayChallenge called');
+      debugPrint('🔵 [HOME DASHBOARD] User ID: $_userId');
+      
       // First try to get existing challenge for today
       final existingChallenge = await _challengeService.getTodayChallenge(_userId);
       
       if (existingChallenge != null) {
+        debugPrint('✅ [HOME DASHBOARD] Found existing challenge for today');
+        debugPrint('📋 Challenge: ${existingChallenge['title']}');
+        
         // Use existing challenge for today
         setState(() {
           _dailyChallenge = {
@@ -157,6 +164,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         return;
       }
 
+      debugPrint('⚠️ [HOME DASHBOARD] No existing challenge found - generating new one');
+      
       // No existing challenge, generate new one
       final userProfile = await _userService.getUserProfile(_userId);
       final selectedDomains =
@@ -165,6 +174,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       final primaryDomain =
           selectedDomains.isNotEmpty ? selectedDomains.first : 'sante';
 
+      debugPrint('📍 [HOME DASHBOARD] Primary domain: $primaryDomain');
+      debugPrint('🚀 [HOME DASHBOARD] Calling generateTodayChallenge...');
+      
       // Generate new challenge (not force regenerate)
       final newChallenge = await _challengeService.generateTodayChallenge(
         userId: _userId,
