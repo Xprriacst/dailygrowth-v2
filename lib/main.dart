@@ -6,6 +6,11 @@ import 'services/supabase_service.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/web_notification_service.dart';
+import 'services/challenge_service.dart';
+import 'services/user_service.dart';
+import 'services/progress_service.dart';
+import 'services/quote_service.dart';
+import 'services/gamification_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
@@ -26,6 +31,13 @@ Future<void> main() async {
 
     // Initialize authentication service
     await AuthService().initialize();
+
+    // Initialize core services
+    await UserService().initialize();
+    await ChallengeService().initialize();
+    await ProgressService().initialize();
+    await QuoteService().initialize();
+    await GamificationService().initialize();
 
     // Initialize notification service (without Supabase dependency for now)
     await NotificationService().initialize();
