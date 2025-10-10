@@ -371,6 +371,21 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                                   isCompleted: _isChallengeCompleted,
                                   onToggleCompletion: _handleChallengeToggle),
 
+                              // 🔧 DEBUG: Bouton temporaire pour tester le webhook n8n
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 4.w),
+                                child: ElevatedButton.icon(
+                                  onPressed: _forceRegenerateChallenge,
+                                  icon: const Icon(Icons.refresh, size: 18),
+                                  label: const Text('🔧 DEBUG: Régénérer défi (test webhook n8n)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(vertical: 1.5.h, horizontal: 3.w),
+                                  ),
+                                ),
+                              ),
+
                               SizedBox(height: 2.h),
 
                               // Inspirational Quote Card - MASQUÉ
@@ -519,6 +534,44 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     return false;
   }
 
+  /// 🔧 DEBUG: Force la régénération du défi du jour pour tester le webhook n8n
+  Future<void> _forceRegenerateChallenge() async {
+    try {
+      debugPrint('');
+      debugPrint('🔧 [DEBUG] Force regenerate challenge button pressed');
+      debugPrint('═══════════════════════════════════════════════');
+      
+      _showDiscreteNotification('Régénération du défi en cours...', isSuccess: true);
+      
+      final userProfile = await _userService.getUserProfile(_userId);
+      final selectedDomains =
+          userProfile?['selected_life_domains'] as List<dynamic>? ?? ['sante'];
+      final primaryDomain =
+          selectedDomains.isNotEmpty ? selectedDomains.first : 'sante';
+
+      debugPrint('🔧 [DEBUG] Calling forceRegenerateTodayChallenge...');
+      
+      final newChallenge = await _challengeService.forceRegenerateTodayChallenge(
+        userId: _userId,
+        lifeDomain: primaryDomain,
+      );
+
+      setState(() {
+        _dailyChallenge = {
+          'id': newChallenge['id'],
+          'title': newChallenge['title'],
+          'description': newChallenge['description'],
+        };
+        _isChallengeCompleted = newChallenge['status'] == 'completed';
+      });
+
+      debugPrint('✅ [DEBUG] Challenge regenerated successfully: ${newChallenge['title']}');
+      _showDiscreteNotification('Nouveau défi généré ! Vérifie les logs console.', isSuccess: true);
+    } catch (e) {
+      debugPrint('❌ [DEBUG] Error regenerating challenge: $e');
+      _showDiscreteNotification('Erreur: $e', isSuccess: false);
+    }
+  }
 
   void _handleProfileTap() {
     Navigator.pushNamed(context, '/user-profile');
