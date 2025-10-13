@@ -55,7 +55,7 @@ class N8nChallengeService {
         webhookUrl,
         data: requestData,
         options: Options(
-          contentType: 'application/json',
+          contentType: 'application/x-www-form-urlencoded',
         ),
       );
 
