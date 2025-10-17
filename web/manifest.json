@@ -1,6 +1,6 @@
 {
-    "name": "DailyGrowth",
-    "short_name": "DailyGrowth",
+    "name": "ChallengeMe",
+    "short_name": "ChallengeMe",
     "start_url": "./",
     "display": "standalone",
     "background_color": "#ffffff",
