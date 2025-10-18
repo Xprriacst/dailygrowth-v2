@@ -14,6 +14,7 @@ import '../../utils/auth_guard.dart';
 import 'widgets/problematique_selection_modal.dart';
 import './widgets/life_domains_widget.dart';
 import './widgets/notification_toggle_widget.dart';
+import './widgets/problematique_progress_widget.dart';
 import './widgets/profile_header_widget.dart';
 import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
@@ -244,6 +245,9 @@ class _UserProfileState extends State<UserProfile> {
                             onAvatarTap: _showProfilePictureModal,
                             userStats: _userStats),
                           SizedBox(height: 3.h),
+
+                          // Progress by Problematique Section
+                          const ProblematiqueProgressWidget(),
 
                           // Account Section
                           SettingsSectionWidget(

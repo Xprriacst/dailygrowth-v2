@@ -226,4 +226,77 @@ class UserService {
       throw Exception('Erreur lors de l\'ajout du succès: $error');
     }
   }
+
+  // Get progress statistics by problematique
+  // Returns a map with completion count and percentage for each problematique
+  // Counts COMPLETED challenges, not just assigned ones
+  Future<Map<String, Map<String, dynamic>>> getProgressByProblematique(
+      String userId) async {
+    try {
+      const int MAX_CHALLENGES_PER_PROBLEMATIQUE = 50;
+
+      // Get all completed daily challenges with their associated micro-challenge problematique
+      // We join daily_challenges with user_micro_challenges to get the problematique
+      // and filter on status = 'completed'
+      final response = await _client
+          .from('user_micro_challenges')
+          .select('''
+            problematique,
+            nom,
+            id
+          ''')
+          .eq('user_id', userId)
+          .eq('is_used_as_daily', true);
+
+      // For each micro-challenge that was used as daily, check if the corresponding
+      // daily_challenge is completed
+      final List<String> completedProblematiques = [];
+      
+      for (var microChallenge in response) {
+        final challengeName = microChallenge['nom'] as String;
+        final problematique = microChallenge['problematique'] as String;
+        
+        // Check if there's a completed daily_challenge with this name
+        final completedChallenge = await _client
+            .from('daily_challenges')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('title', challengeName)
+            .eq('status', 'completed')
+            .maybeSingle();
+        
+        if (completedChallenge != null) {
+          completedProblematiques.add(problematique);
+        }
+      }
+
+      // Count challenges per problematique
+      final Map<String, int> challengeCounts = {};
+      
+      for (var problematique in completedProblematiques) {
+        challengeCounts[problematique] = (challengeCounts[problematique] ?? 0) + 1;
+      }
+
+      // Calculate percentages and create result map
+      final Map<String, Map<String, dynamic>> result = {};
+      
+      for (var entry in challengeCounts.entries) {
+        final completed = entry.value;
+        final percentage = (completed / MAX_CHALLENGES_PER_PROBLEMATIQUE * 100).clamp(0, 100);
+        
+        result[entry.key] = {
+          'completed': completed,
+          'total': MAX_CHALLENGES_PER_PROBLEMATIQUE,
+          'percentage': percentage.toInt(),
+          'remaining': MAX_CHALLENGES_PER_PROBLEMATIQUE - completed,
+        };
+      }
+
+      debugPrint('📊 Progress by problematique (COMPLETED challenges): $result');
+      return result;
+    } catch (error) {
+      debugPrint('⚠️ Error fetching progress by problematique: $error');
+      throw Exception('Erreur lors de la récupération de la progression: $error');
+    }
+  }
 }
