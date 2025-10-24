@@ -20,6 +20,7 @@ import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
 import './widgets/settings_section_widget.dart';
 import '../settings/notification_settings_widget.dart';
+import '../onboarding_flow/widgets/problematique_progress_selection_widget.dart';
 
 import 'package:universal_html/html.dart' as html;
 
@@ -455,19 +456,68 @@ class _UserProfileState extends State<UserProfile> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ProblematiqueSelectionModal(
-        selectedProblematique: _getSelectedProblematique(),
-        onProblematiqueChanged: (String newProblematique) async {
-          try {
-            await _userService.updateUserProfile(
-              userId: _authService.userId!,
-              selectedProblematiques: [newProblematique]);
-            await _loadUserData(); // Reload data
-            // Note: Popup removed - success is implicit when modal closes
-          } catch (e) {
-            _showBeautifulErrorMessage('Erreur lors de la mise à jour: $e');
-          }
-        }));
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: AppTheme.lightTheme.colorScheme.background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: EdgeInsets.only(top: 2.h, bottom: 1.h),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            // Titre
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Votre objectif',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.lightTheme.colorScheme.onSurface,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Terminé',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Widget de sélection avec progression
+            Expanded(
+              child: ProblematiqueProgressSelectionWidget(
+                selectedDomains: const [],
+                onDomainToggle: (_) async {
+                  // Recharger les données après modification
+                  await _loadUserData();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _updateNotificationSetting(String key, bool value) async {
