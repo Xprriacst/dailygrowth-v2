@@ -44,6 +44,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     "title": "Chargement...",
     "description": "Récupération du défi du jour...",
   };
+  
+  // Note du défi (stockage local temporaire)
+  String _challengeNote = "";
 
   // Real inspirational quote data
   Map<String, dynamic> _inspirationalQuote = {
@@ -369,7 +372,15 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                                   challengeDescription:
                                       _dailyChallenge['description'] as String,
                                   isCompleted: _isChallengeCompleted,
-                                  onToggleCompletion: _handleChallengeToggle),
+                                  onToggleCompletion: _handleChallengeToggle,
+                                  initialNote: _challengeNote,
+                                  onNoteChanged: (note) {
+                                    setState(() {
+                                      _challengeNote = note;
+                                    });
+                                    debugPrint('Note sauvegardée: $note');
+                                    // TODO: Sauvegarder en base de données
+                                  }),
 
                               SizedBox(height: 2.h),
 
