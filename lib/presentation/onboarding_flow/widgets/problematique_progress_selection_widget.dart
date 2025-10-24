@@ -103,11 +103,15 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
 
         _progressByProblematique = progressCounts;
       }
-      
-      _animationController.forward();
     } catch (e) {
       debugPrint('❌ Erreur lors du chargement de la progression: $e');
     } finally {
+      if (!mounted) return;
+
+      if (_animationController.status == AnimationStatus.dismissed) {
+        _animationController.forward();
+      }
+
       setState(() => _isLoading = false);
     }
   }
