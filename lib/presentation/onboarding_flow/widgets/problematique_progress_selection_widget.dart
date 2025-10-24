@@ -71,18 +71,18 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
           final selectedDescriptions = selectedProblematiquesData.cast<String>();
           
           // Mapper les descriptions aux objets ChallengeProblematique
-          _selectedProblematiques = ChallengeProblematique.all
+          _selectedProblematiques = ChallengeProblematique.allProblematiques
               .where((p) => selectedDescriptions.contains(p.description))
               .toList();
-          
-          // Récupérer la progression pour chaque problématique
-          for (final problematique in _selectedProblematiques) {
-            final progress = await _userService.getProgressByProblematique(
-              currentUser.id,
-              problematique.description,
-            );
-            _progressByProblematique[problematique.description] = progress['completed_count'] ?? 0;
-          }
+
+          // Récupérer la progression pour chaque problématique en une seule requête
+          final progressMap = await _userService.getProgressByProblematique(currentUser.id);
+
+          _progressByProblematique = {
+            for (final entry in progressMap.entries)
+              if ((entry.value['completed'] ?? 0) > 0 && selectedDescriptions.contains(entry.key))
+                entry.key: (entry.value['completed'] ?? 0) as int,
+          };
         }
       }
       
