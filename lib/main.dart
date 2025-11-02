@@ -56,11 +56,17 @@ Future<void> main() async {
     debugPrint('❌ Service initialization error: $e');
   }
 
-  runApp(const MyApp());
+  final shouldForceResetPassword = await _prepareInitialPasswordRecovery();
+
+  runApp(MyApp(
+    shouldForceResetPassword: shouldForceResetPassword,
+  ));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({Key? key, this.shouldForceResetPassword = false}) : super(key: key);
+
+  final bool shouldForceResetPassword;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -68,11 +74,19 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _authService = AuthService();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _hasForcedResetRoute = false;
 
   @override
   void initState() {
     super.initState();
     _setupDeepLinkHandling();
+
+    if (widget.shouldForceResetPassword) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigateToResetPassword();
+      });
+    }
   }
 
   void _setupDeepLinkHandling() {
@@ -82,7 +96,10 @@ class _MyAppState extends State<MyApp> {
         try {
           debugPrint('Auth state changed: ${data.event}');
 
-          if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
+          if (data.event == AuthChangeEvent.passwordRecovery) {
+            debugPrint('🔐 Password recovery event detected');
+            _navigateToResetPassword();
+          } else if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
             debugPrint('User signed in successfully via deep link or normal flow');
             // Navigation will be handled by individual screens or AuthGuard
           } else if (data.event == AuthChangeEvent.signedOut) {
@@ -104,6 +121,7 @@ class _MyAppState extends State<MyApp> {
       return MaterialApp(
         title: 'DailyGrowth',
         theme: AppTheme.lightTheme,
+        navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
           return MediaQuery(
@@ -139,5 +157,58 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     _authService.dispose();
     super.dispose();
+  }
+
+  void _navigateToResetPassword() {
+    if (_hasForcedResetRoute) return;
+    _hasForcedResetRoute = true;
+
+    if (_navigatorKey.currentState == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          AppRoutes.resetPassword,
+          (route) => false,
+        );
+      });
+      return;
+    }
+
+    _navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      AppRoutes.resetPassword,
+      (route) => false,
+    );
+  }
+}
+
+Future<bool> _prepareInitialPasswordRecovery() async {
+  if (!kIsWeb) {
+    return false;
+  }
+
+  try {
+    final uri = Uri.base;
+    final path = uri.path.toLowerCase();
+    final fragment = uri.fragment.toLowerCase();
+    final hasResetPath = path.contains('reset-password');
+    final hasResetFragment = fragment.contains('reset-password');
+
+    if (!hasResetPath && !hasResetFragment) {
+      return false;
+    }
+
+    final code = uri.queryParameters['code'];
+    if (code != null && code.isNotEmpty) {
+      try {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+        debugPrint('✅ Password recovery session established via code parameter');
+      } catch (e) {
+        debugPrint('❌ Failed to exchange recovery code for session: $e');
+      }
+    }
+
+    return true;
+  } catch (e) {
+    debugPrint('❌ Error preparing password recovery: $e');
+    return false;
   }
 }

@@ -308,7 +308,7 @@ class AuthService {
       await _client.auth.resetPasswordForEmail(
         email,
         redirectTo: kIsWeb 
-          ? 'https://challengeme.ch/reset-password' 
+          ? 'https://challengeme.ch/#/reset-password' 
           : 'io.supabase.dailygrowth://reset-password/',
       );
 
