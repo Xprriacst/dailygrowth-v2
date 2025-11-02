@@ -102,7 +102,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Sizer(builder: (context, orientation, screenType) {
       return MaterialApp(
-        title: 'DailyGrowth',
+        title: 'ChallengeMe',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {

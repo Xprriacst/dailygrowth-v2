@@ -739,7 +739,7 @@ class _UserProfileState extends State<UserProfile> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('À propos de DailyGrowth'),
+        title: Text('À propos de ChallengeMe'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,9 +747,9 @@ class _UserProfileState extends State<UserProfile> {
             Text('Version: 1.0.0'),
             SizedBox(height: 1.h),
             Text(
-                'DailyGrowth vous accompagne dans votre développement personnel quotidien.'),
+                'ChallengeMe vous accompagne dans votre développement personnel quotidien.'),
             SizedBox(height: 2.h),
-            Text('© 2024 DailyGrowth. Tous droits réservés.'),
+            Text('© 2024 ChallengeMe. Tous droits réservés.'),
           ]),
         actions: [
           TextButton(

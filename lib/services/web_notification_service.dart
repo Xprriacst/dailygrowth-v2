@@ -105,7 +105,7 @@ class WebNotificationService {
 
       // Extract notification data
       var notification = js_util.getProperty(payload, 'notification');
-      var title = js_util.getProperty(notification, 'title') ?? 'DailyGrowth';
+      var title = js_util.getProperty(notification, 'title') ?? 'ChallengeMe';
       var body = js_util.getProperty(notification, 'body') ?? 'Nouveau message';
 
       // Show notification using web notification API
@@ -275,7 +275,7 @@ class WebNotificationService {
       debugPrint('🧪 Triggering test notification...');
       await showNotification(
         title: 'Test Notification',
-        body: 'This is a test notification from DailyGrowth',
+        body: 'This is a test notification from ChallengeMe',
         icon: '/icons/icon-192.png',
       );
     } catch (e) {
@@ -519,7 +519,7 @@ class WebNotificationService {
     String? userName,
   }) async {
     await showNotification(
-      title: title ?? 'Rappel DailyGrowth',
+      title: title ?? 'Rappel ChallengeMe',
       body: body ?? 'N\'oubliez pas votre défi du jour ${userName ?? ''}!',
       icon: icon,
       data: data,

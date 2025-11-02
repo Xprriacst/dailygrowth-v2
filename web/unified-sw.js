@@ -1,4 +1,4 @@
-// Service Worker unifié pour DailyGrowth PWA
+// Service Worker unifié pour ChallengeMe PWA
 // Combine les fonctionnalités de caching, notifications locales et Firebase Cloud Messaging
 
 // Import Firebase scripts pour FCM
@@ -96,7 +96,7 @@ self.addEventListener('fetch', function(event) {
 let scheduledNotifications = new Map();
 let periodicCheckInterval = null;
 
-const INDEXED_DB_NAME = 'DailyGrowthDB';
+const INDEXED_DB_NAME = 'ChallengeMe_DB';
 const INDEXED_DB_STORE = 'notifications';
 
 async function openIndexedDB() {
@@ -206,7 +206,7 @@ async function restoreScheduledNotifications() {
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] Message push reçu en arrière-plan: ', payload);
 
-  const notificationTitle = payload.notification?.title || 'DailyGrowth';
+  const notificationTitle = payload.notification?.title || 'ChallengeMe';
   const notificationOptions = {
     body: payload.notification?.body || 'Nouveau défi disponible !',
     icon: '/icons/Icon-192.png',

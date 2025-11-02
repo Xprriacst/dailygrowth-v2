@@ -263,7 +263,7 @@ class _MilestoneCelebrationWidgetState extends State<MilestoneCelebrationWidget>
   void _shareProgress() {
     // Implement native sharing functionality
     final shareText =
-        'Je viens de débloquer "${widget.milestone['title']}" dans DailyGrowth ! 🎉';
+        'Je viens de débloquer "${widget.milestone['title']}" dans ChallengeMe ! 🎉';
 
     // For now, show a toast message
     ScaffoldMessenger.of(context).showSnackBar(

@@ -1,4 +1,4 @@
-// Firebase Cloud Messaging Service Worker pour DailyGrowth PWA
+// Firebase Cloud Messaging Service Worker pour ChallengeMe PWA
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
@@ -23,7 +23,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] Message push reçu en arrière-plan: ', payload);
 
-  const notificationTitle = payload.notification?.title || 'DailyGrowth';
+  const notificationTitle = payload.notification?.title || 'ChallengeMe';
   const notificationOptions = {
     body: payload.notification?.body || 'Nouveau défi disponible !',
     icon: '/icons/Icon-192.png',
