@@ -811,7 +811,17 @@ class _UserProfileState extends State<UserProfile> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-                'Cette action est irréversible. Toutes vos données seront définitivement supprimées.'),
+                '⚠️ Cette action est irréversible. Toutes vos données seront définitivement supprimées.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.lightTheme.colorScheme.error,
+                ),
+              ),
+            SizedBox(height: 2.h),
+            Text(
+                'Cela inclut : défis, progression, statistiques, notifications et toutes vos données personnelles.',
+                style: TextStyle(fontSize: 12.sp),
+              ),
             SizedBox(height: 2.h),
             TextField(
               controller: emailController,
@@ -824,19 +834,82 @@ class _UserProfileState extends State<UserProfile> {
             onPressed: () => Navigator.pop(context),
             child: Text('Annuler')),
           ElevatedButton(
-            onPressed: () {
-              if (emailController.text == _userData?["email"]) {
-                Navigator.pop(context);
-                Navigator.pushNamedAndRemoveUntil(
-                    context, '/login-screen', (route) => false);
-                _showBeautifulSuccessMessage('Fonctionnalité à implémenter');
+            onPressed: () async {
+              if (emailController.text.trim() == _userData?["email"]) {
+                Navigator.pop(context); // Close confirmation dialog
+                
+                // Show loading
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => Center(
+                    child: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightTheme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: AppTheme.lightTheme.colorScheme.primary,
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Suppression du compte...',
+                            style: AppTheme.lightTheme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+
+                try {
+                  // Delete the account
+                  await _authService.deleteAccount();
+
+                  // Close loading dialog
+                  if (mounted) Navigator.pop(context);
+
+                  // Navigate to login screen
+                  if (mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/login-screen', 
+                      (route) => false,
+                    );
+                  }
+
+                  // Show success message on login screen
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Votre compte a été supprimé avec succès'),
+                        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Close loading dialog
+                  if (mounted) Navigator.pop(context);
+                  
+                  // Show error
+                  if (mounted) {
+                    _showBeautifulErrorMessage(
+                      'Erreur lors de la suppression du compte: ${e.toString().replaceAll('Exception: ', '')}',
+                    );
+                  }
+                }
               } else {
                 _showBeautifulErrorMessage('L\'adresse e-mail ne correspond pas');
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.lightTheme.colorScheme.error),
-            child: Text('Supprimer')),
+            child: Text('Supprimer définitivement')),
         ]));
   }
 
