@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
@@ -33,13 +34,26 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    _handleDeepLink();
+    _handlePasswordRecovery();
   }
 
-  void _handleDeepLink() {
-    if (widget.token != null && widget.type == 'recovery') {
-      // Token de récupération détecté, l'utilisateur peut maintenant définir un nouveau mot de passe
-      debugPrint('🔑 Reset password token detected: ${widget.token}');
+  Future<void> _handlePasswordRecovery() async {
+    // Supabase gère automatiquement les hash fragments (#access_token=...)
+    // On attend que la session soit établie
+    await Future.delayed(const Duration(milliseconds: 1000));
+    
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      debugPrint('✅ Session de récupération établie pour: ${session.user.email}');
+      Fluttertoast.showToast(
+        msg: "Vous pouvez maintenant définir votre nouveau mot de passe",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.blue,
+        textColor: Colors.white,
+      );
+    } else {
+      debugPrint('⚠️ Aucune session trouvée - vérifiez le lien de réinitialisation');
+      // Ne pas afficher d'erreur ici car l'utilisateur peut arriver directement sur la page
     }
   }
 
