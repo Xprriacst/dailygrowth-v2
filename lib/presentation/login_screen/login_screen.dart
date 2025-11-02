@@ -357,6 +357,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleForgotPassword() {
+    final resetEmailController = TextEditingController(text: _emailController.text);
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -373,24 +375,41 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: 2.h),
             TextField(
-              controller: TextEditingController(text: _emailController.text),
+              controller: resetEmailController,
               decoration: InputDecoration(
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
+              autofocus: true,
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              resetEmailController.dispose();
+              Navigator.pop(context);
+            },
             child: Text('Annuler'),
           ),
           ElevatedButton(
             onPressed: () async {
+              final email = resetEmailController.text.trim();
+              
+              if (email.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Veuillez entrer votre email'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              
               try {
-                await _authService.resetPassword(_emailController.text.trim());
+                await _authService.resetPassword(email);
+                resetEmailController.dispose();
                 Navigator.pop(context);
                 
                 // Afficher une boîte de dialogue avec instructions claires
@@ -422,7 +441,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              _emailController.text.trim(),
+                              email,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.lightTheme.colorScheme.primary,
@@ -452,6 +471,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 );
               } catch (e) {
+                resetEmailController.dispose();
                 Navigator.pop(context);
                 showDialog(
                   context: context,
@@ -464,7 +484,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text('Erreur'),
                         ],
                       ),
-                      content: Text('Impossible d\'envoyer l\'email de réinitialisation. Vérifiez votre adresse email et réessayez.'),
+                      content: Text('Impossible d\'envoyer l\'email de réinitialisation. Vérifiez votre adresse email et réessayez.\n\nDétails: ${e.toString()}'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
