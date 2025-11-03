@@ -152,6 +152,15 @@
         ? window.APP_BUILD_VERSION
         : Date.now().toString();
 
+      window.APP_BUILD_VERSION = versionToken;
+      try {
+        localStorage.setItem('challengeme.buildVersion', versionToken);
+      } catch (e) {
+        console.warn('⚠️ Unable to persist build version in localStorage:', e);
+      }
+      document.title = `ChallengeMe • build ${versionToken}`;
+      console.log(`[ChallengeMe] Build version: ${versionToken}`);
+
       _flutter.loader.loadEntrypoint({
         entrypointUrl: `main.dart.js?v=${versionToken}`,
         serviceWorker: {

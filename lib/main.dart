@@ -15,6 +15,7 @@ import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
 import 'package:flutter/foundation.dart';
+import 'utils/build_version_helper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -124,12 +125,54 @@ class _MyAppState extends State<MyApp> {
         navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
-          return MediaQuery(
+          Widget content = MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: TextScaler.linear(1.0),
             ),
             child: child!,
           );
+
+          if (kIsWeb) {
+            final buildVersion = getAppBuildVersion();
+            if (buildVersion.isNotEmpty) {
+              final theme = Theme.of(context);
+              content = Stack(
+                children: [
+                  content,
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Build $buildVersion',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ) ??
+                              const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+          }
+
+          return content;
         },
         initialRoute: AppRoutes.initialRoute,
         routes: AppRoutes.routes,
