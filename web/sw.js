@@ -2,8 +2,8 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
-// Configuration
-const CACHE_VERSION = 'v4.0.0';
+// Configuration - VERSION DYNAMIQUE REMPLACÉE PAR BUILD
+const CACHE_VERSION = '__SW_VERSION__'; // Sera remplacé par le build Netlify
 const CACHE_NAME = 'dailygrowth-unified-' + CACHE_VERSION;
 
 // Configuration Firebase
@@ -282,6 +282,11 @@ self.addEventListener('message', async function(event) {
   console.log('[SW] 📨 Message received:', data?.type || 'unknown', data);
   
   switch (data?.type) {
+    case 'SKIP_WAITING':
+      console.log('[SW] 🚀 Received SKIP_WAITING - activating new version immediately');
+      self.skipWaiting();
+      break;
+      
     case 'SET_BADGE':
       updateAppBadge(data.count || 0);
       break;

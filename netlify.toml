@@ -1,6 +1,6 @@
 [build]
   # Installation Flutter et build avec gestion du cache
-  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable; fi && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && ls -la build/web/ && APP_BUILD_VERSION=${NETLIFY_BUILD_ID:-${COMMIT_REF:-$(date +%s)}} && sed -i.bak \"s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g\" build/web/index.html && sed -i.bak \"s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g\" build/web/index.html && rm -f build/web/index.html.bak && echo \"Variables replaced successfully (build version: $APP_BUILD_VERSION)\""
+  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable; fi && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && ls -la build/web/ && APP_BUILD_VERSION=${NETLIFY_BUILD_ID:-${COMMIT_REF:-$(date +%s)}} && sed -i.bak \"s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g\" build/web/index.html && sed -i.bak \"s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g\" build/web/index.html && sed -i.bak \"s|__SW_VERSION__|$APP_BUILD_VERSION|g\" build/web/sw.js && rm -f build/web/index.html.bak build/web/sw.js.bak && echo \"Variables replaced successfully (build version: $APP_BUILD_VERSION, SW version updated)\""
   publish = "build/web"
 
 # Configuration des redirections pour SPA
@@ -41,11 +41,11 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# Headers pour les fichiers JS/CSS
+# Headers pour les fichiers JS/CSS - Cache minimal pour forcer les mises à jour
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=300, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*.css"
