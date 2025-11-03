@@ -57,6 +57,11 @@
     };
   </script>
 
+  <!-- Build version injection (replaced during deploy) -->
+  <script>
+    window.APP_BUILD_VERSION = '__APP_BUILD_VERSION__';
+  </script>
+
   <!-- Development environment variables (local only) -->
   <script src="env.js"></script>
 
@@ -143,7 +148,12 @@
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
+      const versionToken = (window.APP_BUILD_VERSION && window.APP_BUILD_VERSION !== '__APP_BUILD_VERSION__')
+        ? window.APP_BUILD_VERSION
+        : Date.now().toString();
+
       _flutter.loader.loadEntrypoint({
+        entrypointUrl: `main.dart.js?v=${versionToken}`,
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
         },
