@@ -387,9 +387,11 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
             ],
 
             SizedBox(height: 4.h),
+            SizedBox(height: 4.h),
+
+            const BuildVersionBanner(),
+            SizedBox(height: 2.h),
           ],
-          const BuildVersionBanner(),
-          SizedBox(height: 2.h),
         ),
       ),
     );
