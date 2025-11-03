@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
+import 'package:universal_html/html.dart' as html;
 import '../utils/build_version_helper.dart';
 
 /// Service pour vérifier si une nouvelle version de l'app est disponible
@@ -57,22 +58,32 @@ class VersionCheckerService {
       );
 
       if (response.statusCode == 200 && response.data is String) {
-        // Extraire la version du HTML
-        final versionMatch = RegExp(r'window\.APP_BUILD_VERSION\s*=\s*[\'"]([^\'"]+)[\'"]')
-            .firstMatch(response.data);
+        // Extraire la version du HTML de manière simple
+        final htmlData = response.data as String;
         
-        if (versionMatch != null) {
-          final serverVersion = versionMatch.group(1);
+        // Chercher "window.APP_BUILD_VERSION = 'xxxxx'" ou "window.APP_BUILD_VERSION = \"xxxxx\""
+        final startMarker = 'window.APP_BUILD_VERSION = ';
+        final startIndex = htmlData.indexOf(startMarker);
+        
+        if (startIndex >= 0) {
+          final valueStart = startIndex + startMarker.length;
+          // Ignorer le premier guillemet
+          final quote = htmlData[valueStart]; // ' ou "
+          final versionStart = valueStart + 1;
+          final versionEnd = htmlData.indexOf(quote, versionStart);
           
-          if (serverVersion != null && 
-              serverVersion != '__APP_BUILD_VERSION__' &&
-              serverVersion != _currentVersion &&
-              serverVersion.isNotEmpty) {
+          if (versionEnd > versionStart) {
+            final serverVersion = htmlData.substring(versionStart, versionEnd);
             
-            debugPrint('[VersionChecker] 🆕 New version detected: $serverVersion (current: $_currentVersion)');
-            _onNewVersionDetected?.call(serverVersion);
-          } else {
-            debugPrint('[VersionChecker] ✅ Running latest version: $_currentVersion');
+            if (serverVersion != '__APP_BUILD_VERSION__' &&
+                serverVersion != _currentVersion &&
+                serverVersion.isNotEmpty) {
+              
+              debugPrint('[VersionChecker] 🆕 New version detected: $serverVersion (current: $_currentVersion)');
+              _onNewVersionDetected?.call(serverVersion);
+            } else {
+              debugPrint('[VersionChecker] ✅ Running latest version: $_currentVersion');
+            }
           }
         }
       }
@@ -84,14 +95,7 @@ class VersionCheckerService {
   /// Force un rechargement de l'application
   static void reloadApp() {
     if (kIsWeb) {
-      // Nettoyer tous les caches
       try {
-        // ignore: avoid_web_libraries_in_flutter
-        import 'dart:html' as html;
-        
-        // Vider le localStorage (optionnel - garde les données utilisateur)
-        // html.window.localStorage.clear();
-        
         // Forcer le rechargement en vidant le cache
         html.window.location.reload();
       } catch (e) {
@@ -101,73 +105,29 @@ class VersionCheckerService {
   }
 
   /// Vérifie si le Service Worker a une nouvelle version en attente
+  /// Note: Méthode simplifiée - utilise le rechargement direct
   static Future<bool> checkServiceWorkerUpdate() async {
     if (!kIsWeb) return false;
     
-    try {
-      // ignore: avoid_web_libraries_in_flutter
-      import 'dart:html' as html;
-      import 'dart:js_util' as js_util;
-      
-      final navigator = html.window.navigator;
-      final swContainer = js_util.getProperty(navigator, 'serviceWorker');
-      
-      if (swContainer != null) {
-        final registration = await js_util.promiseToFuture(
-          js_util.callMethod(swContainer, 'getRegistration', [])
-        );
-        
-        if (registration != null) {
-          // Vérifier s'il y a un worker en attente
-          final waiting = js_util.getProperty(registration, 'waiting');
-          if (waiting != null) {
-            debugPrint('[VersionChecker] 🔄 Service Worker update available');
-            return true;
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('[VersionChecker] ⚠️ Error checking SW update: $e');
-    }
-    
+    // Simplifié: on se fie à la détection de version pour déclencher le reload
+    debugPrint('[VersionChecker] ℹ️ Service Worker check - using version detection instead');
     return false;
   }
 
   /// Active le nouveau Service Worker en attente
+  /// Note: Le rechargement de la page active automatiquement le nouveau SW
   static Future<void> activateNewServiceWorker() async {
     if (!kIsWeb) return;
     
     try {
-      // ignore: avoid_web_libraries_in_flutter
-      import 'dart:html' as html;
-      import 'dart:js_util' as js_util;
+      debugPrint('[VersionChecker] 🔄 Activating new version via reload...');
       
-      final navigator = html.window.navigator;
-      final swContainer = js_util.getProperty(navigator, 'serviceWorker');
-      
-      if (swContainer != null) {
-        final registration = await js_util.promiseToFuture(
-          js_util.callMethod(swContainer, 'getRegistration', [])
-        );
-        
-        if (registration != null) {
-          final waiting = js_util.getProperty(registration, 'waiting');
-          if (waiting != null) {
-            debugPrint('[VersionChecker] 🔄 Activating new Service Worker...');
-            
-            // Envoyer message SKIP_WAITING au SW
-            js_util.callMethod(waiting, 'postMessage', [
-              js_util.jsify({'type': 'SKIP_WAITING'})
-            ]);
-            
-            // Recharger après un court délai
-            await Future.delayed(const Duration(milliseconds: 500));
-            reloadApp();
-          }
-        }
-      }
+      // Le rechargement va automatiquement activer le nouveau SW
+      // grâce au message SKIP_WAITING dans sw.js
+      await Future.delayed(const Duration(milliseconds: 500));
+      reloadApp();
     } catch (e) {
-      debugPrint('[VersionChecker] ❌ Error activating SW: $e');
+      debugPrint('[VersionChecker] ❌ Error during reload: $e');
       // Fallback: reload anyway
       reloadApp();
     }
