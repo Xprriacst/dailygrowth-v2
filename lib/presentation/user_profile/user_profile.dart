@@ -36,7 +36,7 @@ class _UserProfileState extends State<UserProfile> {
   String? _selectedProfileImage;
 
   // Bottom navigation state
-  int _currentBottomNavIndex = 2; // Profile is index 2
+  int _currentBottomNavIndex = 3; // Profile is index 3
 
   // Real user data from Supabase
   Map<String, dynamic>? _userData;
@@ -422,9 +422,12 @@ class _UserProfileState extends State<UserProfile> {
         Navigator.pushReplacementNamed(context, '/home-dashboard');
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, '/challenge-history');
+        Navigator.pushReplacementNamed(context, '/notes');
         break;
       case 2:
+        Navigator.pushReplacementNamed(context, '/challenge-history');
+        break;
+      case 3:
         // Already on user profile
         break;
     }

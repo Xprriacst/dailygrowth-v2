@@ -50,7 +50,7 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
   late ScrollController _scrollController;
 
   // Bottom navigation state
-  int _currentBottomNavIndex = 1; // History is index 1
+  int _currentBottomNavIndex = 2; // History is index 2
 
   String _searchQuery = '';
   String _selectedDomain = 'Tous';
@@ -668,9 +668,12 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
         Navigator.pushReplacementNamed(context, '/home-dashboard');
         break;
       case 1:
-        // Already on challenge history
+        Navigator.pushReplacementNamed(context, '/notes');
         break;
       case 2:
+        // Already on challenge history
+        break;
+      case 3:
         Navigator.pushReplacementNamed(context, '/user-profile');
         break;
     }
