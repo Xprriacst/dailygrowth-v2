@@ -10,12 +10,11 @@ import 'services/challenge_service.dart';
 import 'services/user_service.dart';
 import 'services/progress_service.dart';
 import 'services/quote_service.dart';
-import 'services/gamification_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
 import 'package:flutter/foundation.dart';
-import 'utils/build_version_helper.dart';
+import 'services/gamification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,7 +64,8 @@ Future<void> main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key, this.shouldForceResetPassword = false}) : super(key: key);
+  const MyApp({Key? key, this.shouldForceResetPassword = false})
+      : super(key: key);
 
   final bool shouldForceResetPassword;
 
@@ -100,8 +100,10 @@ class _MyAppState extends State<MyApp> {
           if (data.event == AuthChangeEvent.passwordRecovery) {
             debugPrint('🔐 Password recovery event detected');
             _navigateToResetPassword();
-          } else if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
-            debugPrint('User signed in successfully via deep link or normal flow');
+          } else if (data.event == AuthChangeEvent.signedIn ||
+              data.event == AuthChangeEvent.tokenRefreshed) {
+            debugPrint(
+                'User signed in successfully via deep link or normal flow');
             // Navigation will be handled by individual screens or AuthGuard
           } else if (data.event == AuthChangeEvent.signedOut) {
             debugPrint('User signed out');
@@ -125,54 +127,12 @@ class _MyAppState extends State<MyApp> {
         navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
-          Widget content = MediaQuery(
+          return MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: TextScaler.linear(1.0),
             ),
             child: child!,
           );
-
-          if (kIsWeb) {
-            final buildVersion = getAppBuildVersion();
-            if (buildVersion.isNotEmpty) {
-              final theme = Theme.of(context);
-              content = Stack(
-                children: [
-                  content,
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: IgnorePointer(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Build $buildVersion',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ) ??
-                              const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-          }
-
-          return content;
         },
         initialRoute: AppRoutes.initialRoute,
         routes: AppRoutes.routes,
@@ -182,7 +142,7 @@ class _MyAppState extends State<MyApp> {
             final uri = Uri.parse(settings.name!);
             final token = uri.queryParameters['token'];
             final type = uri.queryParameters['type'];
-            
+
             return MaterialPageRoute(
               builder: (context) => ResetPasswordScreen(
                 token: token,
@@ -243,7 +203,8 @@ Future<bool> _prepareInitialPasswordRecovery() async {
     if (code != null && code.isNotEmpty) {
       try {
         await Supabase.instance.client.auth.exchangeCodeForSession(code);
-        debugPrint('✅ Password recovery session established via code parameter');
+        debugPrint(
+            '✅ Password recovery session established via code parameter');
       } catch (e) {
         debugPrint('❌ Failed to exchange recovery code for session: $e');
       }

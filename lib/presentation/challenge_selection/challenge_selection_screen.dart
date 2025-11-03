@@ -9,25 +9,26 @@ import '../../services/n8n_challenge_service.dart';
 import '../../services/user_service.dart';
 import './widgets/problematique_category_widget.dart';
 import './widgets/micro_challenge_card_widget.dart';
+import '../../widgets/build_version_banner.dart';
 
 class ChallengeSelectionScreen extends StatefulWidget {
   const ChallengeSelectionScreen({Key? key}) : super(key: key);
 
   @override
-  State<ChallengeSelectionScreen> createState() => _ChallengeSelectionScreenState();
+  State<ChallengeSelectionScreen> createState() =>
+      _ChallengeSelectionScreenState();
 }
 
 class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
     with TickerProviderStateMixin {
-  
   final N8nChallengeService _n8nService = N8nChallengeService();
   final UserService _userService = UserService();
-  
+
   ChallengeProblematique? _selectedProblematique;
   Map<String, dynamic>? _generatedChallenges;
   bool _isGenerating = false;
   String? _errorMessage;
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -65,10 +66,10 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
       await _userService.initialize();
       final currentUser = Supabase.instance.client.auth.currentUser;
       final userId = currentUser?.id;
-      
+
       Map<String, dynamic>? userProfile;
       int nombreDefisReleves = 0;
-      
+
       if (userId != null) {
         try {
           userProfile = await _userService.getUserProfile(userId);
@@ -105,7 +106,6 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
           curve: Curves.easeInOut,
         );
       }
-
     } catch (e) {
       debugPrint('❌ Error generating challenges: $e');
       setState(() {
@@ -172,7 +172,8 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
             // Sélection des problématiques par catégorie
             if (_selectedProblematique == null) ...[
               ...ChallengeProblematique.allCategories.map((category) {
-                final problematiques = ChallengeProblematique.getByCategory(category);
+                final problematiques =
+                    ChallengeProblematique.getByCategory(category);
                 return Column(
                   children: [
                     ProblematiqueCategory(
@@ -211,7 +212,8 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                       'Problématique: ${_selectedProblematique?.title}',
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
+                        color: AppTheme.lightTheme.colorScheme.onSurface
+                            .withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -232,10 +234,12 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                       width: double.infinity,
                       padding: EdgeInsets.all(4.w),
                       decoration: BoxDecoration(
-                        color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                        color: AppTheme.lightTheme.colorScheme.primary
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                          color: AppTheme.lightTheme.colorScheme.primary
+                              .withOpacity(0.3),
                         ),
                       ),
                       child: Column(
@@ -250,11 +254,13 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                               SizedBox(width: 3.w),
                               Expanded(
                                 child: Text(
-                                  _selectedProblematique?.title ?? 'Objectif sélectionné',
+                                  _selectedProblematique?.title ??
+                                      'Objectif sélectionné',
                                   style: TextStyle(
                                     fontSize: 18.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.lightTheme.colorScheme.primary,
+                                    color:
+                                        AppTheme.lightTheme.colorScheme.primary,
                                   ),
                                 ),
                               ),
@@ -265,14 +271,17 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                             'Niveau détecté: ${_generatedChallenges!['niveau_detecte'] ?? 'Non défini'}',
                             style: TextStyle(
                               fontSize: 14.sp,
-                              color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.8),
+                              color: AppTheme.lightTheme.colorScheme.primary
+                                  .withOpacity(0.8),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if (_generatedChallenges!['source'] == 'fallback_local') ...[
+                          if (_generatedChallenges!['source'] ==
+                              'fallback_local') ...[
                             SizedBox(height: 1.h),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 2.w, vertical: 0.5.h),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -319,7 +328,8 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                               HapticFeedback.lightImpact();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Défi "${defi['nom']}" marqué comme complété !'),
+                                  content: Text(
+                                      'Défi "${defi['nom']}" marqué comme complété !'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -339,13 +349,16 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              Navigator.pushReplacementNamed(context, AppRoutes.homeDashboard);
+                              Navigator.pushReplacementNamed(
+                                  context, AppRoutes.homeDashboard);
                             },
                             icon: const Icon(Icons.home),
                             label: const Text('Retour au tableau de bord'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                              foregroundColor: AppTheme.lightTheme.colorScheme.onPrimary,
+                              backgroundColor:
+                                  AppTheme.lightTheme.colorScheme.primary,
+                              foregroundColor:
+                                  AppTheme.lightTheme.colorScheme.onPrimary,
                               padding: EdgeInsets.symmetric(vertical: 2.h),
                             ),
                           ),
@@ -358,8 +371,10 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
                             icon: const Icon(Icons.refresh),
                             label: const Text('Choisir un autre objectif'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-                              foregroundColor: AppTheme.lightTheme.colorScheme.onSurface,
+                              backgroundColor:
+                                  AppTheme.lightTheme.colorScheme.surface,
+                              foregroundColor:
+                                  AppTheme.lightTheme.colorScheme.onSurface,
                               padding: EdgeInsets.symmetric(vertical: 2.h),
                             ),
                           ),
@@ -373,6 +388,8 @@ class _ChallengeSelectionScreenState extends State<ChallengeSelectionScreen>
 
             SizedBox(height: 4.h),
           ],
+          const BuildVersionBanner(),
+          SizedBox(height: 2.h),
         ),
       ),
     );
