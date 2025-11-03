@@ -224,10 +224,10 @@ class NoteService {
     try {
       final response = await _supabase
           .from('notes')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('user_id', userId);
 
-      return (response as PostgrestList).count ?? 0;
+      return (response as List).length;
     } catch (e) {
       debugPrint('❌ NoteService: Failed to count notes: $e');
       return 0;
