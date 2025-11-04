@@ -96,10 +96,22 @@ class VersionCheckerService {
   static void reloadApp() {
     if (kIsWeb) {
       try {
-        // Forcer le rechargement en vidant le cache
-        html.window.location.reload();
+        // Forcer un vrai rechargement (pas depuis le cache)
+        // En ajoutant un timestamp dans l'URL pour forcer le refresh
+        final currentUrl = html.window.location.href ?? '';
+        final separator = currentUrl.contains('?') ? '&' : '?';
+        final newUrl = '$currentUrl${separator}_t=${DateTime.now().millisecondsSinceEpoch}';
+        
+        debugPrint('[VersionChecker] 🔄 Reloading with cache bypass: $newUrl');
+        html.window.location.href = newUrl;
       } catch (e) {
         debugPrint('[VersionChecker] ❌ Error reloading app: $e');
+        // Fallback: reload simple
+        try {
+          html.window.location.reload();
+        } catch (e2) {
+          debugPrint('[VersionChecker] ❌ Fallback reload also failed: $e2');
+        }
       }
     }
   }

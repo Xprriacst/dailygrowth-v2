@@ -83,9 +83,32 @@ class UpdateAvailableDialog extends StatelessWidget {
         ),
         FilledButton.icon(
           onPressed: () {
+            // Fermer le dialog
             Navigator.of(context).pop();
-            // Attendre que le dialog se ferme
-            Future.delayed(const Duration(milliseconds: 300), () {
+            
+            // Afficher un indicateur de chargement
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(
+                child: Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Mise à jour en cours...'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+            
+            // Recharger après un court délai
+            Future.delayed(const Duration(milliseconds: 500), () {
               VersionCheckerService.reloadApp();
             });
           },
