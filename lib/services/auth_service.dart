@@ -404,12 +404,24 @@ class AuthService {
   Future<void> deleteAccount() async {
     try {
       if (!isAuthenticated) {
-        throw Exception('User not authenticated');
+        throw Exception('Utilisateur non authentifié');
       }
 
-      // This would require admin privileges or RPC function
-      // Implementation depends on your backend setup
-      throw Exception('Fonctionnalité non implémentée');
+      debugPrint('Attempting to delete account for user: ${currentUser?.email}');
+
+      // Call the RPC function to delete the account
+      final response = await _client.rpc('delete_user_account');
+
+      debugPrint('Delete account response: $response');
+
+      // Check if deletion was successful
+      if (response != null && response['success'] == true) {
+        debugPrint('Account deleted successfully');
+        _authStateController.add(false);
+      } else {
+        final errorMessage = response?['message'] ?? 'Erreur inconnue';
+        throw Exception(errorMessage);
+      }
     } catch (error) {
       debugPrint('Delete account error: $error');
       throw Exception('Erreur de suppression de compte: $error');

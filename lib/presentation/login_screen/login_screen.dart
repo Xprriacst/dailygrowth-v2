@@ -26,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _isGoogleLoading = false;
-  bool _isAppleLoading = false;
   String? _emailError;
   String? _passwordError;
   String? _generalError;
@@ -315,8 +314,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleSocialLogin(String provider) async {
     if (provider == 'google') {
       setState(() => _isGoogleLoading = true);
-    } else if (provider == 'apple') {
-      setState(() => _isAppleLoading = true);
     }
 
     try {
@@ -324,8 +321,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (provider == 'google') {
         success = await _authService.signInWithGoogle();
-      } else if (provider == 'apple') {
-        success = await _authService.signInWithApple();
       }
 
       if (success) {
@@ -350,7 +345,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() {
           _isGoogleLoading = false;
-          _isAppleLoading = false;
         });
       }
     }
@@ -727,27 +721,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 4.h),
 
-                // Social Login Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: SocialLoginButton(
-                        iconName: 'g_mobiledata',
-                        text: 'Google',
-                        isLoading: _isGoogleLoading,
-                        onPressed: () => _handleSocialLogin('google'),
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: SocialLoginButton(
-                        iconName: 'apple',
-                        text: 'Apple',
-                        isLoading: _isAppleLoading,
-                        onPressed: () => _handleSocialLogin('apple'),
-                      ),
-                    ),
-                  ],
+                // Social Login Button
+                SocialLoginButton(
+                  iconName: 'g_mobiledata',
+                  text: 'Google',
+                  isLoading: _isGoogleLoading,
+                  onPressed: () => _handleSocialLogin('google'),
                 ),
 
                 SizedBox(height: 6.h),

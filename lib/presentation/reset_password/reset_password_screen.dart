@@ -132,7 +132,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 SizedBox(height: 2.h),
                 
                 Text(
-                  'Choisissez un mot de passe sécurisé pour votre compte DailyGrowth.',
+                  'Choisissez un mot de passe sécurisé pour votre compte ChallengeMe.',
                   style: AppTheme.bodyStyle,
                   textAlign: TextAlign.center,
                 ),
