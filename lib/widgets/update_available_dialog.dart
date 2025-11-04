@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/version_checker_service.dart';
 
@@ -100,6 +101,11 @@ class UpdateAvailableDialog extends StatelessWidget {
                         CircularProgressIndicator(),
                         SizedBox(height: 16),
                         Text('Mise à jour en cours...'),
+                        SizedBox(height: 8),
+                        Text(
+                          'Cela peut prendre quelques secondes',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
                       ],
                     ),
                   ),
@@ -110,6 +116,17 @@ class UpdateAvailableDialog extends StatelessWidget {
             // Recharger après un court délai
             Future.delayed(const Duration(milliseconds: 500), () {
               VersionCheckerService.reloadApp();
+            });
+            
+            // Timeout de sécurité : forcer reload après 10 secondes si rien ne se passe
+            Future.delayed(const Duration(seconds: 10), () {
+              // Si on arrive ici, c'est que le reload n'a pas fonctionné
+              // Forcer un reload simple en fallback
+              try {
+                VersionCheckerService.reloadApp();
+              } catch (e) {
+                debugPrint('[UpdateDialog] ⚠️ Timeout fallback reload failed: $e');
+              }
             });
           },
           icon: const Icon(Icons.refresh),
