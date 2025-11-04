@@ -83,10 +83,10 @@ class UpdateAvailableDialog extends StatelessWidget {
           child: const Text('Plus tard'),
         ),
         FilledButton.icon(
-          onPressed: () {
+          onPressed: () async {
             // Fermer le dialog
             Navigator.of(context).pop();
-            
+
             // Afficher un indicateur de chargement
             showDialog(
               context: context,
@@ -103,8 +103,9 @@ class UpdateAvailableDialog extends StatelessWidget {
                         Text('Mise à jour en cours...'),
                         SizedBox(height: 8),
                         Text(
-                          'Cela peut prendre quelques secondes',
+                          'L\'application va se recharger dans un instant',
                           style: TextStyle(fontSize: 12, color: Colors.grey),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -112,22 +113,13 @@ class UpdateAvailableDialog extends StatelessWidget {
                 ),
               ),
             );
-            
-            // Recharger après un court délai
-            Future.delayed(const Duration(milliseconds: 500), () {
-              VersionCheckerService.reloadApp();
-            });
-            
-            // Timeout de sécurité : forcer reload après 10 secondes si rien ne se passe
-            Future.delayed(const Duration(seconds: 10), () {
-              // Si on arrive ici, c'est que le reload n'a pas fonctionné
-              // Forcer un reload simple en fallback
-              try {
-                VersionCheckerService.reloadApp();
-              } catch (e) {
-                debugPrint('[UpdateDialog] ⚠️ Timeout fallback reload failed: $e');
-              }
-            });
+
+            // Recharger après un court délai pour laisser le dialog s'afficher
+            await Future.delayed(const Duration(milliseconds: 300));
+
+            // Lancer le processus de rechargement
+            // Note: La fonction reloadApp() ne retournera jamais car la page sera rechargée
+            await VersionCheckerService.reloadApp();
           },
           icon: const Icon(Icons.refresh),
           label: const Text('Mettre à jour'),
