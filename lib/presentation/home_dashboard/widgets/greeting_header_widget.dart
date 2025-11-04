@@ -8,6 +8,7 @@ class GreetingHeaderWidget extends StatelessWidget {
   final int currentStreak;
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
+  final VoidCallback? onNotesTap;
 
   const GreetingHeaderWidget({
     Key? key,
@@ -15,6 +16,7 @@ class GreetingHeaderWidget extends StatelessWidget {
     required this.currentStreak,
     required this.onProfileTap,
     required this.onNotificationTap,
+    this.onNotesTap,
   }) : super(key: key);
 
   @override
@@ -87,51 +89,36 @@ class GreetingHeaderWidget extends StatelessWidget {
             ),
           ),
 
-          // Notification Bell - MASQUÉ
-          // GestureDetector(
-          //   onTap: onNotificationTap,
-          //   child: Container(
-          //     width: 12.w,
-          //     height: 12.w,
-          //     decoration: BoxDecoration(
-          //       shape: BoxShape.circle,
-          //       color: AppTheme.lightTheme.colorScheme.surface,
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: AppTheme.lightTheme.colorScheme.shadow
-          //               .withOpacity(0.1),
-          //           blurRadius: 8,
-          //           offset: Offset(0, 2),
-          //         ),
-          //       ],
-          //     ),
-          //     child: Stack(
-          //       children: [
-          //         Center(
-          //           child: CustomIconWidget(
-          //             iconName: 'notifications',
-          //             color: AppTheme.lightTheme.colorScheme.onSurface,
-          //             size: 6.w,
-          //           ),
-          //         ),
-          //         // Notification badge
-          //         Positioned(
-          //           top: 2.w,
-          //           right: 2.w,
-          //           child: Container(
-          //             width: 2.w,
-          //             height: 2.w,
-          //             decoration: BoxDecoration(
-          //               shape: BoxShape.circle,
-          //               color: AppTheme.lightTheme.colorScheme.tertiary,
-          //             ),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-          SizedBox.shrink(), // Remplace l'icône de notification
+          // Notes Button
+          if (onNotesTap != null)
+            GestureDetector(
+              onTap: onNotesTap,
+              child: Container(
+                width: 12.w,
+                height: 12.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.lightTheme.colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.lightTheme.colorScheme.shadow
+                          .withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: CustomIconWidget(
+                    iconName: 'note_alt',
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                    size: 6.w,
+                  ),
+                ),
+              ),
+            )
+          else
+            const SizedBox.shrink(),
         ],
       ),
     );

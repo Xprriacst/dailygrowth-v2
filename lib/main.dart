@@ -11,6 +11,7 @@ import 'services/user_service.dart';
 import 'services/progress_service.dart';
 import 'services/quote_service.dart';
 import 'services/version_checker_service.dart';
+import 'services/note_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
@@ -41,6 +42,7 @@ Future<void> main() async {
     await ProgressService().initialize();
     await QuoteService().initialize();
     await GamificationService().initialize();
+    await NoteService().initialize();
 
     // Initialize notification service (without Supabase dependency for now)
     await NotificationService().initialize();

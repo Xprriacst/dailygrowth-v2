@@ -363,7 +363,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   userName: _userName,
                                   currentStreak: _currentStreak,
                                   onProfileTap: _handleProfileTap,
-                                  onNotificationTap: _handleNotificationTap),
+                                  onNotificationTap: _handleNotificationTap,
+                                  onNotesTap: _handleNotesTap),
 
                               SizedBox(height: 2.h),
 
@@ -538,6 +539,10 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   void _handleNotificationTap() {
     Navigator.pushNamed(context, '/notification-settings');
+  }
+
+  void _handleNotesTap() {
+    Navigator.pushNamed(context, '/notes-list');
   }
 
   void _handleBottomNavTap(int index) async {
