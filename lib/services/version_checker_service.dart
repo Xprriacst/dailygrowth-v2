@@ -93,27 +93,73 @@ class VersionCheckerService {
   }
 
   /// Force un rechargement de l'application
-  static void reloadApp() {
-    if (kIsWeb) {
-      try {
-        // Forcer un vrai rechargement (pas depuis le cache)
-        // En ajoutant un timestamp dans l'URL pour forcer le refresh
-        final currentUrl = html.window.location.href ?? '';
-        final separator = currentUrl.contains('?') ? '&' : '?';
-        final newUrl = '$currentUrl${separator}_t=${DateTime.now().millisecondsSinceEpoch}';
-        
-        debugPrint('[VersionChecker] 🔄 Reloading with cache bypass: $newUrl');
-        html.window.location.href = newUrl;
-      } catch (e) {
-        debugPrint('[VersionChecker] ❌ Error reloading app: $e');
-        // Fallback: reload simple
+  static Future<void> reloadApp() async {
+    if (!kIsWeb) return;
+
+    try {
+      debugPrint('[VersionChecker] 🔄 Starting app reload process...');
+
+      // 1. Vérifier s'il y a un Service Worker en attente et lui envoyer SKIP_WAITING
+      if (html.window.navigator.serviceWorker != null) {
         try {
-          html.window.location.reload();
-        } catch (e2) {
-          debugPrint('[VersionChecker] ❌ Fallback reload also failed: $e2');
+          final registration = await html.window.navigator.serviceWorker!.ready;
+
+          // S'il y a un SW en attente, lui envoyer le message SKIP_WAITING
+          final waiting = registration.waiting;
+          if (waiting != null) {
+            debugPrint('[VersionChecker] 📤 Sending SKIP_WAITING to waiting Service Worker');
+            waiting.postMessage({'type': 'SKIP_WAITING'});
+
+            // Attendre un peu pour laisser le SW s'activer
+            await Future.delayed(const Duration(milliseconds: 500));
+          } else {
+            debugPrint('[VersionChecker] ℹ️ No waiting Service Worker, proceeding with reload');
+          }
+        } catch (e) {
+          debugPrint('[VersionChecker] ⚠️ Could not check Service Worker: $e');
         }
       }
+
+      // 2. Recharger la page
+      _performReload();
+    } catch (e) {
+      debugPrint('[VersionChecker] ❌ Error during reload process: $e');
+      // Fallback: recharger quand même
+      _performReload();
     }
+  }
+
+  /// Effectue le rechargement de la page
+  static void _performReload() {
+    try {
+      debugPrint('[VersionChecker] 🔄 Performing page reload...');
+
+      // Utiliser location.replace() avec l'URL actuelle propre pour éviter l'historique
+      final cleanUrl = _getCleanUrl();
+      html.window.location.replace(cleanUrl);
+    } catch (e) {
+      debugPrint('[VersionChecker] ⚠️ Replace failed, trying reload: $e');
+      try {
+        // Fallback: reload simple
+        html.window.location.reload();
+      } catch (e2) {
+        debugPrint('[VersionChecker] ❌ All reload methods failed: $e2');
+      }
+    }
+  }
+
+  /// Obtient une URL propre sans paramètres temporaires
+  static String _getCleanUrl() {
+    final currentUrl = html.window.location.href ?? '';
+
+    // Supprimer les paramètres _t= qui pourraient exister
+    final uri = Uri.parse(currentUrl);
+    final cleanParams = Map<String, dynamic>.from(uri.queryParameters);
+    cleanParams.remove('_t');
+
+    // Reconstruire l'URL sans le paramètre _t
+    final newUri = uri.replace(queryParameters: cleanParams.isEmpty ? null : cleanParams);
+    return newUri.toString();
   }
 
   /// Vérifie si le Service Worker a une nouvelle version en attente
