@@ -1,183 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:intl/intl.dart';
 
 import '../../../models/note.dart';
+import '../../../models/challenge_problematique.dart';
 import '../../../theme/app_theme.dart';
 
-/// Google Keep-style note card widget
 class NoteCardWidget extends StatelessWidget {
   final Note note;
+  final Map<String, dynamic>? progressInfo;
   final VoidCallback onTap;
   final VoidCallback onDelete;
-  final VoidCallback onTogglePin;
 
   const NoteCardWidget({
     Key? key,
     required this.note,
+    this.progressInfo,
     required this.onTap,
     required this.onDelete,
-    required this.onTogglePin,
   }) : super(key: key);
 
-  Color _getNoteColor(String colorName) {
-    switch (colorName) {
-      case 'red':
-        return const Color(0xFFF28B82);
-      case 'orange':
-        return const Color(0xFFFBBC04);
-      case 'yellow':
-        return const Color(0xFFFFF475);
-      case 'green':
-        return const Color(0xFFCCFF90);
-      case 'blue':
-        return const Color(0xFFA7FFEB);
-      case 'purple':
-        return const Color(0xFFD7AEFB);
-      case 'pink':
-        return const Color(0xFFFDCFE8);
-      case 'gray':
-        return const Color(0xFFE8EAED);
-      default:
-        return Colors.white;
+  Color _getProgressColor(int percentage) {
+    if (percentage >= 80) {
+      return Colors.green;
+    } else if (percentage >= 50) {
+      return AppTheme.primaryLight;
+    } else if (percentage >= 25) {
+      return Colors.orange;
+    } else {
+      return Colors.red.shade300;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        if (difference.inMinutes == 0) {
-          return 'À l\'instant';
-        }
-        return 'Il y a ${difference.inMinutes} min';
-      }
-      return 'Il y a ${difference.inHours}h';
-    }
-    if (difference.inDays == 1) return 'Hier';
-    if (difference.inDays < 7) return 'Il y a ${difference.inDays}j';
-    if (difference.inDays < 30) return 'Il y a ${(difference.inDays / 7).floor()} sem';
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final noteColor = _getNoteColor(note.color);
-    final hasTitle = note.title != null && note.title!.isNotEmpty;
+    final problematique = ChallengeProblematique.allProblematiques.firstWhere(
+      (p) => p.title == note.problematique,
+      orElse: () => ChallengeProblematique.allProblematiques.first,
+    );
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 2.h),
-        decoration: BoxDecoration(
-          color: noteColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+    final percentage = progressInfo?['percentage'] as int? ?? 0;
+    final completed = progressInfo?['completed'] as int? ?? 0;
+    final total = progressInfo?['total'] as int? ?? 50;
+    final progressColor = _getProgressColor(percentage);
+
+    final formattedDate = DateFormat('d MMM yyyy', 'fr_FR').format(note.updatedAt);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.dividerLight,
+          width: 1,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title and pin icon
-            if (hasTitle || note.isPinned)
-              Padding(
-                padding: EdgeInsets.fromLTRB(4.w, 3.w, 2.w, 0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.shadowLight.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: EdgeInsets.all(4.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Problématique + Badge progression
+                Row(
                   children: [
-                    if (hasTitle)
-                      Expanded(
-                        child: Text(
-                          note.title!,
-                          style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                    // Emoji + Problématique
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            problematique.emoji,
+                            style: TextStyle(fontSize: 20.sp),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              note.problematique,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primaryLight,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
                       ),
-                    if (note.isPinned)
-                      Icon(
-                        Icons.push_pin,
-                        size: 4.w,
-                        color: Colors.black54,
+                    ),
+                    // Badge de progression
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 2.w,
+                        vertical: 0.5.h,
                       ),
+                      decoration: BoxDecoration(
+                        color: progressColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.trending_up,
+                            size: 14.sp,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 1.w),
+                          Text(
+                            '$percentage%',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Menu de suppression
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: AppTheme.errorLight,
+                        size: 20.sp,
+                      ),
+                      onPressed: onDelete,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ],
                 ),
-              ),
 
-            // Content
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                4.w,
-                hasTitle ? 1.h : 3.w,
-                4.w,
-                2.h,
-              ),
-              child: Text(
-                note.content,
-                style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.black87,
-                  height: 1.4,
+                SizedBox(height: 1.h),
+
+                // Barre de progression
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage / 100,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                    minHeight: 6,
+                  ),
                 ),
-                maxLines: 10,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
 
-            // Footer with date and actions
-            Padding(
-              padding: EdgeInsets.fromLTRB(4.w, 0, 2.w, 2.w),
-              child: Row(
-                children: [
-                  // Last edited date
-                  Expanded(
-                    child: Text(
-                      _formatDate(note.updatedAt),
-                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                        fontSize: 11,
-                      ),
-                    ),
+                SizedBox(height: 0.5.h),
+
+                // Texte progression
+                Text(
+                  '$completed/$total défis complétés',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: AppTheme.textSecondaryLight,
                   ),
-                  
-                  // Pin button
-                  IconButton(
-                    icon: Icon(
-                      note.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      size: 4.5.w,
-                    ),
-                    color: Colors.black54,
-                    onPressed: onTogglePin,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.all(1.w),
-                    constraints: const BoxConstraints(),
+                ),
+
+                SizedBox(height: 1.5.h),
+
+                // Titre de la note
+                Text(
+                  note.title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimaryLight,
                   ),
-                  
-                  // Delete button
-                  IconButton(
-                    icon: Icon(Icons.delete_outline, size: 4.5.w),
-                    color: Colors.black54,
-                    onPressed: onDelete,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.all(1.w),
-                    constraints: const BoxConstraints(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                if (note.content.isNotEmpty) ...[
+                  SizedBox(height: 1.h),
+                  // Aperçu du contenu
+                  Text(
+                    note.content,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppTheme.textSecondaryLight,
+                      height: 1.4,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
+
+                SizedBox(height: 1.5.h),
+
+                // Footer: Date de modification
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      size: 14.sp,
+                      color: AppTheme.textDisabledLight,
+                    ),
+                    SizedBox(width: 1.w),
+                    Text(
+                      'Modifié le $formattedDate',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppTheme.textDisabledLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

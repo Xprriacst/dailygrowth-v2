@@ -21,6 +21,7 @@ import './widgets/bottom_navigation_widget.dart';
 import './widgets/daily_challenge_card_widget.dart';
 import './widgets/greeting_header_widget.dart';
 import './widgets/weekly_progress_widget.dart';
+import '../../widgets/build_version_banner.dart';
 
 class HomeDashboard extends StatefulWidget {
   const HomeDashboard({Key? key}) : super(key: key);
@@ -29,7 +30,8 @@ class HomeDashboard extends StatefulWidget {
   State<HomeDashboard> createState() => _HomeDashboardState();
 }
 
-class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateMixin {
+class _HomeDashboardState extends State<HomeDashboard>
+    with TickerProviderStateMixin {
   int _currentBottomNavIndex = 0;
   bool _isChallengeCompleted = false;
   bool _isRefreshing = false;
@@ -82,7 +84,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     // Ensure user is authenticated before initializing
     final canProceed = await AuthGuard.canNavigate(context, '/home-dashboard');
     if (!canProceed) return;
-    
+
     _initializeServices();
   }
 
@@ -111,7 +113,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       setState(() {
         _isLoadingData = false;
       });
-      
+
       // Still show permission dialog even if services failed to initialize
       _schedulePermissionDialog();
     }
@@ -150,14 +152,15 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       debugPrint('');
       debugPrint('🔵 [HOME DASHBOARD] _loadTodayChallenge called');
       debugPrint('🔵 [HOME DASHBOARD] User ID: $_userId');
-      
+
       // First try to get existing challenge for today
-      final existingChallenge = await _challengeService.getTodayChallenge(_userId);
-      
+      final existingChallenge =
+          await _challengeService.getTodayChallenge(_userId);
+
       if (existingChallenge != null) {
         debugPrint('✅ [HOME DASHBOARD] Found existing challenge for today');
         debugPrint('📋 Challenge: ${existingChallenge['title']}');
-        
+
         // Use existing challenge for today
         setState(() {
           _dailyChallenge = {
@@ -168,23 +171,24 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           };
           _isChallengeCompleted = existingChallenge['status'] == 'completed';
         });
-        debugPrint('✅ Loaded existing challenge: ${existingChallenge['title']}');
+        debugPrint(
+            '✅ Loaded existing challenge: ${existingChallenge['title']}');
         return;
       }
 
-      debugPrint('⚠️ [HOME DASHBOARD] No existing challenge found - generating new one');
-      
+      debugPrint(
+          '⚠️ [HOME DASHBOARD] No existing challenge found - generating new one');
+
       // No existing challenge, generate new one
       final userProfile = await _userService.getUserProfile(_userId);
       final selectedDomains =
-          userProfile?['selected_life_domains'] as List<dynamic>? ??
-              ['sante'];
+          userProfile?['selected_life_domains'] as List<dynamic>? ?? ['sante'];
       final primaryDomain =
           selectedDomains.isNotEmpty ? selectedDomains.first : 'sante';
 
       debugPrint('📍 [HOME DASHBOARD] Primary domain: $primaryDomain');
       debugPrint('🚀 [HOME DASHBOARD] Calling generateTodayChallenge...');
-      
+
       // Generate new challenge (not force regenerate)
       final newChallenge = await _challengeService.generateTodayChallenge(
         userId: _userId,
@@ -200,13 +204,14 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         };
         _isChallengeCompleted = newChallenge['status'] == 'completed';
       });
-      
+
       debugPrint('✅ Challenge loaded: ${newChallenge['title']}');
     } catch (e) {
       debugPrint('Failed to load today\'s challenge: $e');
       // Fallback to existing challenge if regeneration fails
       try {
-        final existingChallenge = await _challengeService.getTodayChallenge(_userId);
+        final existingChallenge =
+            await _challengeService.getTodayChallenge(_userId);
         if (existingChallenge != null) {
           setState(() {
             _dailyChallenge = {
@@ -307,8 +312,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
       final weeklyProgress = await _progressService.getWeeklyProgress(_userId);
 
-      final completedDays =
-          weeklyProgress.where((day) => day['completed'] as bool? ?? false).length;
+      final completedDays = weeklyProgress
+          .where((day) => day['completed'] as bool? ?? false)
+          .length;
       final totalDays = weeklyProgress.length;
 
       setState(() {
@@ -324,7 +330,6 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       });
     }
   }
-
 
   String _formatDate(String dateTime) {
     final date = DateTime.parse(dateTime);
@@ -368,7 +373,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                                   userName: _userName,
                                   currentStreak: _currentStreak,
                                   onProfileTap: _handleProfileTap,
-                                  onNotificationTap: _handleNotificationTap),
+                                  onNotificationTap: _handleNotificationTap,
+                                  onNotesTap: _handleNotesTap),
 
                               SizedBox(height: 2.h),
 
@@ -414,6 +420,10 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
                               SizedBox(height: 3.h),
 
+                              const BuildVersionBanner(),
+
+                              SizedBox(height: 1.5.h),
+
                               SizedBox(
                                   height: 10.h), // Space for bottom navigation
                             ])))),
@@ -432,7 +442,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
       await _loadUserData();
       _showDiscreteNotification('Contenu actualisé !', isSuccess: true);
     } catch (e) {
-      _showDiscreteNotification('Erreur lors de l\'actualisation', isSuccess: false);
+      _showDiscreteNotification('Erreur lors de l\'actualisation',
+          isSuccess: false);
     } finally {
       setState(() {
         _isRefreshing = false;
@@ -464,7 +475,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
         final totalChallenges = await _getTotalCompletedChallenges(_userId);
 
         // Check if this is a milestone moment
-        final isMilestone = _shouldShowCelebrationPopup(_currentStreak, totalChallenges);
+        final isMilestone =
+            _shouldShowCelebrationPopup(_currentStreak, totalChallenges);
 
         if (isMilestone) {
           // Show beautiful popup for milestones
@@ -498,10 +510,12 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           _isChallengeCompleted = false;
         });
 
-        _showDiscreteNotification('Défi marqué comme non terminé', isSuccess: false);
+        _showDiscreteNotification('Défi marqué comme non terminé',
+            isSuccess: false);
       }
     } catch (e) {
-      _showDiscreteNotification('Erreur lors de la mise à jour du défi', isSuccess: false);
+      _showDiscreteNotification('Erreur lors de la mise à jour du défi',
+          isSuccess: false);
     }
   }
 
@@ -512,7 +526,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
           .from('challenge_history')
           .select('id')
           .eq('user_id', userId);
-      
+
       return response.length;
     } catch (e) {
       debugPrint('Erreur lors du comptage des défis: $e');
@@ -528,13 +542,13 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     if ([3, 7, 14, 30].contains(streakCount)) {
       return true;
     }
-    
+
     // 📈 Paliers de progression totale
     // Affiche popup pour les jalons de défis complétés
     if ([5, 10, 25, 50].contains(totalChallenges)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -544,6 +558,10 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
 
   void _handleNotificationTap() {
     Navigator.pushNamed(context, '/notification-settings');
+  }
+
+  void _handleNotesTap() {
+    Navigator.pushNamed(context, '/notes-list');
   }
 
   void _handleBottomNavTap(int index) async {
@@ -609,7 +627,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                  color:
+                      AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -628,13 +647,15 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                       end: Alignment.bottomRight,
                       colors: [
                         AppTheme.lightTheme.colorScheme.primary,
-                        AppTheme.lightTheme.colorScheme.primary.withOpacity(0.8),
+                        AppTheme.lightTheme.colorScheme.primary
+                            .withOpacity(0.8),
                       ],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                        color: AppTheme.lightTheme.colorScheme.primary
+                            .withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -647,7 +668,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                   ),
                 ),
                 SizedBox(height: 3.h),
-                
+
                 // Titre festif
                 Text(
                   'Bravo ! 🎉',
@@ -657,7 +678,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                   ),
                 ),
                 SizedBox(height: 2.h),
-                
+
                 // Message personnalisé
                 Text(
                   message,
@@ -667,7 +688,7 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 4.h),
-                
+
                 // Bouton stylé
                 SizedBox(
                   width: double.infinity,
@@ -681,7 +702,8 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 2,
-                      shadowColor: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.3),
+                      shadowColor: AppTheme.lightTheme.colorScheme.primary
+                          .withOpacity(0.3),
                     ),
                     child: Text(
                       'Continuer',
@@ -716,9 +738,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
             curve: Curves.easeOutBack,
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
             decoration: BoxDecoration(
-              color: isSuccess 
-                ? AppTheme.lightTheme.colorScheme.primaryContainer
-                : AppTheme.lightTheme.colorScheme.errorContainer,
+              color: isSuccess
+                  ? AppTheme.lightTheme.colorScheme.primaryContainer
+                  : AppTheme.lightTheme.colorScheme.errorContainer,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -733,9 +755,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
               children: [
                 Icon(
                   isSuccess ? Icons.check_circle : Icons.error,
-                  color: isSuccess 
-                    ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
-                    : AppTheme.lightTheme.colorScheme.onErrorContainer,
+                  color: isSuccess
+                      ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
+                      : AppTheme.lightTheme.colorScheme.onErrorContainer,
                   size: 5.w,
                 ),
                 SizedBox(width: 2.w),
@@ -743,9 +765,9 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
                   child: Text(
                     message,
                     style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                      color: isSuccess 
-                        ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
-                        : AppTheme.lightTheme.colorScheme.onErrorContainer,
+                      color: isSuccess
+                          ? AppTheme.lightTheme.colorScheme.onPrimaryContainer
+                          : AppTheme.lightTheme.colorScheme.onErrorContainer,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -811,20 +833,23 @@ class _HomeDashboardState extends State<HomeDashboard> with TickerProviderStateM
     // Wait a bit for the UI to settle, then show the dialog if needed
     Timer(const Duration(milliseconds: 1500), () async {
       if (!mounted) return;
-      
+
       try {
         final webNotificationService = WebNotificationService();
-        final shouldShow = await webNotificationService.shouldShowPermissionDialog();
-        
+        final shouldShow =
+            await webNotificationService.shouldShowPermissionDialog();
+
         if (shouldShow && mounted) {
           await NotificationPermissionDialog.showIfNeeded(
             context,
             onPermissionGranted: () {
-              debugPrint('🎉 User granted notification permission from home dialog');
+              debugPrint(
+                  '🎉 User granted notification permission from home dialog');
               // Optionally refresh notification settings or update UI
             },
             onPermissionDenied: () {
-              debugPrint('😔 User denied notification permission from home dialog');
+              debugPrint(
+                  '😔 User denied notification permission from home dialog');
               // Could show alternative engagement strategy
             },
           );

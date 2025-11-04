@@ -19,6 +19,7 @@ import './widgets/profile_header_widget.dart';
 import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
 import './widgets/settings_section_widget.dart';
+import './widgets/problematique_progress_widget.dart';
 import '../settings/notification_settings_widget.dart';
 import '../onboarding_flow/widgets/problematique_progress_selection_widget.dart';
 
@@ -280,7 +281,10 @@ class _UserProfileState extends State<UserProfile> {
                                 onEditTap: _showLifeDomainsModal),
                             ]),
 
-
+                          // Progress by Problematique Section
+                          // TODO: Temporairement masqué - pourcentage incohérent (basé sur défis assignés vs complétés)
+                          // Fix disponible sur branche development
+                          // const ProblematiqueProgressWidget(),
 
                           // Support Section
                           SettingsSectionWidget(

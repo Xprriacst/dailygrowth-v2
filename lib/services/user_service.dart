@@ -229,51 +229,23 @@ class UserService {
 
   // Get progress statistics by problematique
   // Returns a map with completion count and percentage for each problematique
-  // Counts COMPLETED challenges, not just assigned ones
   Future<Map<String, Map<String, dynamic>>> getProgressByProblematique(
       String userId) async {
     try {
       const int MAX_CHALLENGES_PER_PROBLEMATIQUE = 50;
 
-      // Get all completed daily challenges with their associated micro-challenge problematique
-      // We join daily_challenges with user_micro_challenges to get the problematique
-      // and filter on status = 'completed'
+      // Get all completed micro-challenges for this user, grouped by problematique
       final response = await _client
           .from('user_micro_challenges')
-          .select('''
-            problematique,
-            nom,
-            id
-          ''')
+          .select('problematique')
           .eq('user_id', userId)
           .eq('is_used_as_daily', true);
-
-      // For each micro-challenge that was used as daily, check if the corresponding
-      // daily_challenge is completed
-      final List<String> completedProblematiques = [];
-      
-      for (var microChallenge in response) {
-        final challengeName = microChallenge['nom'] as String;
-        final problematique = microChallenge['problematique'] as String;
-        
-        // Check if there's a completed daily_challenge with this name
-        final completedChallenge = await _client
-            .from('daily_challenges')
-            .select('id, status')
-            .eq('user_id', userId)
-            .eq('title', challengeName)
-            .eq('status', 'completed')
-            .maybeSingle();
-        
-        if (completedChallenge != null) {
-          completedProblematiques.add(problematique);
-        }
-      }
 
       // Count challenges per problematique
       final Map<String, int> challengeCounts = {};
       
-      for (var problematique in completedProblematiques) {
+      for (var challenge in response) {
+        final problematique = challenge['problematique'] as String? ?? 'Non défini';
         challengeCounts[problematique] = (challengeCounts[problematique] ?? 0) + 1;
       }
 
@@ -292,7 +264,7 @@ class UserService {
         };
       }
 
-      debugPrint('📊 Progress by problematique (COMPLETED challenges): $result');
+      debugPrint('📊 Progress by problematique: $result');
       return result;
     } catch (error) {
       debugPrint('⚠️ Error fetching progress by problematique: $error');

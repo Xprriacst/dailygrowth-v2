@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import '../../../theme/app_theme.dart';
+import '../../../core/app_export.dart';
 import '../../../services/user_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -74,22 +74,20 @@ class _ProblematiqueProgressWidgetState
               size: 10.w,
               color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.5),
             ),
-            SizedBox(height: 2.h),
-            Text(
-              'Progression par Problématique',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.lightTheme.colorScheme.onSurface,
-              ),
-            ),
             SizedBox(height: 1.h),
             Text(
-              'Complète des défis pour voir ta progression !',
+              'Aucun défi complété',
+              style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            SizedBox(height: 0.5.h),
+            Text(
+              'Commencez à relever des défis pour voir votre progression',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.6),
+              style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
+                    .withOpacity(0.7),
               ),
             ),
           ],
@@ -102,131 +100,185 @@ class _ProblematiqueProgressWidgetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.only(bottom: 2.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Progression par Problématique',
-                  style: TextStyle(
-                    fontSize: 14.sp,
+          Text(
+            'Progression par problématique',
+            style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.lightTheme.colorScheme.onSurface,
+            ),
+          ),
+          SizedBox(height: 1.h),
+          Text(
+            'Objectif : 50 défis par problématique',
+            style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: 2.h),
+          ..._progressData.entries.map((entry) {
+            return _buildProgressItem(
+              problematique: entry.key,
+              data: entry.value,
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressItem({
+    required String problematique,
+    required Map<String, dynamic> data,
+  }) {
+    final completed = data['completed'] as int;
+    final total = data['total'] as int;
+    final percentage = data['percentage'] as int;
+    final remaining = data['remaining'] as int;
+
+    // Choose color based on progress
+    Color progressColor;
+    if (percentage >= 80) {
+      progressColor = Colors.green;
+    } else if (percentage >= 50) {
+      progressColor = AppTheme.lightTheme.colorScheme.primary;
+    } else if (percentage >= 25) {
+      progressColor = Colors.orange;
+    } else {
+      progressColor = Colors.red.shade300;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 2.h),
+      padding: EdgeInsets.all(2.h),
+      decoration: BoxDecoration(
+        color: AppTheme.lightTheme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: progressColor.withOpacity(0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: progressColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  problematique,
+                  style: AppTheme.lightTheme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.lightTheme.colorScheme.onSurface,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.refresh,
-                    size: 5.w,
-                    color: AppTheme.lightTheme.colorScheme.primary,
-                  ),
-                  onPressed: _loadProgressData,
-                  tooltip: 'Rafraîchir',
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                decoration: BoxDecoration(
+                  color: progressColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-              ],
-            ),
-          ),
-          ..._progressData.entries.map((entry) {
-            final problematique = entry.key;
-            final data = entry.value;
-            final completed = data['completed'] as int;
-            final total = data['total'] as int;
-            final percentage = data['percentage'] as int;
-            final remaining = data['remaining'] as int;
-
-            return Container(
-              margin: EdgeInsets.only(bottom: 2.h),
-              padding: EdgeInsets.all(3.h),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
+                child: Text(
+                  '$percentage%',
+                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: progressColor,
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Problématique name
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.flag_circle,
-                        size: 5.w,
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                      ),
-                      SizedBox(width: 2.w),
-                      Expanded(
-                        child: Text(
-                          problematique,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.lightTheme.colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 3.w,
-                          vertical: 0.5.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '$percentage%',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.lightTheme.colorScheme.primary,
-                          ),
-                        ),
+            ],
+          ),
+          SizedBox(height: 1.5.h),
+          // Progress bar
+          Stack(
+            children: [
+              Container(
+                height: 1.h,
+                decoration: BoxDecoration(
+                  color: AppTheme.lightTheme.colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              FractionallySizedBox(
+                widthFactor: percentage / 100,
+                child: Container(
+                  height: 1.h,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        progressColor,
+                        progressColor.withOpacity(0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: progressColor.withOpacity(0.3),
+                        blurRadius: 4,
                       ),
                     ],
                   ),
-                  SizedBox(height: 2.h),
-                  
-                  // Progress bar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: percentage / 100,
-                      minHeight: 1.h,
-                      backgroundColor: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppTheme.lightTheme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 1.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$completed/$total défis complétés',
+                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (remaining > 0)
+                Text(
+                  '$remaining restants',
+                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
+                        .withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
+          ),
+          // Achievement message
+          if (percentage == 100)
+            Container(
+              margin: EdgeInsets.only(top: 1.h),
+              padding: EdgeInsets.all(1.h),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.emoji_events,
+                    color: Colors.green,
+                    size: 4.w,
+                  ),
+                  SizedBox(width: 2.w),
+                  Expanded(
+                    child: Text(
+                      '🎉 Félicitations ! Objectif atteint !',
+                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  SizedBox(height: 1.h),
-                  
-                  // Stats
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '$completed/$total défis complétés',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                      Text(
-                        '$remaining restants',
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.5),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
-            );
-          }).toList(),
+            ),
         ],
       ),
     );

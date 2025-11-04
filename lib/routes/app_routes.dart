@@ -11,7 +11,7 @@ import '../presentation/user_profile/user_profile.dart';
 import '../presentation/admin_panel/admin_panel.dart';
 import '../presentation/reset_password/reset_password_screen.dart';
 import '../presentation/challenge_selection/challenge_selection_screen.dart';
-import '../presentation/notes/notes_screen.dart';
+import '../presentation/notes/notes_list_screen.dart';
 
 class AppRoutes {
   // Route constants
@@ -26,7 +26,7 @@ class AppRoutes {
   static const String adminPanel = '/admin-panel';
   static const String resetPassword = '/reset-password';
   static const String challengeSelection = '/challenge-selection';
-  static const String notes = '/notes';
+  static const String notesList = '/notes-list';
 
   // Route map
   static Map<String, WidgetBuilder> get routes => {
@@ -41,7 +41,7 @@ class AppRoutes {
         adminPanel: (context) => const AdminPanel(),
         resetPassword: (context) => const ResetPasswordScreen(),
         challengeSelection: (context) => const ChallengeSelectionScreen(),
-        notes: (context) => const NotesScreen(),
+        notesList: (context) => const NotesListScreen(),
       };
 
   // Initial route

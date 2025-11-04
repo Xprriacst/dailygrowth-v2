@@ -1,236 +1,243 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
+
+import './supabase_service.dart';
 import '../models/note.dart';
 
-/// Service for managing user notes with Google Keep-style functionality
-/// 
-/// Handles CRUD operations for notes stored in Supabase
 class NoteService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  static final NoteService _instance = NoteService._internal();
+  factory NoteService() => _instance;
+  NoteService._internal();
+
+  late final SupabaseClient _client;
   bool _isInitialized = false;
 
-  /// Initialize the note service
   Future<void> initialize() async {
-    if (_isInitialized) return;
-    
-    try {
-      debugPrint('üìù NoteService: Initializing...');
+    if (!_isInitialized) {
+      _client = await SupabaseService().client;
       _isInitialized = true;
-      debugPrint('‚úÖ NoteService: Initialized successfully');
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Initialization failed: $e');
-      rethrow;
     }
   }
 
-  /// Get all notes for a user, sorted by pinned status and creation date
-  Future<List<Note>> getAllNotes(String userId) async {
-    try {
-      debugPrint('üìù NoteService: Fetching all notes for user $userId');
-      
-      final response = await _supabase
-          .from('notes')
-          .select()
-          .eq('user_id', userId)
-          .order('is_pinned', ascending: false)
-          .order('created_at', ascending: false);
-
-      final notes = (response as List)
-          .map((json) => Note.fromJson(json as Map<String, dynamic>))
-          .toList();
-
-      debugPrint('‚úÖ NoteService: Fetched ${notes.length} notes');
-      return notes;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to fetch notes: $e');
-      rethrow;
-    }
-  }
-
-  /// Get a single note by ID
-  Future<Note?> getNote(String noteId) async {
-    try {
-      debugPrint('üìù NoteService: Fetching note $noteId');
-      
-      final response = await _supabase
-          .from('notes')
-          .select()
-          .eq('id', noteId)
-          .single();
-
-      final note = Note.fromJson(response as Map<String, dynamic>);
-      debugPrint('‚úÖ NoteService: Fetched note: ${note.title}');
-      return note;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to fetch note: $e');
-      return null;
-    }
-  }
-
-  /// Create a new note
+  /// CrÈer une nouvelle note
   Future<Note> createNote({
     required String userId,
-    String? title,
+    required String title,
     required String content,
-    String color = 'default',
-    bool isPinned = false,
+    required String problematique,
+    List<String>? tags,
   }) async {
     try {
-      debugPrint('üìù NoteService: Creating new note');
-      
-      final now = DateTime.now();
+      if (!_isInitialized) {
+        await initialize();
+      }
+
       final noteData = {
         'user_id': userId,
         'title': title,
         'content': content,
-        'color': color,
-        'is_pinned': isPinned,
-        'created_at': now.toIso8601String(),
-        'updated_at': now.toIso8601String(),
+        'problematique': problematique,
+        'tags': tags ?? [],
       };
 
-      final response = await _supabase
+      final response = await _client
           .from('notes')
           .insert(noteData)
           .select()
           .single();
 
-      final note = Note.fromJson(response as Map<String, dynamic>);
-      debugPrint('‚úÖ NoteService: Note created: ${note.id}');
-      return note;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to create note: $e');
-      rethrow;
+      debugPrint(' Note crÈÈe avec succËs: ${response['id']}');
+      return Note.fromJson(response);
+    } catch (error) {
+      debugPrint('L Erreur lors de la crÈation de la note: $error');
+      throw Exception('Erreur lors de la crÈation de la note: $error');
     }
   }
 
-  /// Update an existing note
+  /// Mettre ‡ jour une note existante
   Future<Note> updateNote({
     required String noteId,
     String? title,
     String? content,
-    String? color,
-    bool? isPinned,
+    String? problematique,
+    List<String>? tags,
   }) async {
     try {
-      debugPrint('üìù NoteService: Updating note $noteId');
-      
+      if (!_isInitialized) {
+        await initialize();
+      }
+
       final updateData = <String, dynamic>{};
       if (title != null) updateData['title'] = title;
       if (content != null) updateData['content'] = content;
-      if (color != null) updateData['color'] = color;
-      if (isPinned != null) updateData['is_pinned'] = isPinned;
-      updateData['updated_at'] = DateTime.now().toIso8601String();
+      if (problematique != null) updateData['problematique'] = problematique;
+      if (tags != null) updateData['tags'] = tags;
 
-      final response = await _supabase
+      if (updateData.isEmpty) {
+        throw Exception('Aucune donnÈe ‡ mettre ‡ jour');
+      }
+
+      final response = await _client
           .from('notes')
           .update(updateData)
           .eq('id', noteId)
           .select()
           .single();
 
-      final note = Note.fromJson(response as Map<String, dynamic>);
-      debugPrint('‚úÖ NoteService: Note updated: ${note.id}');
-      return note;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to update note: $e');
-      rethrow;
+      debugPrint(' Note mise ‡ jour avec succËs: $noteId');
+      return Note.fromJson(response);
+    } catch (error) {
+      debugPrint('L Erreur lors de la mise ‡ jour de la note: $error');
+      throw Exception('Erreur lors de la mise ‡ jour de la note: $error');
     }
   }
 
-  /// Toggle the pinned status of a note
-  Future<Note> togglePin(String noteId, bool currentPinnedStatus) async {
-    try {
-      debugPrint('üìù NoteService: Toggling pin for note $noteId');
-      
-      return await updateNote(
-        noteId: noteId,
-        isPinned: !currentPinnedStatus,
-      );
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to toggle pin: $e');
-      rethrow;
-    }
-  }
-
-  /// Delete a note
+  /// Supprimer une note
   Future<void> deleteNote(String noteId) async {
     try {
-      debugPrint('üìù NoteService: Deleting note $noteId');
-      
-      await _supabase
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      await _client
           .from('notes')
           .delete()
           .eq('id', noteId);
 
-      debugPrint('‚úÖ NoteService: Note deleted: $noteId');
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to delete note: $e');
-      rethrow;
+      debugPrint(' Note supprimÈe avec succËs: $noteId');
+    } catch (error) {
+      debugPrint('L Erreur lors de la suppression de la note: $error');
+      throw Exception('Erreur lors de la suppression de la note: $error');
     }
   }
 
-  /// Search notes by title or content
-  Future<List<Note>> searchNotes(String userId, String query) async {
+  /// RÈcupÈrer toutes les notes d'un utilisateur
+  Future<List<Note>> getUserNotes(String userId) async {
     try {
-      debugPrint('üìù NoteService: Searching notes for: "$query"');
-      
-      final response = await _supabase
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      final response = await _client
+          .from('notes')
+          .select()
+          .eq('user_id', userId)
+          .order('updated_at', ascending: false);
+
+      final notes = (response as List)
+          .map((json) => Note.fromJson(json))
+          .toList();
+
+      debugPrint(' ${notes.length} notes rÈcupÈrÈes pour l\'utilisateur');
+      return notes;
+    } catch (error) {
+      debugPrint('L Erreur lors de la rÈcupÈration des notes: $error');
+      throw Exception('Erreur lors de la rÈcupÈration des notes: $error');
+    }
+  }
+
+  /// RÈcupÈrer les notes d'un utilisateur pour une problÈmatique spÈcifique
+  Future<List<Note>> getUserNotesByProblematique({
+    required String userId,
+    required String problematique,
+  }) async {
+    try {
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      final response = await _client
+          .from('notes')
+          .select()
+          .eq('user_id', userId)
+          .eq('problematique', problematique)
+          .order('updated_at', ascending: false);
+
+      final notes = (response as List)
+          .map((json) => Note.fromJson(json))
+          .toList();
+
+      debugPrint(' ${notes.length} notes rÈcupÈrÈes pour la problÈmatique: $problematique');
+      return notes;
+    } catch (error) {
+      debugPrint('L Erreur lors de la rÈcupÈration des notes par problÈmatique: $error');
+      throw Exception('Erreur lors de la rÈcupÈration des notes: $error');
+    }
+  }
+
+  /// RÈcupÈrer une note spÈcifique par ID
+  Future<Note?> getNoteById(String noteId) async {
+    try {
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      final response = await _client
+          .from('notes')
+          .select()
+          .eq('id', noteId)
+          .single();
+
+      debugPrint(' Note rÈcupÈrÈe: $noteId');
+      return Note.fromJson(response);
+    } catch (error) {
+      debugPrint('L Erreur lors de la rÈcupÈration de la note: $error');
+      return null;
+    }
+  }
+
+  /// Compter le nombre de notes par problÈmatique pour un utilisateur
+  Future<Map<String, int>> countNotesByProblematique(String userId) async {
+    try {
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      final response = await _client
+          .from('notes')
+          .select('problematique')
+          .eq('user_id', userId);
+
+      final Map<String, int> counts = {};
+      for (var item in response) {
+        final problematique = item['problematique'] as String;
+        counts[problematique] = (counts[problematique] ?? 0) + 1;
+      }
+
+      return counts;
+    } catch (error) {
+      debugPrint('L Erreur lors du comptage des notes: $error');
+      return {};
+    }
+  }
+
+  /// Rechercher des notes par titre ou contenu
+  Future<List<Note>> searchNotes({
+    required String userId,
+    required String query,
+  }) async {
+    try {
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      // Recherche dans le titre et le contenu
+      final response = await _client
           .from('notes')
           .select()
           .eq('user_id', userId)
           .or('title.ilike.%$query%,content.ilike.%$query%')
-          .order('is_pinned', ascending: false)
-          .order('created_at', ascending: false);
+          .order('updated_at', ascending: false);
 
       final notes = (response as List)
-          .map((json) => Note.fromJson(json as Map<String, dynamic>))
+          .map((json) => Note.fromJson(json))
           .toList();
 
-      debugPrint('‚úÖ NoteService: Found ${notes.length} notes');
+      debugPrint(' ${notes.length} notes trouvÈes pour la recherche: "$query"');
       return notes;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to search notes: $e');
-      rethrow;
-    }
-  }
-
-  /// Get pinned notes only
-  Future<List<Note>> getPinnedNotes(String userId) async {
-    try {
-      debugPrint('üìù NoteService: Fetching pinned notes');
-      
-      final response = await _supabase
-          .from('notes')
-          .select()
-          .eq('user_id', userId)
-          .eq('is_pinned', true)
-          .order('created_at', ascending: false);
-
-      final notes = (response as List)
-          .map((json) => Note.fromJson(json as Map<String, dynamic>))
-          .toList();
-
-      debugPrint('‚úÖ NoteService: Fetched ${notes.length} pinned notes');
-      return notes;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to fetch pinned notes: $e');
-      rethrow;
-    }
-  }
-
-  /// Get notes count for a user
-  Future<int> getNotesCount(String userId) async {
-    try {
-      final response = await _supabase
-          .from('notes')
-          .select('id')
-          .eq('user_id', userId);
-
-      return (response as List).length;
-    } catch (e) {
-      debugPrint('‚ùå NoteService: Failed to count notes: $e');
-      return 0;
+    } catch (error) {
+      debugPrint('L Erreur lors de la recherche de notes: $error');
+      throw Exception('Erreur lors de la recherche de notes: $error');
     }
   }
 }

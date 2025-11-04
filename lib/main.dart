@@ -10,11 +10,15 @@ import 'services/challenge_service.dart';
 import 'services/user_service.dart';
 import 'services/progress_service.dart';
 import 'services/quote_service.dart';
-import 'services/gamification_service.dart';
+import 'services/version_checker_service.dart';
+import 'services/note_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
+import 'widgets/update_available_dialog.dart';
 import 'package:flutter/foundation.dart';
+import 'services/gamification_service.dart';
+import 'utils/build_version_helper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +42,7 @@ Future<void> main() async {
     await ProgressService().initialize();
     await QuoteService().initialize();
     await GamificationService().initialize();
+    await NoteService().initialize();
 
     // Initialize notification service (without Supabase dependency for now)
     await NotificationService().initialize();
@@ -64,7 +69,8 @@ Future<void> main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key, this.shouldForceResetPassword = false}) : super(key: key);
+  const MyApp({Key? key, this.shouldForceResetPassword = false})
+      : super(key: key);
 
   final bool shouldForceResetPassword;
 
@@ -74,6 +80,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _authService = AuthService();
+  final _versionChecker = VersionCheckerService();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _hasForcedResetRoute = false;
 
@@ -81,12 +88,38 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _setupDeepLinkHandling();
+    _setupVersionCheck();
 
     if (widget.shouldForceResetPassword) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _navigateToResetPassword();
       });
     }
+  }
+
+  void _setupVersionCheck() {
+    if (!kIsWeb) return;
+
+    // Démarrer la vérification de version après un délai pour laisser l'app se charger
+    Future.delayed(const Duration(seconds: 10), () {
+      if (!mounted) return;
+
+      _versionChecker.startVersionCheck(
+        onNewVersionDetected: (newVersion) {
+          final currentVersion = getAppBuildVersion();
+          debugPrint('[Version] 🆕 New version detected: $newVersion (current: $currentVersion)');
+
+          // Afficher le dialog de mise à jour
+          if (mounted && _navigatorKey.currentContext != null) {
+            UpdateAvailableDialog.showIfNeeded(
+              _navigatorKey.currentContext!,
+              newVersion: newVersion,
+              currentVersion: currentVersion,
+            );
+          }
+        },
+      );
+    });
   }
 
   void _setupDeepLinkHandling() {
@@ -99,8 +132,10 @@ class _MyAppState extends State<MyApp> {
           if (data.event == AuthChangeEvent.passwordRecovery) {
             debugPrint('🔐 Password recovery event detected');
             _navigateToResetPassword();
-          } else if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
-            debugPrint('User signed in successfully via deep link or normal flow');
+          } else if (data.event == AuthChangeEvent.signedIn ||
+              data.event == AuthChangeEvent.tokenRefreshed) {
+            debugPrint(
+                'User signed in successfully via deep link or normal flow');
             // Navigation will be handled by individual screens or AuthGuard
           } else if (data.event == AuthChangeEvent.signedOut) {
             debugPrint('User signed out');
@@ -119,7 +154,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Sizer(builder: (context, orientation, screenType) {
       return MaterialApp(
-        title: 'ChallengeMe',
+        title: 'DailyGrowth',
         theme: AppTheme.lightTheme,
         navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
@@ -139,7 +174,7 @@ class _MyAppState extends State<MyApp> {
             final uri = Uri.parse(settings.name!);
             final token = uri.queryParameters['token'];
             final type = uri.queryParameters['type'];
-            
+
             return MaterialPageRoute(
               builder: (context) => ResetPasswordScreen(
                 token: token,
@@ -156,6 +191,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _authService.dispose();
+    _versionChecker.stopVersionCheck();
     super.dispose();
   }
 
@@ -200,7 +236,8 @@ Future<bool> _prepareInitialPasswordRecovery() async {
     if (code != null && code.isNotEmpty) {
       try {
         await Supabase.instance.client.auth.exchangeCodeForSession(code);
-        debugPrint('✅ Password recovery session established via code parameter');
+        debugPrint(
+            '✅ Password recovery session established via code parameter');
       } catch (e) {
         debugPrint('❌ Failed to exchange recovery code for session: $e');
       }
