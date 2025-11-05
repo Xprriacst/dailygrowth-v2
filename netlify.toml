@@ -56,7 +56,17 @@
     echo "// Production env.js (empty - values injected in index.html)" > build/web/env.js
     echo "console.log('[env.js] Environment variables loaded from window.ENV');" >> build/web/env.js
 
-    # Step 8: Verify replacement
+    # Step 8: Copy _redirects file to build directory (critical for Netlify routing)
+    echo "📋 Copying _redirects file..."
+    if [ -f "web/_redirects" ]; then
+      cp web/_redirects build/web/_redirects
+      echo "✅ _redirects file copied successfully"
+      cat build/web/_redirects
+    else
+      echo "⚠️ Warning: web/_redirects file not found!"
+    fi
+
+    # Step 9: Verify replacement
     echo "🔍 Verifying version replacement..."
     if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
       echo "❌ ERROR: Version placeholder was not replaced!"
@@ -76,69 +86,9 @@
   """
   publish = "build/web"
 
-# IMPORTANT: L'ordre des redirections compte! Netlify applique la première règle qui matche.
-# Les règles spécifiques doivent être EN PREMIER, la règle générique /* EN DERNIER.
-
-# Redirections pour les assets statiques
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/icons/*"
-  to = "/icons/:splat"
-  status = 200
-
-# Ne pas rediriger les fichiers JavaScript vers index.html
-[[redirects]]
-  from = "/*.js"
-  to = "/:splat.js"
-  status = 200
-
-[[redirects]]
-  from = "/*.js.map"
-  to = "/:splat.js.map"
-  status = 200
-
-# Ne pas rediriger les fichiers CSS vers index.html
-[[redirects]]
-  from = "/*.css"
-  to = "/:splat.css"
-  status = 200
-
-# Ne pas rediriger les fichiers JSON (manifest, etc.)
-[[redirects]]
-  from = "/*.json"
-  to = "/:splat.json"
-  status = 200
-
-# Ne pas rediriger les fichiers d'images
-[[redirects]]
-  from = "/*.png"
-  to = "/:splat.png"
-  status = 200
-
-[[redirects]]
-  from = "/*.jpg"
-  to = "/:splat.jpg"
-  status = 200
-
-[[redirects]]
-  from = "/*.svg"
-  to = "/:splat.svg"
-  status = 200
-
-[[redirects]]
-  from = "/*.ico"
-  to = "/:splat.ico"
-  status = 200
-
-# Configuration des redirections pour SPA (EN DERNIER comme fallback)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# NOTE: Les redirections sont gérées par le fichier _redirects dans build/web/
+# Le fichier _redirects est copié depuis web/_redirects pendant le build
+# Cette approche est plus fiable que les redirections dans netlify.toml pour Flutter Web
 
 # Variables d'environnement
 [build.environment]
