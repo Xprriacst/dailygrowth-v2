@@ -674,7 +674,7 @@ class _UserProfileState extends State<UserProfile> {
 
       final String jsonData = jsonEncode(exportData);
       final String fileName =
-          'dailygrowth_data_${DateTime.now().millisecondsSinceEpoch}.json';
+          'challengeme_data_${DateTime.now().millisecondsSinceEpoch}.json';
 
       if (kIsWeb) {
         final bytes = utf8.encode(jsonData);

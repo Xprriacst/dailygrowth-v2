@@ -229,7 +229,7 @@ class AuthService {
         },
         emailRedirectTo: kIsWeb
             ? null
-            : 'io.supabase.dailygrowth://login-callback/', // Deep link for mobile
+            : 'io.supabase.challengeme://login-callback/', // Deep link for mobile
       );
 
       if (response.user == null) {
@@ -271,7 +271,7 @@ class AuthService {
 
       final response = await _client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? null : 'io.supabase.dailygrowth://login-callback/',
+        redirectTo: kIsWeb ? null : 'io.supabase.challengeme://login-callback/',
       );
 
       debugPrint('Google sign-in response: $response');
@@ -289,7 +289,7 @@ class AuthService {
 
       final response = await _client.auth.signInWithOAuth(
         OAuthProvider.apple,
-        redirectTo: kIsWeb ? null : 'io.supabase.dailygrowth://login-callback/',
+        redirectTo: kIsWeb ? null : 'io.supabase.challengeme://login-callback/',
       );
 
       debugPrint('Apple sign-in response: $response');
@@ -309,7 +309,7 @@ class AuthService {
         email,
         redirectTo: kIsWeb 
           ? 'https://challengeme.ch/#/reset-password' 
-          : 'io.supabase.dailygrowth://reset-password/',
+          : 'io.supabase.challengeme://reset-password/',
       );
 
       debugPrint('Password reset email sent successfully');
@@ -327,7 +327,7 @@ class AuthService {
       await _client.auth.resend(
         type: OtpType.signup,
         email: email,
-        emailRedirectTo: kIsWeb ? null : 'io.supabase.dailygrowth://confirm/',
+        emailRedirectTo: kIsWeb ? null : 'io.supabase.challengeme://confirm/',
       );
 
       debugPrint('Confirmation email resent successfully');

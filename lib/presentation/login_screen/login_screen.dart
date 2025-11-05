@@ -32,9 +32,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Mock credentials for testing
   final Map<String, String> _mockCredentials = {
-    'admin@dailygrowth.fr': 'admin123',
-    'user@dailygrowth.fr': 'user123',
-    'demo@dailygrowth.fr': 'demo123',
+    'admin@challengeme.ch': 'admin123',
+    'user@challengeme.ch': 'user123',
+    'demo@challengeme.ch': 'demo123',
     'expertiaen5min@gmail.com': 'password123',
   };
 
