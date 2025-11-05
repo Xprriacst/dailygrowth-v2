@@ -72,12 +72,7 @@
   publish = "build/web"
 
 # Configuration des redirections pour SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Redirections pour les assets statiques
+# Placer les ressources statiques avant le fallback global afin d'éviter de renvoyer index.html
 [[redirects]]
   from = "/assets/*"
   to = "/assets/:splat"
@@ -86,6 +81,46 @@
 [[redirects]]
   from = "/icons/*"
   to = "/icons/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/flutter_service_worker.js"
+  to = "/flutter_service_worker.js"
+  status = 200
+
+[[redirects]]
+  from = "/sw.js"
+  to = "/sw.js"
+  status = 200
+
+[[redirects]]
+  from = "/main.dart.js"
+  to = "/main.dart.js"
+  status = 200
+
+[[redirects]]
+  from = "/*.js"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*.wasm"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 # Variables d'environnement
