@@ -14,12 +14,14 @@ import '../../utils/auth_guard.dart';
 import 'widgets/problematique_selection_modal.dart';
 import './widgets/life_domains_widget.dart';
 import './widgets/notification_toggle_widget.dart';
+import './widgets/problematique_progress_widget.dart';
 import './widgets/profile_header_widget.dart';
 import './widgets/profile_picture_modal.dart';
 import './widgets/settings_item_widget.dart';
 import './widgets/settings_section_widget.dart';
 import './widgets/problematique_progress_widget.dart';
 import '../settings/notification_settings_widget.dart';
+import '../onboarding_flow/widgets/problematique_progress_selection_widget.dart';
 
 import 'package:universal_html/html.dart' as html;
 
@@ -35,7 +37,7 @@ class _UserProfileState extends State<UserProfile> {
   String? _selectedProfileImage;
 
   // Bottom navigation state
-  int _currentBottomNavIndex = 2; // Profile is index 2
+  int _currentBottomNavIndex = 3; // Profile is index 3
 
   // Real user data from Supabase
   Map<String, dynamic>? _userData;
@@ -246,6 +248,9 @@ class _UserProfileState extends State<UserProfile> {
                             userStats: _userStats),
                           SizedBox(height: 3.h),
 
+                          // Progress by Problematique Section
+                          const ProblematiqueProgressWidget(),
+
                           // Account Section
                           SettingsSectionWidget(
                             title: 'Compte',
@@ -421,9 +426,12 @@ class _UserProfileState extends State<UserProfile> {
         Navigator.pushReplacementNamed(context, '/home-dashboard');
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, '/challenge-history');
+        Navigator.pushReplacementNamed(context, '/notes');
         break;
       case 2:
+        Navigator.pushReplacementNamed(context, '/challenge-history');
+        break;
+      case 3:
         // Already on user profile
         break;
     }
@@ -455,19 +463,68 @@ class _UserProfileState extends State<UserProfile> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ProblematiqueSelectionModal(
-        selectedProblematique: _getSelectedProblematique(),
-        onProblematiqueChanged: (String newProblematique) async {
-          try {
-            await _userService.updateUserProfile(
-              userId: _authService.userId!,
-              selectedProblematiques: [newProblematique]);
-            await _loadUserData(); // Reload data
-            // Note: Popup removed - success is implicit when modal closes
-          } catch (e) {
-            _showBeautifulErrorMessage('Erreur lors de la mise à jour: $e');
-          }
-        }));
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: AppTheme.lightTheme.colorScheme.background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: EdgeInsets.only(top: 2.h, bottom: 1.h),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            // Titre
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Votre objectif',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.lightTheme.colorScheme.onSurface,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Terminé',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.lightTheme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Widget de sélection avec progression
+            Expanded(
+              child: ProblematiqueProgressSelectionWidget(
+                selectedDomains: const [],
+                onDomainToggle: (_) async {
+                  // Recharger les données après modification
+                  await _loadUserData();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _updateNotificationSetting(String key, bool value) async {
@@ -617,7 +674,7 @@ class _UserProfileState extends State<UserProfile> {
 
       final String jsonData = jsonEncode(exportData);
       final String fileName =
-          'dailygrowth_data_${DateTime.now().millisecondsSinceEpoch}.json';
+          'challengeme_data_${DateTime.now().millisecondsSinceEpoch}.json';
 
       if (kIsWeb) {
         final bytes = utf8.encode(jsonData);
@@ -689,7 +746,7 @@ class _UserProfileState extends State<UserProfile> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('À propos de DailyGrowth'),
+        title: Text('À propos de ChallengeMe'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -697,9 +754,9 @@ class _UserProfileState extends State<UserProfile> {
             Text('Version: 1.0.0'),
             SizedBox(height: 1.h),
             Text(
-                'DailyGrowth vous accompagne dans votre développement personnel quotidien.'),
+                'ChallengeMe vous accompagne dans votre développement personnel quotidien.'),
             SizedBox(height: 2.h),
-            Text('© 2024 DailyGrowth. Tous droits réservés.'),
+            Text('© 2024 ChallengeMe. Tous droits réservés.'),
           ]),
         actions: [
           TextButton(
@@ -761,7 +818,17 @@ class _UserProfileState extends State<UserProfile> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-                'Cette action est irréversible. Toutes vos données seront définitivement supprimées.'),
+                '⚠️ Cette action est irréversible. Toutes vos données seront définitivement supprimées.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.lightTheme.colorScheme.error,
+                ),
+              ),
+            SizedBox(height: 2.h),
+            Text(
+                'Cela inclut : défis, progression, statistiques, notifications et toutes vos données personnelles.',
+                style: TextStyle(fontSize: 12.sp),
+              ),
             SizedBox(height: 2.h),
             TextField(
               controller: emailController,
@@ -774,19 +841,82 @@ class _UserProfileState extends State<UserProfile> {
             onPressed: () => Navigator.pop(context),
             child: Text('Annuler')),
           ElevatedButton(
-            onPressed: () {
-              if (emailController.text == _userData?["email"]) {
-                Navigator.pop(context);
-                Navigator.pushNamedAndRemoveUntil(
-                    context, '/login-screen', (route) => false);
-                _showBeautifulSuccessMessage('Fonctionnalité à implémenter');
+            onPressed: () async {
+              if (emailController.text.trim() == _userData?["email"]) {
+                Navigator.pop(context); // Close confirmation dialog
+                
+                // Show loading
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => Center(
+                    child: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightTheme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: AppTheme.lightTheme.colorScheme.primary,
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Suppression du compte...',
+                            style: AppTheme.lightTheme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+
+                try {
+                  // Delete the account
+                  await _authService.deleteAccount();
+
+                  // Close loading dialog
+                  if (mounted) Navigator.pop(context);
+
+                  // Navigate to login screen
+                  if (mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/login-screen', 
+                      (route) => false,
+                    );
+                  }
+
+                  // Show success message on login screen
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Votre compte a été supprimé avec succès'),
+                        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Close loading dialog
+                  if (mounted) Navigator.pop(context);
+                  
+                  // Show error
+                  if (mounted) {
+                    _showBeautifulErrorMessage(
+                      'Erreur lors de la suppression du compte: ${e.toString().replaceAll('Exception: ', '')}',
+                    );
+                  }
+                }
               } else {
                 _showBeautifulErrorMessage('L\'adresse e-mail ne correspond pas');
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.lightTheme.colorScheme.error),
-            child: Text('Supprimer')),
+            child: Text('Supprimer définitivement')),
         ]));
   }
 

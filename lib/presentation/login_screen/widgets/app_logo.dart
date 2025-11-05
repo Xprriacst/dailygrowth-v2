@@ -47,7 +47,7 @@ class AppLogo extends StatelessWidget {
           ),
           SizedBox(height: 1.h),
           Text(
-            'DG',
+            'CM',
             style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,

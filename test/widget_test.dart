@@ -1,18 +1,18 @@
-// Basic Flutter widget test for DailyGrowth app
+// Basic Flutter widget test for ChallengeMe app
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group('DailyGrowth Basic Tests', () {
+  group('ChallengeMe Basic Tests', () {
     testWidgets('App should create without errors', (WidgetTester tester) async {
       // Simple test to verify the app can be instantiated
       // This avoids complex dependencies while testing basic functionality
       
       final testApp = MaterialApp(
         home: Scaffold(
-          appBar: AppBar(title: const Text('DailyGrowth')),
+          appBar: AppBar(title: const Text('ChallengeMe')),
           body: const Center(
-            child: Text('Welcome to DailyGrowth'),
+            child: Text('Welcome to ChallengeMe'),
           ),
         ),
       );
@@ -20,8 +20,8 @@ void main() {
       await tester.pumpWidget(testApp);
 
       // Verify basic UI elements are present
-      expect(find.text('DailyGrowth'), findsOneWidget);
-      expect(find.text('Welcome to DailyGrowth'), findsOneWidget);
+      expect(find.text('ChallengeMe'), findsOneWidget);
+      expect(find.text('Welcome to ChallengeMe'), findsOneWidget);
     });
 
     testWidgets('Basic widget interaction test', (WidgetTester tester) async {
