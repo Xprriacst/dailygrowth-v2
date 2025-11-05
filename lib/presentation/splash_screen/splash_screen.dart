@@ -384,7 +384,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           SizedBox(height: 1.h),
           Text(
-            'DailyGrowth',
+            'ChallengeMe',
             style: GoogleFonts.inter(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
