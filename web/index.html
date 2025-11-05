@@ -52,9 +52,14 @@
     // Direct environment variables injection (replaced by Netlify build)
     window.ENV = {
       FIREBASE_VAPID_KEY: 'NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER',
-      SUPABASE_URL: 'NETLIFY_SUPABASE_URL_PLACEHOLDER', 
+      SUPABASE_URL: 'NETLIFY_SUPABASE_URL_PLACEHOLDER',
       SUPABASE_ANON_KEY: 'NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER'
     };
+  </script>
+
+  <!-- Build version for update detection -->
+  <script>
+    window.APP_BUILD_VERSION = '__APP_BUILD_VERSION__';
   </script>
 
   <!-- Development environment variables (local only) -->

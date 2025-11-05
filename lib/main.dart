@@ -11,9 +11,12 @@ import 'services/user_service.dart';
 import 'services/progress_service.dart';
 import 'services/quote_service.dart';
 import 'services/gamification_service.dart';
+import 'services/version_checker_service.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_routes.dart';
 import 'presentation/reset_password/reset_password_screen.dart';
+import 'widgets/update_available_dialog.dart';
+import 'utils/build_version_helper.dart';
 import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
@@ -74,6 +77,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _authService = AuthService();
+  final _versionChecker = VersionCheckerService();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _hasForcedResetRoute = false;
 
@@ -81,12 +85,35 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _setupDeepLinkHandling();
+    _setupVersionCheck();
 
     if (widget.shouldForceResetPassword) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _navigateToResetPassword();
       });
     }
+  }
+
+  void _setupVersionCheck() {
+    if (!kIsWeb) return;
+
+    // Démarrer la vérification des versions après un délai pour laisser l'app s'initialiser
+    Future.delayed(const Duration(seconds: 10), () {
+      _versionChecker.startVersionCheck(
+        onNewVersionDetected: (newVersion) {
+          final currentVersion = getAppBuildVersion();
+          debugPrint('🔄 New version detected: $newVersion (current: $currentVersion)');
+
+          if (mounted && _navigatorKey.currentContext != null) {
+            UpdateAvailableDialog.showIfNeeded(
+              _navigatorKey.currentContext!,
+              newVersion: newVersion,
+              currentVersion: currentVersion,
+            );
+          }
+        },
+      );
+    });
   }
 
   void _setupDeepLinkHandling() {
@@ -156,6 +183,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _authService.dispose();
+    _versionChecker.dispose();
     super.dispose();
   }
 
