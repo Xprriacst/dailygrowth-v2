@@ -51,7 +51,12 @@
     sed -i "s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g" build/web/index.html
     sed -i "s|__SW_VERSION__|$APP_BUILD_VERSION|g" build/web/sw.js
 
-    # Step 7: Verify replacement
+    # Step 7: Create env.js file (fix for MIME type error)
+    echo "📝 Creating env.js file..."
+    echo "// Production env.js (empty - values injected in index.html)" > build/web/env.js
+    echo "console.log('[env.js] Environment variables loaded from window.ENV');" >> build/web/env.js
+
+    # Step 8: Verify replacement
     echo "🔍 Verifying version replacement..."
     if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
       echo "❌ ERROR: Version placeholder was not replaced!"
@@ -71,8 +76,10 @@
   """
   publish = "build/web"
 
-# Configuration des redirections pour SPA
-# Placer les ressources statiques avant le fallback global afin d'éviter de renvoyer index.html
+# IMPORTANT: L'ordre des redirections compte! Netlify applique la première règle qui matche.
+# Les règles spécifiques doivent être EN PREMIER, la règle générique /* EN DERNIER.
+
+# Redirections pour les assets statiques
 [[redirects]]
   from = "/assets/*"
   to = "/assets/:splat"
@@ -100,12 +107,47 @@
 
 [[redirects]]
   from = "/*.js"
-  to = "/:splat"
+  to = "/:splat.js"
+  status = 200
+
+[[redirects]]
+  from = "/*.js.map"
+  to = "/:splat.js.map"
+  status = 200
+
+[[redirects]]
+  from = "/*.css"
+  to = "/:splat.css"
+  status = 200
+
+[[redirects]]
+  from = "/*.json"
+  to = "/:splat.json"
+  status = 200
+
+[[redirects]]
+  from = "/*.png"
+  to = "/:splat.png"
+  status = 200
+
+[[redirects]]
+  from = "/*.jpg"
+  to = "/:splat.jpg"
+  status = 200
+
+[[redirects]]
+  from = "/*.svg"
+  to = "/:splat.svg"
+  status = 200
+
+[[redirects]]
+  from = "/*.ico"
+  to = "/:splat.ico"
   status = 200
 
 [[redirects]]
   from = "/*.wasm"
-  to = "/:splat"
+  to = "/:splat.wasm"
   status = 200
 
 [[redirects]]
@@ -144,13 +186,22 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# Headers pour les fichiers JS/CSS - Cache minimal pour forcer les mises à jour
+# Headers pour les fichiers JS - Cache minimal pour forcer les mises à jour + Content-Type explicite
 [[headers]]
   for = "/*.js"
   [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*.css"
   [headers.values]
+    Content-Type = "text/css; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers pour les fichiers JSON
+[[headers]]
+  for = "/*.json"
+  [headers.values]
+    Content-Type = "application/json; charset=utf-8"
+    Cache-Control = "public, max-age=86400"
