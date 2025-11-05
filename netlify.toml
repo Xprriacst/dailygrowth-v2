@@ -22,6 +22,17 @@
     echo "📂 Build output:"
     ls -la build/web/
 
+    echo ""
+    echo "🔍 Checking for critical files..."
+    [ -f "build/web/flutter_service_worker.js" ] && echo "✅ flutter_service_worker.js EXISTS" || echo "❌ flutter_service_worker.js MISSING"
+    [ -f "build/web/main.dart.js" ] && echo "✅ main.dart.js EXISTS" || echo "❌ main.dart.js MISSING"
+    [ -f "build/web/flutter.js" ] && echo "✅ flutter.js EXISTS" || echo "❌ flutter.js MISSING"
+    [ -f "build/web/sw.js" ] && echo "✅ sw.js EXISTS" || echo "❌ sw.js EXISTS"
+
+    echo ""
+    echo "📋 All JavaScript files:"
+    find build/web/ -name "*.js" | sort
+
     # Step 5: Set version (try multiple Netlify variables)
     echo "🔍 Checking available version variables..."
     echo "   BUILD_ID=$BUILD_ID"
