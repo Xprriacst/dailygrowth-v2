@@ -211,6 +211,8 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildNoteCard(Note note) {
+    debugPrint('🎨 Rendu carte: "${note.content}"');
+    
     final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
     final formattedDate = dateFormat.format(note.createdAt);
 
@@ -219,16 +221,16 @@ class _NotesScreenState extends State<NotesScreen> {
       child: Container(
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.amber.shade50, // Fond crème visible temporaire
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.grey.shade300,
-            width: 1,
+            color: Colors.orange,
+            width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
               offset: Offset(0, 2),
             ),
           ],
