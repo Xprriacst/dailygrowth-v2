@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _setupDeepLinkHandling();
-    _setupVersionCheck();
+    // _setupVersionCheck(); // Désactivé : popup de mise à jour masquée
 
     if (widget.shouldForceResetPassword) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

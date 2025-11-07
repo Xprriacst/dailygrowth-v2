@@ -1,88 +1,66 @@
 class Note {
-  final String id;
+  final String? id;
   final String userId;
-  final String title;
+  final String? challengeId;
   final String content;
-  final String problematique; // Référence à la problématique (title de ChallengeProblematique)
-  final List<String> tags;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? challengeTitle;
 
-  const Note({
-    required this.id,
+  Note({
+    this.id,
     required this.userId,
-    required this.title,
+    this.challengeId,
     required this.content,
-    required this.problematique,
-    this.tags = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.challengeTitle,
   });
 
-  // Factory constructor from JSON (Supabase response)
+  // Create from JSON (Supabase response)
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
-      id: json['id'] as String,
+      id: json['id'] as String?,
       userId: json['user_id'] as String,
-      title: json['title'] as String,
-      content: json['content'] as String? ?? '',
-      problematique: json['problematique'] as String,
-      tags: json['tags'] != null
-          ? List<String>.from(json['tags'] as List)
-          : [],
+      challengeId: json['challenge_id'] as String?,
+      content: json['content'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      challengeTitle: json['challenge_title'] as String?,
     );
   }
 
   // Convert to JSON for Supabase
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
       'user_id': userId,
-      'title': title,
+      if (challengeId != null) 'challenge_id': challengeId,
       'content': content,
-      'problematique': problematique,
-      'tags': tags,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      if (challengeTitle != null) 'challenge_title': challengeTitle,
     };
   }
 
-  // Create a copy with modified fields
+  // Copy with method for updates
   Note copyWith({
     String? id,
     String? userId,
-    String? title,
+    String? challengeId,
     String? content,
-    String? problematique,
-    List<String>? tags,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? challengeTitle,
   }) {
     return Note(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      title: title ?? this.title,
+      challengeId: challengeId ?? this.challengeId,
       content: content ?? this.content,
-      problematique: problematique ?? this.problematique,
-      tags: tags ?? this.tags,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      challengeTitle: challengeTitle ?? this.challengeTitle,
     );
   }
-
-  @override
-  String toString() {
-    return 'Note(id: $id, title: $title, problematique: $problematique, createdAt: $createdAt)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is Note && other.id == id;
-  }
-
-  @override
-  int get hashCode => id.hashCode;
 }

@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
+import '../../../services/note_service.dart';
 
 class DailyChallengeCardWidget extends StatefulWidget {
   final String challengeTitle;
   final String challengeDescription;
   final bool isCompleted;
   final VoidCallback onToggleCompletion;
-  final String? initialNote;
-  final Function(String)? onNoteChanged;
+  final String? challengeId;
 
   const DailyChallengeCardWidget({
     Key? key,
@@ -18,8 +18,7 @@ class DailyChallengeCardWidget extends StatefulWidget {
     required this.challengeDescription,
     required this.isCompleted,
     required this.onToggleCompletion,
-    this.initialNote,
-    this.onNoteChanged,
+    this.challengeId,
   }) : super(key: key);
 
   @override
@@ -31,9 +30,11 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late TextEditingController _noteController;
-  bool _isNoteExpanded = false;
-  bool _isNoteSaving = false;
+  final TextEditingController _noteController = TextEditingController();
+  final NoteService _noteService = NoteService();
+  bool _isLoadingNote = false;
+  bool _isSavingNote = false;
+  String? _currentNoteId;
 
   @override
   void initState() {
@@ -49,9 +50,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
-    _noteController = TextEditingController(text: widget.initialNote ?? '');
-    _isNoteExpanded = (widget.initialNote?.isNotEmpty ?? false);
+    _loadNote();
   }
 
   @override
@@ -59,6 +58,80 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     _animationController.dispose();
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNote() async {
+    if (widget.challengeId == null) return;
+
+    setState(() => _isLoadingNote = true);
+
+    try {
+      final note = await _noteService.getNoteForChallenge(widget.challengeId!);
+      if (note != null && mounted) {
+        setState(() {
+          _noteController.text = note.content;
+          _currentNoteId = note.id;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading note: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingNote = false);
+      }
+    }
+  }
+
+  Future<void> _saveNote() async {
+    if (widget.challengeId == null || _noteController.text.trim().isEmpty) {
+      return;
+    }
+
+    setState(() => _isSavingNote = true);
+
+    try {
+      if (_currentNoteId != null) {
+        // Update existing note
+        await _noteService.updateNote(
+          noteId: _currentNoteId!,
+          content: _noteController.text.trim(),
+        );
+      } else {
+        // Create new note
+        final note = await _noteService.createNote(
+          content: _noteController.text.trim(),
+          challengeId: widget.challengeId,
+          challengeTitle: widget.challengeTitle,
+        );
+        if (note != null && mounted) {
+          setState(() => _currentNoteId = note.id);
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Note enregistrée ✓'),
+            duration: Duration(seconds: 1),
+            backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving note: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'enregistrement'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingNote = false);
+      }
+    }
   }
 
   void _handleTap() {
@@ -332,6 +405,105 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                         ),
                       ],
                     ),
+                  ),
+                ),
+
+                SizedBox(height: 3.h),
+
+                // Notes section
+                Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.surfaceVariant
+                        .withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.lightTheme.colorScheme.outline
+                          .withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CustomIconWidget(
+                            iconName: 'note',
+                            color: AppTheme.lightTheme.colorScheme.primary,
+                            size: 4.w,
+                          ),
+                          SizedBox(width: 2.w),
+                          Text(
+                            'Mes notes',
+                            style: AppTheme.lightTheme.textTheme.bodyMedium
+                                ?.copyWith(
+                              color: AppTheme.lightTheme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Spacer(),
+                          if (_isSavingNote)
+                            SizedBox(
+                              width: 4.w,
+                              height: 4.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.lightTheme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 2.h),
+                      TextField(
+                        controller: _noteController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          hintText: 'Écrivez vos réflexions ici...',
+                          hintStyle: AppTheme.lightTheme.textTheme.bodyMedium
+                              ?.copyWith(
+                            color: AppTheme
+                                .lightTheme.colorScheme.onSurfaceVariant
+                                .withOpacity(0.5),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: AppTheme.lightTheme.colorScheme.outline
+                                  .withOpacity(0.3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: AppTheme.lightTheme.colorScheme.outline
+                                  .withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: AppTheme.lightTheme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.all(3.w),
+                        ),
+                        style: AppTheme.lightTheme.textTheme.bodyMedium,
+                        onChanged: (value) {
+                          // Auto-save after 1 second of inactivity
+                          Future.delayed(Duration(seconds: 1), () {
+                            if (_noteController.text == value) {
+                              _saveNote();
+                            }
+                          });
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],

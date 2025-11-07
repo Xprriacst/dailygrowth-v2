@@ -386,15 +386,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       _dailyChallenge['description'] as String,
                                   isCompleted: _isChallengeCompleted,
                                   onToggleCompletion: _handleChallengeToggle,
-                                  initialNote: _challengeNote,
-                                  onNoteChanged: (note) async {
-                                    setState(() {
-                                      _challengeNote = note;
-                                    });
-                                    if (note.trim().isNotEmpty) {
-                                      await _saveNoteToDatabase(note);
-                                    }
-                                  }),
+                                  challengeId: _dailyChallenge['id'] as String?),
 
                               SizedBox(height: 2.h),
 
