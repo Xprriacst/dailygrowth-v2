@@ -210,6 +210,28 @@ class _NotesScreenState extends State<NotesScreen> {
     );
   }
 
+  Color _getProblematiqueCouleur(String? problematique) {
+    if (problematique == null) return Colors.grey.shade400;
+    
+    // Couleurs inspirées de Google Keep
+    final colors = {
+      'lâcher-prise': Color(0xFF91D5FF), // Bleu clair
+      'maîtriser': Color(0xFFB7EB8F), // Vert clair
+      'revenus': Color(0xFFFFD666), // Jaune/Or
+      'développement': Color(0xFFFF85C0), // Rose
+      'charisme': Color(0xFFD3ADF7), // Violet
+      'santé': Color(0xFF87E8DE), // Turquoise
+    };
+    
+    // Recherche insensible à la casse
+    final key = colors.keys.firstWhere(
+      (k) => problematique.toLowerCase().contains(k.toLowerCase()),
+      orElse: () => '',
+    );
+    
+    return colors[key] ?? Colors.orange.shade300;
+  }
+
   Widget _buildNoteCard(Note note) {
     debugPrint('🎨 Rendu carte: "${note.content}"');
     
@@ -239,6 +261,26 @@ class _NotesScreenState extends State<NotesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Badge problématique
+            if (note.problematique != null) ...[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _getProblematiqueCouleur(note.problematique),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  note.problematique!,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12),
+            ],
+            
             // Contenu de la note
             Text(
               note.content,

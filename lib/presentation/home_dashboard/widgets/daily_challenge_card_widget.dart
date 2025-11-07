@@ -11,6 +11,7 @@ class DailyChallengeCardWidget extends StatefulWidget {
   final bool isCompleted;
   final VoidCallback onToggleCompletion;
   final String? challengeId;
+  final String? problematique;
 
   const DailyChallengeCardWidget({
     Key? key,
@@ -19,6 +20,7 @@ class DailyChallengeCardWidget extends StatefulWidget {
     required this.isCompleted,
     required this.onToggleCompletion,
     this.challengeId,
+    this.problematique,
   }) : super(key: key);
 
   @override
@@ -84,6 +86,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
         content: _noteController.text.trim(),
         challengeId: widget.challengeId,
         challengeTitle: widget.challengeTitle,
+        problematique: widget.problematique,
       );
       
       if (note != null && mounted) {

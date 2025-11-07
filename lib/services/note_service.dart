@@ -38,6 +38,7 @@ class NoteService {
     required String content,
     String? challengeId,
     String? challengeTitle,
+    String? problematique,
   }) async {
     try {
       if (_currentUserId == null) {
@@ -54,6 +55,7 @@ class NoteService {
         'challenge_id': challengeId,
         'content': content.trim(),
         'challenge_title': challengeTitle,
+        'problematique': problematique,
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),
       };
