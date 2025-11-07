@@ -105,6 +105,7 @@ class ChallengeService {
       
       Map<String, String> challengeData;
       String? microChallengeId;
+      String? problematique;
       
       if (newChallenge != null) {
         challengeData = {
@@ -112,7 +113,9 @@ class ChallengeService {
           'description': newChallenge['mission'] as String,
         };
         microChallengeId = newChallenge['id'] as String;
+        problematique = newChallenge['problematique'] as String?;
         debugPrint('✅ Generated new challenge via n8n: ${challengeData['title']}');
+        debugPrint('   Problematique: $problematique');
       } else {
         // Fallback vers la génération locale
         debugPrint('⚠️ n8n generation failed, using local fallback');
@@ -128,6 +131,7 @@ class ChallengeService {
         'points_reward': _getPointsForDifficulty(difficulty),
         'date_assigned': DateTime.now().toIso8601String().split('T')[0],
         'status': 'pending',
+        if (problematique != null) 'problematique': problematique,
       };
 
       final response = await _client
