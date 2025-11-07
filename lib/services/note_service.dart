@@ -58,7 +58,13 @@ class NoteService {
         'updated_at': now.toIso8601String(),
       };
 
-      debugPrint('[NoteService] Creating note: $noteData');
+      debugPrint('========================================');
+      debugPrint('[NoteService] 🆕 CREATING NEW NOTE');
+      debugPrint('  User ID: $_currentUserId');
+      debugPrint('  Challenge ID: ${challengeId ?? "AUCUN (note indépendante)"}');
+      debugPrint('  Content: ${content.trim()}');
+      debugPrint('  Content length: ${content.trim().length} chars');
+      debugPrint('========================================');
 
       final response = await _supabase
           .from('notes')
@@ -66,7 +72,9 @@ class NoteService {
           .select()
           .single();
 
-      debugPrint('[NoteService] ✅ Note created successfully');
+      debugPrint('✅ [NoteService] Note created with ID: ${response['id']}');
+      debugPrint('========================================');
+      
       return Note.fromJson(response);
     } catch (e) {
       debugPrint('[NoteService] ❌ Error creating note: $e');
@@ -141,7 +149,9 @@ class NoteService {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('[NoteService] Fetching all notes for user');
+      debugPrint('========================================');
+      debugPrint('[NoteService] 📥 FETCHING ALL NOTES');
+      debugPrint('  User ID: $_currentUserId');
 
       final response = await _supabase
           .from('notes')
@@ -153,7 +163,12 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] ✅ Fetched ${notes.length} notes');
+      debugPrint('✅ [NoteService] Fetched ${notes.length} notes');
+      for (var i = 0; i < notes.length; i++) {
+        debugPrint('  Note ${i + 1}: "${notes[i].content.substring(0, notes[i].content.length > 30 ? 30 : notes[i].content.length)}..." (ID: ${notes[i].id})');
+      }
+      debugPrint('========================================');
+      
       return notes;
     } catch (e) {
       debugPrint('[NoteService] ❌ Error fetching notes: $e');
