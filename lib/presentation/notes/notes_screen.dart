@@ -222,115 +222,27 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _buildNoteCard(Note note) {
     debugPrint('🎨 [NotesScreen] Rendu carte pour note: "${note.content}"');
     
-    final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
-    final formattedDate = dateFormat.format(note.createdAt);
-
+    // VERSION ULTRA-SIMPLIFIÉE POUR DEBUG
     return GestureDetector(
       onTap: () => _showNoteEditor(note: note),
       child: Container(
+        padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
-        color: Colors.white, // Temporaire pour debug
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
-          width: 1,
+          color: Colors.yellow, // Couleur très visible pour debug
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red, width: 3), // Bordure rouge épaisse
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with challenge title if available
-          if (note.challengeTitle != null) ...[
-            Container(
-              padding: EdgeInsets.all(3.w),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CustomIconWidget(
-                    iconName: 'emoji_events',
-                    color: AppTheme.lightTheme.colorScheme.primary,
-                    size: 4.w,
-                  ),
-                  SizedBox(width: 2.w),
-                  Expanded(
-                    child: Text(
-                      note.challengeTitle!,
-                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+        child: Center(
+          child: Text(
+            note.content,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-
-          // Note content
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(3.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      note.content,
-                      style: TextStyle(
-                        color: Colors.black, // Temporaire pour debug
-                        fontSize: 16, // Plus grand pour debug
-                        height: 1.4,
-                      ),
-                      maxLines: 8,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          formattedDate,
-                          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                            color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                                .withOpacity(0.6),
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => _deleteNote(note.id!),
-                        child: Padding(
-                          padding: EdgeInsets.all(2.w),
-                          child: CustomIconWidget(
-                            iconName: 'delete',
-                            color: Colors.red.shade400,
-                            size: 4.w,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        ),
       ),
     );
   }
