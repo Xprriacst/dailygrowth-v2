@@ -231,56 +231,54 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                 SizedBox(height: 3.h),
 
                 // Notes section (Google Keep style)
-                GestureDetector(
-                  onTap: _toggleNoteExpansion,
-                  child: Container(
-                    padding: EdgeInsets.all(3.w),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFFFF9C4), // Jaune Google Keep
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Color(0xFFFBC02D).withOpacity(0.3),
-                        width: 1,
-                      ),
+                Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFFF9C4), // Jaune Google Keep
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Color(0xFFFBC02D).withOpacity(0.3),
+                      width: 1,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CustomIconWidget(
-                              iconName: 'edit_note',
-                              color: Color(0xFFF57F17),
-                              size: 5.w,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CustomIconWidget(
+                            iconName: 'edit_note',
+                            color: Color(0xFFF57F17),
+                            size: 5.w,
+                          ),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              _noteController.text.isEmpty
+                                  ? 'Ajouter une note...'
+                                  : 'Ma note',
+                              style: AppTheme.lightTheme.textTheme.bodyMedium
+                                  ?.copyWith(
+                                color: Color(0xFFF57F17),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            SizedBox(width: 2.w),
-                            Expanded(
-                              child: Text(
-                                _noteController.text.isEmpty
-                                    ? 'Ajouter une note...'
-                                    : 'Ma note',
-                                style: AppTheme.lightTheme.textTheme.bodyMedium
-                                    ?.copyWith(
-                                  color: Color(0xFFF57F17),
-                                  fontWeight: FontWeight.w600,
+                          ),
+                          if (_isSavingNote)
+                            SizedBox(
+                              width: 4.w,
+                              height: 4.w,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFF57F17),
                                 ),
                               ),
                             ),
-                            if (_isSavingNote)
-                              SizedBox(
-                                width: 4.w,
-                                height: 4.w,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFFF57F17),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                          SizedBox(height: 2.h),
-                          TextField(
+                        ],
+                      ),
+                      SizedBox(height: 2.h),
+                      TextField(
                             controller: _noteController,
                             maxLines: 4,
                             style: AppTheme.lightTheme.textTheme.bodyMedium
@@ -306,9 +304,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                               });
                             },
                           ),
-                        ],
-                      ],
-                    ),
+                    ],
                   ),
                 ),
 
