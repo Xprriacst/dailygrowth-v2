@@ -213,8 +213,8 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _buildNoteCard(Note note) {
     debugPrint('🎨 Rendu carte: "${note.content}"');
     
-    final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
-    final formattedDate = dateFormat.format(note.createdAt);
+    // Format simple sans locale pour éviter l'erreur
+    final formattedDate = '${note.createdAt.day}/${note.createdAt.month}/${note.createdAt.year}';
 
     return GestureDetector(
       onTap: () => _showNoteEditor(note: note),
