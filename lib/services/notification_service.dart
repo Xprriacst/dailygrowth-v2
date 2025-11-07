@@ -755,7 +755,7 @@ class NotificationService {
       // Test basic notification
       try {
         await _webNotificationService.showNotification(
-          title: '🧪 Test DailyGrowth',
+          title: '🧪 Test ChallengeMe',
           body: 'Notification de test réussie !',
           data: {
             'test': true,
@@ -806,7 +806,7 @@ class NotificationService {
 
       try {
         await sendInstantNotification(
-          title: '🧪 Test DailyGrowth',
+          title: '🧪 Test ChallengeMe',
           body: 'Test mobile réussi !',
           payload: 'test_notification',
         );

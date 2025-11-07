@@ -1,15 +1,78 @@
 [build]
   # Installation Flutter et build avec gestion du cache
-  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable; fi && export PATH=$PATH:$PWD/flutter/bin && flutter config --enable-web && flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY && ls -la build/web/ && sed -i.bak \"s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g\" build/web/index.html && sed -i.bak \"s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g\" build/web/index.html && echo \"Variables replaced successfully\""
+  command = """
+    # Step 1: Install Flutter if needed
+    if [ ! -d "flutter" ]; then
+      echo "📦 Installing Flutter..."
+      git clone https://github.com/flutter/flutter.git -b stable
+    fi
+
+    # Step 2: Configure Flutter
+    export PATH=$PATH:$PWD/flutter/bin
+    flutter config --enable-web
+
+    # Step 3: Build Flutter web app
+    echo "🔨 Building Flutter web app..."
+    flutter build web --release \
+      --dart-define=SUPABASE_URL=$SUPABASE_URL \
+      --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
+      --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY
+
+    # Step 4: Verify build output
+    echo "📂 Build output:"
+    ls -la build/web/
+
+    # Step 5: Set version (try multiple Netlify variables)
+    echo "🔍 Checking available version variables..."
+    echo "   BUILD_ID=$BUILD_ID"
+    echo "   NETLIFY_BUILD_ID=$NETLIFY_BUILD_ID"
+    echo "   COMMIT_REF=$COMMIT_REF"
+    echo "   CONTEXT=$CONTEXT"
+
+    if [ -n "$BUILD_ID" ]; then
+      APP_BUILD_VERSION="$BUILD_ID"
+      echo "✅ Using BUILD_ID: $APP_BUILD_VERSION"
+    elif [ -n "$NETLIFY_BUILD_ID" ]; then
+      APP_BUILD_VERSION="$NETLIFY_BUILD_ID"
+      echo "✅ Using NETLIFY_BUILD_ID: $APP_BUILD_VERSION"
+    elif [ -n "$COMMIT_REF" ]; then
+      APP_BUILD_VERSION="$COMMIT_REF"
+      echo "⚠️ Using COMMIT_REF: $APP_BUILD_VERSION"
+    else
+      APP_BUILD_VERSION=$(date +%s%3N)
+      echo "⚠️ Using timestamp (milliseconds): $APP_BUILD_VERSION"
+    fi
+
+    # Step 6: Replace placeholders (without creating backup files)
+    echo "🔄 Replacing placeholders..."
+    sed -i "s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g" build/web/index.html
+    sed -i "s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g" build/web/index.html
+    sed -i "s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g" build/web/index.html
+    sed -i "s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g" build/web/index.html
+    sed -i "s|__SW_VERSION__|$APP_BUILD_VERSION|g" build/web/sw.js
+
+    # Step 7: Verify replacement
+    echo "🔍 Verifying version replacement..."
+    if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
+      echo "❌ ERROR: Version placeholder was not replaced!"
+      exit 1
+    else
+      echo "✅ Version successfully set to: $APP_BUILD_VERSION"
+    fi
+
+    if grep -q "__SW_VERSION__" build/web/sw.js; then
+      echo "❌ ERROR: SW version placeholder was not replaced!"
+      exit 1
+    else
+      echo "✅ Service Worker version successfully updated"
+    fi
+
+    echo "🎉 Build completed successfully!"
+  """
   publish = "build/web"
 
 # Configuration des redirections pour SPA
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Redirections pour les assets statiques
+# Placer les ressources statiques avant le fallback global afin d'éviter de renvoyer index.html
 [[redirects]]
   from = "/assets/*"
   to = "/assets/:splat"
@@ -18,6 +81,46 @@
 [[redirects]]
   from = "/icons/*"
   to = "/icons/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/flutter_service_worker.js"
+  to = "/flutter_service_worker.js"
+  status = 200
+
+[[redirects]]
+  from = "/sw.js"
+  to = "/sw.js"
+  status = 200
+
+[[redirects]]
+  from = "/main.dart.js"
+  to = "/main.dart.js"
+  status = 200
+
+[[redirects]]
+  from = "/*.js"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*.wasm"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/favicon.ico"
+  to = "/favicon.ico"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 # Variables d'environnement
@@ -41,11 +144,11 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
-# Headers pour les fichiers JS/CSS
+# Headers pour les fichiers JS/CSS - Cache minimal pour forcer les mises à jour
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*.css"

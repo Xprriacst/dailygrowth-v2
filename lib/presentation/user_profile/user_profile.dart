@@ -277,7 +277,9 @@ class _UserProfileState extends State<UserProfile> {
                             ]),
 
                           // Progress by Problematique Section
-                          const ProblematiqueProgressWidget(),
+                          // TODO: Temporairement masqué - pourcentage incohérent (basé sur défis assignés vs complétés)
+                          // Fix disponible sur branche development
+                          // const ProblematiqueProgressWidget(),
 
                           // Support Section
                           SettingsSectionWidget(
@@ -461,7 +463,7 @@ class _UserProfileState extends State<UserProfile> {
               userId: _authService.userId!,
               selectedProblematiques: [newProblematique]);
             await _loadUserData(); // Reload data
-            _showBeautifulSuccessMessage('Objectif mis à jour');
+            // Note: Popup removed - success is implicit when modal closes
           } catch (e) {
             _showBeautifulErrorMessage('Erreur lors de la mise à jour: $e');
           }

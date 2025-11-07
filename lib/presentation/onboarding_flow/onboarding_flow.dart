@@ -37,7 +37,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     {
       "imageUrl":
           "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "title": "Bienvenue dans DailyGrowth",
+      "title": "Bienvenue dans ChallengeMe",
       "description":
           "Votre compagnon quotidien pour le développement personnel avec des défis personnalisés et de l'inspiration IA.",
     },
@@ -57,7 +57,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     },
     {
       "imageUrl": "assets/images/pwa_tutorial/etape_1_installer.png",
-      "title": "📲 Installer DailyGrowth",
+      "title": "📲 Installer ChallengeMe",
       "description":
           "Ouvrez le menu de Safari et repérez les options supplémentaires pour préparer l'installation.",
       "isPWATutorial": true,
@@ -75,7 +75,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "imageUrl": "assets/images/pwa_tutorial/etape_3_ajouter.png",
       "title": "🏠 Étape 3 : Ajouter",
       "description":
-          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application DailyGrowth à votre PWA.",
+          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application ChallengeMe à votre PWA.",
       "isPWATutorial": true,
       "step": 3,
     },

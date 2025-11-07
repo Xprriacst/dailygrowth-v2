@@ -78,7 +78,7 @@ class NotificationPermissionDialog extends StatelessWidget {
             
             // Titre
             Text(
-              'Restez motivé avec DailyGrowth !',
+              'Restez motivé avec ChallengeMe !',
               textAlign: TextAlign.center,
               style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
@@ -144,7 +144,7 @@ class NotificationPermissionDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Autoriser les notifications',
+                      'Autoriser',
                       style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,

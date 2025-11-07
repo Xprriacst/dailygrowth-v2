@@ -18,12 +18,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="DailyGrowth - Votre application de développement personnel quotidien">
+  <meta name="description" content="ChallengeMe - Votre application de développement personnel quotidien">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="DailyGrowth">
+  <meta name="apple-mobile-web-app-title" content="ChallengeMe">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -37,7 +37,7 @@
   <!-- Web App Manifest -->
   <link rel="manifest" href="manifest.json">
 
-  <title>DailyGrowth</title>
+  <title>ChallengeMe</title>
   <link rel="manifest" href="manifest.json">
 
   <script>
@@ -55,6 +55,11 @@
       SUPABASE_URL: 'NETLIFY_SUPABASE_URL_PLACEHOLDER', 
       SUPABASE_ANON_KEY: 'NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER'
     };
+  </script>
+
+  <!-- Build version injection (replaced during deploy) -->
+  <script>
+    window.APP_BUILD_VERSION = '__APP_BUILD_VERSION__';
   </script>
 
   <!-- Development environment variables (local only) -->
@@ -143,7 +148,21 @@
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
+      const versionToken = (window.APP_BUILD_VERSION && window.APP_BUILD_VERSION !== '__APP_BUILD_VERSION__')
+        ? window.APP_BUILD_VERSION
+        : Date.now().toString();
+
+      window.APP_BUILD_VERSION = versionToken;
+      try {
+        localStorage.setItem('challengeme.buildVersion', versionToken);
+      } catch (e) {
+        console.warn('⚠️ Unable to persist build version in localStorage:', e);
+      }
+      document.title = `ChallengeMe • build ${versionToken}`;
+      console.log(`[ChallengeMe] Build version: ${versionToken}`);
+
       _flutter.loader.loadEntrypoint({
+        entrypointUrl: `main.dart.js?v=${versionToken}`,
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
         },
