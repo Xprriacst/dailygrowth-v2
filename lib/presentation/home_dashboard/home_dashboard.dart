@@ -374,7 +374,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   challengeDescription:
                                       _dailyChallenge['description'] as String,
                                   isCompleted: _isChallengeCompleted,
-                                  onToggleCompletion: _handleChallengeToggle),
+                                  onToggleCompletion: _handleChallengeToggle,
+                                  challengeId: _dailyChallenge['id'] as String?),
 
                               SizedBox(height: 2.h),
 
