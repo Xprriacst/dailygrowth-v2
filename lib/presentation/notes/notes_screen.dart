@@ -34,22 +34,13 @@ class _NotesScreenState extends State<NotesScreen> {
     setState(() => _isLoading = true);
 
     try {
-      debugPrint('📋 [NotesScreen] Chargement des notes...');
       final notes = await _noteService.getAllNotes();
-      debugPrint('📋 [NotesScreen] ${notes.length} notes récupérées');
-      
-      for (var i = 0; i < notes.length; i++) {
-        debugPrint('  Note $i: "${notes[i].content}" (${notes[i].content.length} caractères)');
-        debugPrint('    ID: ${notes[i].id}');
-        debugPrint('    Challenge: ${notes[i].challengeTitle ?? "Aucun"}');
-      }
       
       if (mounted) {
         setState(() {
           _notes = notes;
           _isLoading = false;
         });
-        debugPrint('✅ [NotesScreen] Interface mise à jour avec ${_notes.length} notes');
       }
     } catch (e) {
       debugPrint('❌ [NotesScreen] Error loading notes: $e');
@@ -181,35 +172,19 @@ class _NotesScreenState extends State<NotesScreen> {
                 )
               : RefreshIndicator(
                   onRefresh: _loadNotes,
-                  child: Column(
-                    children: [
-                      // Debug info
-                      Container(
-                        padding: EdgeInsets.all(2.w),
-                        color: Colors.blue,
-                        child: Text(
-                          'AFFICHAGE: ${_notes.length} notes en mémoire',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Expanded(
-                        child: GridView.builder(
-                          padding: EdgeInsets.all(4.w),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 3.w,
-                            mainAxisSpacing: 2.h,
-                            childAspectRatio: 0.75,
-                          ),
-                          itemCount: _notes.length,
-                          itemBuilder: (context, index) {
-                            debugPrint('🎨 Construction carte $index / ${_notes.length}');
-                            final note = _notes[index];
-                            return _buildNoteCard(note);
-                          },
-                        ),
-                      ),
-                    ],
+                  child: GridView.builder(
+                    padding: EdgeInsets.all(4.w),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 3.w,
+                      mainAxisSpacing: 2.h,
+                      childAspectRatio: 0.75,
+                    ),
+                    itemCount: _notes.length,
+                    itemBuilder: (context, index) {
+                      final note = _notes[index];
+                      return _buildNoteCard(note);
+                    },
                   ),
                 ),
       floatingActionButton: FloatingActionButton.extended(
@@ -236,28 +211,76 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildNoteCard(Note note) {
-    debugPrint('🎨 [NotesScreen] Rendu carte pour note: "${note.content}"');
-    
-    // VERSION ULTRA-SIMPLIFIÉE POUR DEBUG
+    final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
+    final formattedDate = dateFormat.format(note.createdAt);
+
     return GestureDetector(
       onTap: () => _showNoteEditor(note: note),
       child: Container(
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
-          color: Colors.yellow, // Couleur très visible pour debug
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red, width: 3), // Bordure rouge épaisse
-        ),
-        child: Center(
-          child: Text(
-            note.content,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
+          border: Border.all(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Contenu de la note
+            Expanded(
+              child: Text(
+                note.content,
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+                maxLines: 8,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            
+            SizedBox(height: 2.h),
+            
+            // Ligne du bas : date + bouton supprimer
+            Row(
+              children: [
+                // Date
+                Expanded(
+                  child: Text(
+                    formattedDate,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                
+                // Bouton supprimer
+                InkWell(
+                  onTap: () => _deleteNote(note.id!),
+                  child: Padding(
+                    padding: EdgeInsets.all(2.w),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red.shade400,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
