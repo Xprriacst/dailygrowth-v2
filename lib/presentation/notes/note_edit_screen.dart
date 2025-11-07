@@ -292,14 +292,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
               minHeight: 8,
             ),
           ),
-          SizedBox(height: 0.5.h),
-          Text(
-            '$completed/$total défis complétés',
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppTheme.textSecondaryLight,
-            ),
-          ),
         ],
       ),
     );
