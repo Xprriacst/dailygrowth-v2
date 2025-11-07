@@ -88,11 +88,12 @@ class ProfileHeaderWidget extends StatelessWidget {
                 child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStatItem(
-                          'Série',
-                          '${userStats!['streak_count'] ?? 0}',
-                          'local_fire_department'),
-                      _buildStatDivider(),
+                      // Compteur de série masqué
+                      // _buildStatItem(
+                      //     'Série',
+                      //     '${userStats!['streak_count'] ?? 0}',
+                      //     'local_fire_department'),
+                      // _buildStatDivider(),
                       _buildStatItem('Points',
                           '${userStats!['total_points'] ?? 0}', 'star'),
                       _buildStatDivider(),
