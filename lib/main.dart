@@ -86,7 +86,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _setupDeepLinkHandling();
-    _setupVersionCheck();
+    // _setupVersionCheck(); // Désactivé : popup de mise à jour masquée
 
     if (widget.shouldForceResetPassword) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -152,7 +152,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Sizer(builder: (context, orientation, screenType) {
       return MaterialApp(
-        title: 'DailyGrowth',
+        title: 'ChallengeMe',
         theme: AppTheme.lightTheme,
         navigatorKey: _navigatorKey,
         debugShowCheckedModeBanner: false,
