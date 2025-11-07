@@ -20,6 +20,7 @@ class _NotesScreenState extends State<NotesScreen> {
   final UserService _userService = UserService();
   List<Note> _notes = [];
   Map<String, Map<String, dynamic>> _progressByProblematique = {};
+  String? _currentProblematique;
   bool _isLoading = true;
   int _currentBottomNavIndex = 1; // Index for Notes tab
 
@@ -32,8 +33,31 @@ class _NotesScreenState extends State<NotesScreen> {
   Future<void> _initializeAndLoadNotes() async {
     await _noteService.initialize();
     await _userService.initialize();
+    await _loadCurrentProblematique();
     await _loadNotes();
     await _loadProgress();
+  }
+
+  Future<void> _loadCurrentProblematique() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('❌ [NotesScreen] User not authenticated');
+        return;
+      }
+
+      final problematique = await _userService.getCurrentProblematique(userId);
+      
+      if (mounted) {
+        setState(() {
+          _currentProblematique = problematique;
+        });
+      }
+      
+      debugPrint('✅ [NotesScreen] Current problematique loaded: $_currentProblematique');
+    } catch (e) {
+      debugPrint('❌ [NotesScreen] Error loading current problematique: $e');
+    }
   }
 
   Future<void> _loadNotes() async {
@@ -155,6 +179,7 @@ class _NotesScreenState extends State<NotesScreen> {
               size: 6.w,
             ),
             onPressed: () async {
+              await _loadCurrentProblematique();
               await _loadNotes();
               await _loadProgress();
             },
@@ -203,6 +228,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 )
               : RefreshIndicator(
                   onRefresh: () async {
+                    await _loadCurrentProblematique();
                     await _loadNotes();
                     await _loadProgress();
                   },
@@ -404,6 +430,7 @@ class _NotesScreenState extends State<NotesScreen> {
       MaterialPageRoute(
         builder: (context) => NoteEditScreen(
           note: note,
+          initialProblematique: note?.problematique ?? _currentProblematique,
         ),
       ),
     );
@@ -412,6 +439,7 @@ class _NotesScreenState extends State<NotesScreen> {
     if (result == true) {
       await _loadNotes();
       await _loadProgress();
+      await _loadCurrentProblematique();
     }
   }
 }
