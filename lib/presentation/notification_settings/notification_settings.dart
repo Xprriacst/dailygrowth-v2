@@ -307,7 +307,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
           ),
         ),
         content: Text(
-          'DailyGrowth souhaite vous envoyer des notifications pour vos défis quotidiens et vos réussites.',
+          'ChallengeMe souhaite vous envoyer des notifications pour vos défis quotidiens et vos réussites.',
           style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
             color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
             height: 1.4,

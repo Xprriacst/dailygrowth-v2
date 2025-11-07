@@ -1,4 +1,4 @@
-// Service Worker unifié DailyGrowth - Firebase Push + Cache + Fallback Local
+// Service Worker unifié ChallengeMe - Firebase Push + Cache + Fallback Local
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
@@ -64,7 +64,7 @@ if (firebaseInitialized && messaging) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[SW] 🔔 Firebase push message received:', payload);
 
-    const notificationTitle = payload.notification?.title || 'DailyGrowth';
+    const notificationTitle = payload.notification?.title || 'ChallengeMe';
     const notificationOptions = {
       body: payload.notification?.body || 'Nouveau défi disponible !',
       icon: '/icons/Icon-192.png',
@@ -205,7 +205,7 @@ async function saveToIndexedDB(data) {
   console.log('[SW] 💾 Saving to IndexedDB:', data?.length || 0, 'items');
   
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('DailyGrowthDB', 1);
+    const request = indexedDB.open('ChallengeMe_DB', 1);
     
     request.onerror = () => {
       console.error('[SW] ❌ IndexedDB open error:', request.error);
@@ -243,7 +243,7 @@ async function loadFromIndexedDB() {
   console.log('[SW] 📥 Loading from IndexedDB');
   
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('DailyGrowthDB', 1);
+    const request = indexedDB.open('ChallengeMe_DB', 1);
     
     request.onerror = () => reject(request.error);
     

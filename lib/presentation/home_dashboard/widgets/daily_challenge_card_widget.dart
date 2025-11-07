@@ -142,6 +142,29 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     widget.onToggleCompletion();
   }
 
+  void _toggleNoteExpansion() {
+    setState(() {
+      _isNoteExpanded = !_isNoteExpanded;
+    });
+    HapticFeedback.selectionClick();
+  }
+
+  void _saveNote() async {
+    if (widget.onNoteChanged != null) {
+      setState(() => _isNoteSaving = true);
+      
+      // Simuler un délai de sauvegarde
+      await Future.delayed(Duration(milliseconds: 500));
+      
+      widget.onNoteChanged!(_noteController.text);
+      
+      if (mounted) {
+        setState(() => _isNoteSaving = false);
+        HapticFeedback.lightImpact();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -242,7 +265,100 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                   ),
                 ),
 
-                SizedBox(height: 4.h),
+                SizedBox(height: 3.h),
+
+                // Notes section (Google Keep style)
+                GestureDetector(
+                  onTap: _toggleNoteExpansion,
+                  child: Container(
+                    padding: EdgeInsets.all(3.w),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFFF9C4), // Jaune Google Keep
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Color(0xFFFBC02D).withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CustomIconWidget(
+                              iconName: 'edit_note',
+                              color: Color(0xFFF57F17),
+                              size: 5.w,
+                            ),
+                            SizedBox(width: 2.w),
+                            Expanded(
+                              child: Text(
+                                _noteController.text.isEmpty
+                                    ? 'Ajouter une note...'
+                                    : 'Ma note',
+                                style: AppTheme.lightTheme.textTheme.bodyMedium
+                                    ?.copyWith(
+                                  color: Color(0xFFF57F17),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (_isNoteSaving)
+                              SizedBox(
+                                width: 4.w,
+                                height: 4.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFF57F17),
+                                  ),
+                                ),
+                              )
+                            else
+                              CustomIconWidget(
+                                iconName: _isNoteExpanded
+                                    ? 'expand_less'
+                                    : 'expand_more',
+                                color: Color(0xFFF57F17),
+                                size: 5.w,
+                              ),
+                          ],
+                        ),
+                        if (_isNoteExpanded) ...[
+                          SizedBox(height: 2.h),
+                          TextField(
+                            controller: _noteController,
+                            maxLines: 4,
+                            style: AppTheme.lightTheme.textTheme.bodyMedium
+                                ?.copyWith(
+                              color: Color(0xFF5D4037),
+                            ),
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Écris tes réflexions, tes ressentis...',
+                              hintStyle: AppTheme.lightTheme.textTheme.bodyMedium
+                                  ?.copyWith(
+                                color: Color(0xFF5D4037).withOpacity(0.5),
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onChanged: (value) {
+                              // Auto-save après 1 seconde d'inactivité
+                              Future.delayed(Duration(seconds: 1), () {
+                                if (_noteController.text == value) {
+                                  _saveNote();
+                                }
+                              });
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 3.h),
 
                 // Completion button
                 GestureDetector(

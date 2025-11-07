@@ -22,9 +22,9 @@ class NoteService {
     try {
       debugPrint('[NoteService] Initializing...');
       _initialized = true;
-      debugPrint('[NoteService] ✅ Initialized successfully');
+      debugPrint('[NoteService] â Initialized successfully');
     } catch (e) {
-      debugPrint('[NoteService] ❌ Initialization error: $e');
+      debugPrint('[NoteService] â Initialization error: $e');
       _initialized = false;
       rethrow;
     }
@@ -66,10 +66,10 @@ class NoteService {
           .select()
           .single();
 
-      debugPrint('[NoteService] ✅ Note created successfully');
+      debugPrint('[NoteService] â Note created successfully');
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error creating note: $e');
+      debugPrint('[NoteService] â Error creating note: $e');
       return null;
     }
   }
@@ -103,10 +103,10 @@ class NoteService {
           .select()
           .single();
 
-      debugPrint('[NoteService] ✅ Note updated successfully');
+      debugPrint('[NoteService] â Note updated successfully');
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error updating note: $e');
+      debugPrint('[NoteService] â Error updating note: $e');
       return null;
     }
   }
@@ -126,10 +126,10 @@ class NoteService {
           .eq('id', noteId)
           .eq('user_id', _currentUserId!);
 
-      debugPrint('[NoteService] ✅ Note deleted successfully');
+      debugPrint('[NoteService] â Note deleted successfully');
       return true;
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error deleting note: $e');
+      debugPrint('[NoteService] â Error deleting note: $e');
       return false;
     }
   }
@@ -153,10 +153,10 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] ✅ Fetched ${notes.length} notes');
+      debugPrint('[NoteService] â Fetched ${notes.length} notes');
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error fetching notes: $e');
+      debugPrint('[NoteService] â Error fetching notes: $e');
       return [];
     }
   }
@@ -182,10 +182,10 @@ class NoteService {
         return null;
       }
 
-      debugPrint('[NoteService] ✅ Note found for challenge');
+      debugPrint('[NoteService] â Note found for challenge');
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error fetching note for challenge: $e');
+      debugPrint('[NoteService] â Error fetching note for challenge: $e');
       return null;
     }
   }
@@ -214,10 +214,10 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] ✅ Fetched ${notes.length} notes');
+      debugPrint('[NoteService] â Fetched ${notes.length} notes');
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error fetching notes by date range: $e');
+      debugPrint('[NoteService] â Error fetching notes by date range: $e');
       return [];
     }
   }
@@ -246,10 +246,10 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] ✅ Found ${notes.length} notes');
+      debugPrint('[NoteService] â Found ${notes.length} notes');
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] ❌ Error searching notes: $e');
+      debugPrint('[NoteService] â Error searching notes: $e');
       return [];
     }
   }
