@@ -134,7 +134,42 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     }
   }
 
+  Color _getProblematiqueCouleur(String? problematique) {
+    if (problematique == null) return Colors.grey;
+    
+    // Couleurs par catégorie
+    final prob = ChallengeProblematique.allProblematiques.firstWhere(
+      (p) => p.title == problematique,
+      orElse: () => ChallengeProblematique.allProblematiques.first,
+    );
+    
+    switch (prob.category) {
+      case 'Mental & émotionnel':
+        return Colors.purple;
+      case 'Relations & communication':
+        return Colors.blue;
+      case 'Argent & carrière':
+        return Colors.green;
+      case 'Santé & habitudes de vie':
+        return Colors.red;
+      case 'Productivité & concentration':
+        return Colors.orange;
+      case 'Confiance & identité':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildProblematiqueSelector() {
+    // Trouver la problématique sélectionnée
+    final problematique = ChallengeProblematique.allProblematiques.firstWhere(
+      (p) => p.title == _selectedProblematique,
+      orElse: () => ChallengeProblematique.allProblematiques.first,
+    );
+    
+    final couleur = _getProblematiqueCouleur(_selectedProblematique);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
@@ -148,74 +183,55 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Problématique',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '*',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppTheme.errorLight,
-                ),
-              ),
-            ],
+          Text(
+            'Problématique',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimaryLight,
+            ),
           ),
-          SizedBox(height: 1.h),
-          DropdownButtonFormField<String>(
-            value: _selectedProblematique,
-            decoration: InputDecoration(
-              hintText: 'Sélectionnez une problématique',
-              filled: true,
-              fillColor: AppTheme.backgroundLight,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 3.w,
-                vertical: 1.5.h,
+          SizedBox(height: 1.5.h),
+          // Badge de problématique (statique, non modifiable)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+            decoration: BoxDecoration(
+              color: couleur.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: couleur.withOpacity(0.3),
+                width: 2,
               ),
             ),
-            items: ChallengeProblematique.allProblematiques.map((prob) {
-              return DropdownMenuItem<String>(
-                value: prob.title,
-                child: Row(
-                  children: [
-                    Text(
-                      prob.emoji,
-                      style: TextStyle(fontSize: 18.sp),
-                    ),
-                    SizedBox(width: 2.w),
-                    Expanded(
-                      child: Text(
-                        prob.title,
-                        style: TextStyle(fontSize: 13.sp),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+            child: Row(
+              children: [
+                Text(
+                  problematique.emoji,
+                  style: TextStyle(fontSize: 20.sp),
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedProblematique = value;
-                _progressData = null;
-              });
-              _loadProgressData();
-            },
+                SizedBox(width: 3.w),
+                Expanded(
+                  child: Text(
+                    problematique.title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: couleur,
+                    ),
+                  ),
+                ),
+                // Icône de verrouillage pour indiquer que c'est fixe
+                Icon(
+                  Icons.lock_outline,
+                  size: 18.sp,
+                  color: AppTheme.textSecondaryLight,
+                ),
+              ],
+            ),
           ),
           // Afficher la progression si disponible
           if (_progressData != null) ...[
-            SizedBox(height: 1.h),
+            SizedBox(height: 1.5.h),
             _buildProgressIndicator(),
           ],
         ],
@@ -227,8 +243,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     if (_progressData == null) return const SizedBox.shrink();
 
     final percentage = _progressData!['percentage'] as int;
-    final completed = _progressData!['completed'] as int;
-    final total = _progressData!['total'] as int;
 
     Color progressColor;
     if (percentage >= 80) {
