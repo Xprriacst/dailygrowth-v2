@@ -78,7 +78,7 @@ class NotificationPermissionDialog extends StatelessWidget {
             
             // Titre
             Text(
-              'Restez motivé avec DailyGrowth !',
+              'Restez motivé avec ChallengeMe !',
               textAlign: TextAlign.center,
               style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
