@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
-import '../../../services/note_service.dart';
 
 class DailyChallengeCardWidget extends StatefulWidget {
   final String challengeTitle;
@@ -32,9 +31,6 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  final TextEditingController _noteController = TextEditingController();
-  final NoteService _noteService = NoteService();
-  bool _isSavingNote = false;
 
   @override
   void initState() {
@@ -50,74 +46,12 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    _initializeService();
-  }
-
-  Future<void> _initializeService() async {
-    await _noteService.initialize();
-    // Ne charge plus la note existante - on crée toujours une nouvelle note
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _noteController.dispose();
     super.dispose();
-  }
-
-  Future<void> _saveNote() async {
-    if (_noteController.text.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('La note ne peut pas être vide'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    setState(() => _isSavingNote = true);
-
-    try {
-      // Toujours créer une nouvelle note
-      final note = await _noteService.createNote(
-        content: _noteController.text.trim(),
-        challengeId: widget.challengeId,
-        challengeTitle: widget.challengeTitle,
-        problematique: widget.problematique,
-      );
-      
-      if (note != null && mounted) {
-        // Vider le champ après création
-        _noteController.clear();
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Note enregistrée ✓ (${note.id?.substring(0, 8)}...)'),
-            duration: Duration(seconds: 2),
-            backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
-          ),
-        );
-      } else {
-        throw Exception('Échec de création de la note');
-      }
-    } catch (e) {
-      debugPrint('Error saving note: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de l\'enregistrement'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSavingNote = false);
-      }
-    }
   }
 
   void _handleTap() {
@@ -230,84 +164,6 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
 
                 SizedBox(height: 3.h),
 
-                // Notes section (Google Keep style)
-                Container(
-                  padding: EdgeInsets.all(3.w),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFFF9C4), // Jaune Google Keep
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Color(0xFFFBC02D).withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CustomIconWidget(
-                            iconName: 'edit_note',
-                            color: Color(0xFFF57F17),
-                            size: 5.w,
-                          ),
-                          SizedBox(width: 2.w),
-                          Expanded(
-                            child: Text(
-                              'Ajouter une note...',
-                              style: AppTheme.lightTheme.textTheme.bodyMedium
-                                  ?.copyWith(
-                                color: Color(0xFFF57F17),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (_isSavingNote)
-                            SizedBox(
-                              width: 4.w,
-                              height: 4.w,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Color(0xFFF57F17),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 2.h),
-                      TextField(
-                            controller: _noteController,
-                            maxLines: 4,
-                            style: AppTheme.lightTheme.textTheme.bodyMedium
-                                ?.copyWith(
-                              color: Color(0xFF5D4037),
-                            ),
-                            decoration: InputDecoration(
-                              hintText:
-                                  'Écris tes réflexions, tes ressentis...',
-                              hintStyle: AppTheme.lightTheme.textTheme.bodyMedium
-                                  ?.copyWith(
-                                color: Color(0xFF5D4037).withOpacity(0.5),
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onChanged: (value) {
-                              // Auto-save après 1 seconde d'inactivité
-                              Future.delayed(Duration(seconds: 1), () {
-                                if (_noteController.text == value) {
-                                  _saveNote();
-                                }
-                              });
-                            },
-                          ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
                 // Completion button
                 GestureDetector(
                   onTap: _handleTap,
@@ -353,136 +209,6 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                         ),
                       ],
                     ),
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Notes section
-                Container(
-                  padding: EdgeInsets.all(3.w),
-                  decoration: BoxDecoration(
-                    color: AppTheme.lightTheme.colorScheme.surfaceVariant
-                        .withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppTheme.lightTheme.colorScheme.outline
-                          .withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CustomIconWidget(
-                            iconName: 'note',
-                            color: AppTheme.lightTheme.colorScheme.primary,
-                            size: 4.w,
-                          ),
-                          SizedBox(width: 2.w),
-                          Text(
-                            'Mes notes',
-                            style: AppTheme.lightTheme.textTheme.bodyMedium
-                                ?.copyWith(
-                              color: AppTheme.lightTheme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Spacer(),
-                          if (_isSavingNote)
-                            SizedBox(
-                              width: 4.w,
-                              height: 4.w,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.lightTheme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 2.h),
-                      TextField(
-                        controller: _noteController,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Écrivez vos réflexions ici...',
-                          hintStyle: AppTheme.lightTheme.textTheme.bodyMedium
-                              ?.copyWith(
-                            color: AppTheme
-                                .lightTheme.colorScheme.onSurfaceVariant
-                                .withOpacity(0.5),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppTheme.lightTheme.colorScheme.outline
-                                  .withOpacity(0.3),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppTheme.lightTheme.colorScheme.outline
-                                  .withOpacity(0.3),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppTheme.lightTheme.colorScheme.primary,
-                              width: 2,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.all(3.w),
-                        ),
-                        style: AppTheme.lightTheme.textTheme.bodyMedium,
-                      ),
-                      SizedBox(height: 2.h),
-                      // Save button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isSavingNote ? null : _saveNote,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 1.5.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: _isSavingNote
-                              ? SizedBox(
-                                  width: 4.w,
-                                  height: 4.w,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : CustomIconWidget(
-                                  iconName: 'save',
-                                  color: Colors.white,
-                                  size: 4.w,
-                                ),
-                          label: Text(
-                            _isSavingNote ? 'Enregistrement...' : 'Enregistrer la note',
-                            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ],
