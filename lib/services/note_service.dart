@@ -11,7 +11,7 @@ class NoteService {
 
   final _supabaseService = SupabaseService();
   final _authService = AuthService();
-  SupabaseClient get _supabase => _supabaseService.client;
+  SupabaseClient get _supabase => _supabaseService.clientSync;
 
   bool _initialized = false;
 
@@ -31,7 +31,7 @@ class NoteService {
   }
 
   // Get current user ID
-  String? get _currentUserId => _authService.currentUserId;
+  String? get _currentUserId => _authService.userId;
 
   // Create a new note
   Future<Note?> createNote({
