@@ -738,15 +738,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () => _handleSocialLogin('google'),
                       ),
                     ),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: SocialLoginButton(
-                        iconName: 'apple',
-                        text: 'Apple',
-                        isLoading: _isAppleLoading,
-                        onPressed: () => _handleSocialLogin('apple'),
-                      ),
-                    ),
+                    // Bouton Apple masqué
+                    // SizedBox(width: 4.w),
+                    // Expanded(
+                    //   child: SocialLoginButton(
+                    //     iconName: 'apple',
+                    //     text: 'Apple',
+                    //     isLoading: _isAppleLoading,
+                    //     onPressed: () => _handleSocialLogin('apple'),
+                    //   ),
+                    // ),
                   ],
                 ),
 
