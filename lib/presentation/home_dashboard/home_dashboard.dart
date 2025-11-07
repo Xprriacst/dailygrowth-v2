@@ -14,7 +14,6 @@ import '../../services/progress_service.dart';
 import '../../services/gamification_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/web_notification_service.dart';
-import '../../services/note_service.dart';
 import '../../widgets/notification_permission_dialog.dart';
 import './widgets/achievements_section_widget.dart';
 import './widgets/bottom_navigation_widget.dart';
@@ -46,11 +45,7 @@ class _HomeDashboardState extends State<HomeDashboard>
   Map<String, dynamic> _dailyChallenge = {
     "title": "Chargement...",
     "description": "Récupération du défi du jour...",
-    "problematique": "",
   };
-  
-  // Note du défi (stockage local temporaire)
-  String _challengeNote = "";
 
   // Real inspirational quote data
   Map<String, dynamic> _inspirationalQuote = {
@@ -72,7 +67,6 @@ class _HomeDashboardState extends State<HomeDashboard>
   final ProgressService _progressService = ProgressService();
   final GamificationService _gamificationService = GamificationService();
   final NotificationService _notificationService = NotificationService();
-  final NoteService _noteService = NoteService();
 
   @override
   void initState() {
@@ -97,7 +91,6 @@ class _HomeDashboardState extends State<HomeDashboard>
       await _progressService.initialize();
       await _gamificationService.initialize();
       await _notificationService.initialize();
-      await _noteService.initialize();
 
       // Load user data
       await _loadUserData();
@@ -167,7 +160,7 @@ class _HomeDashboardState extends State<HomeDashboard>
             'id': existingChallenge['id'],
             'title': existingChallenge['title'],
             'description': existingChallenge['description'],
-            'problematique': existingChallenge['life_domain'] ?? existingChallenge['problematique'] ?? '',
+            'problematique': existingChallenge['problematique'],
           };
           _isChallengeCompleted = existingChallenge['status'] == 'completed';
         });
@@ -200,7 +193,7 @@ class _HomeDashboardState extends State<HomeDashboard>
           'id': newChallenge['id'],
           'title': newChallenge['title'],
           'description': newChallenge['description'],
-          'problematique': newChallenge['life_domain'] ?? newChallenge['problematique'] ?? primaryDomain,
+          'problematique': newChallenge['problematique'],
         };
         _isChallengeCompleted = newChallenge['status'] == 'completed';
       });
@@ -218,7 +211,7 @@ class _HomeDashboardState extends State<HomeDashboard>
               'id': existingChallenge['id'],
               'title': existingChallenge['title'],
               'description': existingChallenge['description'],
-              'problematique': existingChallenge['life_domain'] ?? existingChallenge['problematique'] ?? '',
+              'problematique': existingChallenge['problematique'],
             };
             _isChallengeCompleted = existingChallenge['status'] == 'completed';
           });
@@ -373,8 +366,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                                   userName: _userName,
                                   currentStreak: _currentStreak,
                                   onProfileTap: _handleProfileTap,
-                                  onNotificationTap: _handleNotificationTap,
-                                  onNotesTap: _handleNotesTap),
+                                  onNotificationTap: _handleNotificationTap),
 
                               SizedBox(height: 2.h),
 
@@ -386,7 +378,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       _dailyChallenge['description'] as String,
                                   isCompleted: _isChallengeCompleted,
                                   onToggleCompletion: _handleChallengeToggle,
-                                  challengeId: _dailyChallenge['id'] as String?),
+                                  challengeId: _dailyChallenge['id'] as String?,
+                                  problematique: _dailyChallenge['problematique'] as String?),
 
                               SizedBox(height: 2.h),
 
@@ -550,10 +543,6 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   void _handleNotificationTap() {
     Navigator.pushNamed(context, '/notification-settings');
-  }
-
-  void _handleNotesTap() {
-    Navigator.pushNamed(context, '/notes-list');
   }
 
   void _handleBottomNavTap(int index) async {
@@ -777,47 +766,6 @@ class _HomeDashboardState extends State<HomeDashboard>
     Timer(const Duration(seconds: 2), () {
       overlayEntry.remove();
     });
-  }
-
-  /// Save challenge note to database with date and problematic
-  Future<void> _saveNoteToDatabase(String noteContent) async {
-    try {
-      if (_userId.isEmpty || noteContent.trim().isEmpty) return;
-
-      final today = DateTime.now();
-      final dateStr = '${today.day}/${today.month}/${today.year}';
-      final problematique = _dailyChallenge['problematique'] as String? ?? 'Défi du jour';
-      
-      // Titre: Date + Problématique
-      final title = '$dateStr - $problematique';
-      
-      // Vérifier si une note existe déjà pour ce défi
-      final existingNotes = await _noteService.searchNotes(_userId, title);
-      
-      if (existingNotes.isEmpty) {
-        // Créer une nouvelle note
-        await _noteService.createNote(
-          userId: _userId,
-          title: title,
-          content: noteContent,
-          color: 'yellow', // Couleur Google Keep pour les notes de défis
-          isPinned: false,
-        );
-        
-        debugPrint('📝 Note sauvegardée dans l\'onglet Notes: $title');
-        _showDiscreteNotification('Note ajoutée à vos notes ! 📝', isSuccess: true);
-      } else {
-        // Mettre à jour la note existante
-        await _noteService.updateNote(
-          noteId: existingNotes.first.id,
-          content: noteContent,
-        );
-        
-        debugPrint('📝 Note mise à jour: $title');
-      }
-    } catch (e) {
-      debugPrint('❌ Erreur lors de la sauvegarde de la note: $e');
-    }
   }
 
   /// Schedule the notification permission dialog to show after the UI is fully rendered

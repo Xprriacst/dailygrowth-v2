@@ -11,6 +11,7 @@ class DailyChallengeCardWidget extends StatefulWidget {
   final bool isCompleted;
   final VoidCallback onToggleCompletion;
   final String? challengeId;
+  final String? problematique;
 
   const DailyChallengeCardWidget({
     Key? key,
@@ -19,6 +20,7 @@ class DailyChallengeCardWidget extends StatefulWidget {
     required this.isCompleted,
     required this.onToggleCompletion,
     this.challengeId,
+    this.problematique,
   }) : super(key: key);
 
   @override
@@ -32,9 +34,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
   late Animation<double> _scaleAnimation;
   final TextEditingController _noteController = TextEditingController();
   final NoteService _noteService = NoteService();
-  bool _isLoadingNote = false;
   bool _isSavingNote = false;
-  String? _currentNoteId;
 
   @override
   void initState() {
@@ -50,7 +50,12 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    _loadNote();
+    _initializeService();
+  }
+
+  Future<void> _initializeService() async {
+    await _noteService.initialize();
+    // Ne charge plus la note existante - on crée toujours une nouvelle note
   }
 
   @override
@@ -60,62 +65,43 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     super.dispose();
   }
 
-  Future<void> _loadNote() async {
-    if (widget.challengeId == null) return;
-
-    setState(() => _isLoadingNote = true);
-
-    try {
-      final note = await _noteService.getNoteForChallenge(widget.challengeId!);
-      if (note != null && mounted) {
-        setState(() {
-          _noteController.text = note.content;
-          _currentNoteId = note.id;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading note: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingNote = false);
-      }
-    }
-  }
-
   Future<void> _saveNote() async {
-    if (widget.challengeId == null || _noteController.text.trim().isEmpty) {
+    if (_noteController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('La note ne peut pas être vide'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       return;
     }
 
     setState(() => _isSavingNote = true);
 
     try {
-      if (_currentNoteId != null) {
-        // Update existing note
-        await _noteService.updateNote(
-          noteId: _currentNoteId!,
-          content: _noteController.text.trim(),
-        );
-      } else {
-        // Create new note
-        final note = await _noteService.createNote(
-          content: _noteController.text.trim(),
-          challengeId: widget.challengeId,
-          challengeTitle: widget.challengeTitle,
-        );
-        if (note != null && mounted) {
-          setState(() => _currentNoteId = note.id);
-        }
-      }
-
-      if (mounted) {
+      // Toujours créer une nouvelle note
+      final note = await _noteService.createNote(
+        content: _noteController.text.trim(),
+        challengeId: widget.challengeId,
+        challengeTitle: widget.challengeTitle,
+        problematique: widget.problematique,
+      );
+      
+      if (note != null && mounted) {
+        // Vider le champ après création
+        _noteController.clear();
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Note enregistrée ✓'),
-            duration: Duration(seconds: 1),
+            content: Text('Note enregistrée ✓ (${note.id?.substring(0, 8)}...)'),
+            duration: Duration(seconds: 2),
             backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
           ),
         );
+      } else {
+        throw Exception('Échec de création de la note');
       }
     } catch (e) {
       debugPrint('Error saving note: $e');
@@ -494,14 +480,45 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                           contentPadding: EdgeInsets.all(3.w),
                         ),
                         style: AppTheme.lightTheme.textTheme.bodyMedium,
-                        onChanged: (value) {
-                          // Auto-save after 1 second of inactivity
-                          Future.delayed(Duration(seconds: 1), () {
-                            if (_noteController.text == value) {
-                              _saveNote();
-                            }
-                          });
-                        },
+                      ),
+                      SizedBox(height: 2.h),
+                      // Save button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSavingNote ? null : _saveNote,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 1.5.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: _isSavingNote
+                              ? SizedBox(
+                                  width: 4.w,
+                                  height: 4.w,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : CustomIconWidget(
+                                  iconName: 'save',
+                                  color: Colors.white,
+                                  size: 4.w,
+                                ),
+                          label: Text(
+                            _isSavingNote ? 'Enregistrement...' : 'Enregistrer la note',
+                            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

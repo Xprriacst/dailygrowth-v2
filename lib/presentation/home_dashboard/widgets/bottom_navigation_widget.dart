@@ -36,11 +36,6 @@ class BottomNavigationWidget extends StatelessWidget {
         'label': 'Profil',
         'route': '/user-profile',
       },
-      {
-        'icon': 'note',
-        'label': 'Notes',
-        'route': '/notes',
-      },
     ];
 
     return Container(

@@ -6,6 +6,7 @@ class Note {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? challengeTitle;
+  final String? problematique;
 
   Note({
     this.id,
@@ -15,6 +16,7 @@ class Note {
     required this.createdAt,
     required this.updatedAt,
     this.challengeTitle,
+    this.problematique,
   });
 
   // Create from JSON (Supabase response)
@@ -27,6 +29,7 @@ class Note {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       challengeTitle: json['challenge_title'] as String?,
+      problematique: json['problematique'] as String?,
     );
   }
 
@@ -40,6 +43,7 @@ class Note {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       if (challengeTitle != null) 'challenge_title': challengeTitle,
+      if (problematique != null) 'problematique': problematique,
     };
   }
 
@@ -52,6 +56,7 @@ class Note {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? challengeTitle,
+    String? problematique,
   }) {
     return Note(
       id: id ?? this.id,
@@ -61,6 +66,7 @@ class Note {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       challengeTitle: challengeTitle ?? this.challengeTitle,
+      problematique: problematique ?? this.problematique,
     );
   }
 }

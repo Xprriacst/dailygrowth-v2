@@ -11,7 +11,7 @@ class NoteService {
 
   final _supabaseService = SupabaseService();
   final _authService = AuthService();
-  SupabaseClient get _supabase => _supabaseService.client;
+  SupabaseClient get _supabase => _supabaseService.clientSync;
 
   bool _initialized = false;
 
@@ -22,22 +22,23 @@ class NoteService {
     try {
       debugPrint('[NoteService] Initializing...');
       _initialized = true;
-      debugPrint('[NoteService] â Initialized successfully');
+      debugPrint('[NoteService] ✅ Initialized successfully');
     } catch (e) {
-      debugPrint('[NoteService] â Initialization error: $e');
+      debugPrint('[NoteService] ❌ Initialization error: $e');
       _initialized = false;
       rethrow;
     }
   }
 
   // Get current user ID
-  String? get _currentUserId => _authService.currentUserId;
+  String? get _currentUserId => _authService.userId;
 
   // Create a new note
   Future<Note?> createNote({
     required String content,
     String? challengeId,
     String? challengeTitle,
+    String? problematique,
   }) async {
     try {
       if (_currentUserId == null) {
@@ -54,11 +55,18 @@ class NoteService {
         'challenge_id': challengeId,
         'content': content.trim(),
         'challenge_title': challengeTitle,
+        'problematique': problematique,
         'created_at': now.toIso8601String(),
         'updated_at': now.toIso8601String(),
       };
 
-      debugPrint('[NoteService] Creating note: $noteData');
+      debugPrint('========================================');
+      debugPrint('[NoteService] 🆕 CREATING NEW NOTE');
+      debugPrint('  User ID: $_currentUserId');
+      debugPrint('  Challenge ID: ${challengeId ?? "AUCUN (note indépendante)"}');
+      debugPrint('  Content: ${content.trim()}');
+      debugPrint('  Content length: ${content.trim().length} chars');
+      debugPrint('========================================');
 
       final response = await _supabase
           .from('notes')
@@ -66,10 +74,12 @@ class NoteService {
           .select()
           .single();
 
-      debugPrint('[NoteService] â Note created successfully');
+      debugPrint('✅ [NoteService] Note created with ID: ${response['id']}');
+      debugPrint('========================================');
+      
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] â Error creating note: $e');
+      debugPrint('[NoteService] ❌ Error creating note: $e');
       return null;
     }
   }
@@ -103,10 +113,10 @@ class NoteService {
           .select()
           .single();
 
-      debugPrint('[NoteService] â Note updated successfully');
+      debugPrint('[NoteService] ✅ Note updated successfully');
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] â Error updating note: $e');
+      debugPrint('[NoteService] ❌ Error updating note: $e');
       return null;
     }
   }
@@ -126,10 +136,10 @@ class NoteService {
           .eq('id', noteId)
           .eq('user_id', _currentUserId!);
 
-      debugPrint('[NoteService] â Note deleted successfully');
+      debugPrint('[NoteService] ✅ Note deleted successfully');
       return true;
     } catch (e) {
-      debugPrint('[NoteService] â Error deleting note: $e');
+      debugPrint('[NoteService] ❌ Error deleting note: $e');
       return false;
     }
   }
@@ -141,7 +151,9 @@ class NoteService {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('[NoteService] Fetching all notes for user');
+      debugPrint('========================================');
+      debugPrint('[NoteService] 📥 FETCHING ALL NOTES');
+      debugPrint('  User ID: $_currentUserId');
 
       final response = await _supabase
           .from('notes')
@@ -153,10 +165,15 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] â Fetched ${notes.length} notes');
+      debugPrint('✅ [NoteService] Fetched ${notes.length} notes');
+      for (var i = 0; i < notes.length; i++) {
+        debugPrint('  Note ${i + 1}: "${notes[i].content.substring(0, notes[i].content.length > 30 ? 30 : notes[i].content.length)}..." (ID: ${notes[i].id})');
+      }
+      debugPrint('========================================');
+      
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] â Error fetching notes: $e');
+      debugPrint('[NoteService] ❌ Error fetching notes: $e');
       return [];
     }
   }
@@ -182,10 +199,10 @@ class NoteService {
         return null;
       }
 
-      debugPrint('[NoteService] â Note found for challenge');
+      debugPrint('[NoteService] ✅ Note found for challenge');
       return Note.fromJson(response);
     } catch (e) {
-      debugPrint('[NoteService] â Error fetching note for challenge: $e');
+      debugPrint('[NoteService] ❌ Error fetching note for challenge: $e');
       return null;
     }
   }
@@ -214,10 +231,10 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] â Fetched ${notes.length} notes');
+      debugPrint('[NoteService] ✅ Fetched ${notes.length} notes');
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] â Error fetching notes by date range: $e');
+      debugPrint('[NoteService] ❌ Error fetching notes by date range: $e');
       return [];
     }
   }
@@ -246,10 +263,10 @@ class NoteService {
           .map((json) => Note.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      debugPrint('[NoteService] â Found ${notes.length} notes');
+      debugPrint('[NoteService] ✅ Found ${notes.length} notes');
       return notes;
     } catch (e) {
-      debugPrint('[NoteService] â Error searching notes: $e');
+      debugPrint('[NoteService] ❌ Error searching notes: $e');
       return [];
     }
   }

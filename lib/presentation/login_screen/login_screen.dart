@@ -61,8 +61,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Listen to auth state changes
       _authService.authStateChanges.listen((data) {
-        if (data.event == 'signedIn' && mounted) {
-          Navigator.pushReplacementNamed(context, '/home-dashboard');
+        if (!mounted) return;
+
+        if (data.event == AuthChangeEvent.signedIn ||
+            data.event == AuthChangeEvent.tokenRefreshed) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home-dashboard',
+            (route) => false,
+          );
         }
       });
     } catch (e) {

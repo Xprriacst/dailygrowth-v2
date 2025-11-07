@@ -310,6 +310,42 @@ class _UserProfileState extends State<UserProfile> {
 
                           SizedBox(height: 4.h),
 
+                          // DEBUG: Test Notes Button
+                          Container(
+                            margin: EdgeInsets.symmetric(horizontal: 6.w),
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/test-notes');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    AppTheme.lightTheme.colorScheme.secondary,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(vertical: 2.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CustomIconWidget(
+                                    iconName: 'bug_report',
+                                    color: Colors.white,
+                                    size: 5.w),
+                                  SizedBox(width: 2.w),
+                                  Text(
+                                    'TEST: Système Notes',
+                                    style: AppTheme.lightTheme.textTheme.bodyLarge
+                                        ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: 2.h),
+
                           // Logout Button
                           Container(
                             margin: EdgeInsets.symmetric(horizontal: 6.w),
