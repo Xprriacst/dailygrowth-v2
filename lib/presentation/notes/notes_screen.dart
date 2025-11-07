@@ -34,15 +34,25 @@ class _NotesScreenState extends State<NotesScreen> {
     setState(() => _isLoading = true);
 
     try {
+      debugPrint('📋 [NotesScreen] Chargement des notes...');
       final notes = await _noteService.getAllNotes();
+      debugPrint('📋 [NotesScreen] ${notes.length} notes récupérées');
+      
+      for (var i = 0; i < notes.length; i++) {
+        debugPrint('  Note $i: "${notes[i].content}" (${notes[i].content.length} caractères)');
+        debugPrint('    ID: ${notes[i].id}');
+        debugPrint('    Challenge: ${notes[i].challengeTitle ?? "Aucun"}');
+      }
+      
       if (mounted) {
         setState(() {
           _notes = notes;
           _isLoading = false;
         });
+        debugPrint('✅ [NotesScreen] Interface mise à jour avec ${_notes.length} notes');
       }
     } catch (e) {
-      debugPrint('Error loading notes: $e');
+      debugPrint('❌ [NotesScreen] Error loading notes: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -210,6 +220,8 @@ class _NotesScreenState extends State<NotesScreen> {
   }
 
   Widget _buildNoteCard(Note note) {
+    debugPrint('🎨 [NotesScreen] Rendu carte pour note: "${note.content}"');
+    
     final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
     final formattedDate = dateFormat.format(note.createdAt);
 
@@ -217,7 +229,7 @@ class _NotesScreenState extends State<NotesScreen> {
       onTap: () => _showNoteEditor(note: note),
       child: Container(
         decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Colors.white, // Temporaire pour debug
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -279,8 +291,9 @@ class _NotesScreenState extends State<NotesScreen> {
                   Expanded(
                     child: Text(
                       note.content,
-                      style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.lightTheme.colorScheme.onSurface,
+                      style: TextStyle(
+                        color: Colors.black, // Temporaire pour debug
+                        fontSize: 16, // Plus grand pour debug
                         height: 1.4,
                       ),
                       maxLines: 8,
