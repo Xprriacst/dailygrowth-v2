@@ -160,6 +160,7 @@ class _HomeDashboardState extends State<HomeDashboard>
             'id': existingChallenge['id'],
             'title': existingChallenge['title'],
             'description': existingChallenge['description'],
+            'problematique': existingChallenge['problematique'],
           };
           _isChallengeCompleted = existingChallenge['status'] == 'completed';
         });
@@ -192,6 +193,7 @@ class _HomeDashboardState extends State<HomeDashboard>
           'id': newChallenge['id'],
           'title': newChallenge['title'],
           'description': newChallenge['description'],
+          'problematique': newChallenge['problematique'],
         };
         _isChallengeCompleted = newChallenge['status'] == 'completed';
       });
@@ -209,6 +211,7 @@ class _HomeDashboardState extends State<HomeDashboard>
               'id': existingChallenge['id'],
               'title': existingChallenge['title'],
               'description': existingChallenge['description'],
+              'problematique': existingChallenge['problematique'],
             };
             _isChallengeCompleted = existingChallenge['status'] == 'completed';
           });
@@ -375,7 +378,8 @@ class _HomeDashboardState extends State<HomeDashboard>
                                       _dailyChallenge['description'] as String,
                                   isCompleted: _isChallengeCompleted,
                                   onToggleCompletion: _handleChallengeToggle,
-                                  challengeId: _dailyChallenge['id'] as String?),
+                                  challengeId: _dailyChallenge['id'] as String?,
+                                  problematique: _dailyChallenge['problematique'] as String?),
 
                               SizedBox(height: 2.h),
 
