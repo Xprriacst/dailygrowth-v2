@@ -22,6 +22,11 @@ class BottomNavigationWidget extends StatelessWidget {
         'route': '/home-dashboard',
       },
       {
+        'icon': 'note',
+        'label': 'Notes',
+        'route': '/notes',
+      },
+      {
         'icon': 'history',
         'label': 'Historique',
         'route': '/challenge-history',
@@ -30,11 +35,6 @@ class BottomNavigationWidget extends StatelessWidget {
         'icon': 'person',
         'label': 'Profil',
         'route': '/user-profile',
-      },
-      {
-        'icon': 'note',
-        'label': 'Notes',
-        'route': '/notes',
       },
     ];
 

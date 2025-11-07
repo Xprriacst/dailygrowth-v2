@@ -17,7 +17,7 @@ class _NotesScreenState extends State<NotesScreen> {
   final NoteService _noteService = NoteService();
   List<Note> _notes = [];
   bool _isLoading = true;
-  int _currentBottomNavIndex = 3; // Index for Notes tab
+  int _currentBottomNavIndex = 1; // Index for Notes tab
 
   @override
   void initState() {
@@ -88,13 +88,13 @@ class _NotesScreenState extends State<NotesScreen> {
         Navigator.pushReplacementNamed(context, AppRoutes.homeDashboard);
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, AppRoutes.challengeHistory);
+        // Already on Notes screen
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, AppRoutes.userProfile);
+        Navigator.pushReplacementNamed(context, AppRoutes.challengeHistory);
         break;
       case 3:
-        // Already on Notes screen
+        Navigator.pushReplacementNamed(context, AppRoutes.userProfile);
         break;
     }
   }

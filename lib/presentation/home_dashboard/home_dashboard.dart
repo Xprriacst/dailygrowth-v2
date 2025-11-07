@@ -558,9 +558,12 @@ class _HomeDashboardState extends State<HomeDashboard>
         // Already on home dashboard
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, '/challenge-history');
+        Navigator.pushReplacementNamed(context, '/notes');
         break;
       case 2:
+        Navigator.pushReplacementNamed(context, '/challenge-history');
+        break;
+      case 3:
         Navigator.pushReplacementNamed(context, '/user-profile');
         break;
     }
