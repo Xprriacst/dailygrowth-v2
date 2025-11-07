@@ -70,6 +70,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>dailygrowth</string>
+				<string>io.supabase.dailygrowth</string>
 			</array>
 		</dict>
 	</array>
