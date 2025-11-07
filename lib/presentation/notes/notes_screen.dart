@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_export.dart';
 import '../../models/note.dart';
 import '../../services/note_service.dart';
+import '../../services/user_service.dart';
 import '../home_dashboard/widgets/bottom_navigation_widget.dart';
-import 'package:intl/intl.dart';
 import 'note_edit_screen.dart';
 
 class NotesScreen extends StatefulWidget {
@@ -16,7 +17,9 @@ class NotesScreen extends StatefulWidget {
 
 class _NotesScreenState extends State<NotesScreen> {
   final NoteService _noteService = NoteService();
+  final UserService _userService = UserService();
   List<Note> _notes = [];
+  Map<String, Map<String, dynamic>> _progressByProblematique = {};
   bool _isLoading = true;
   int _currentBottomNavIndex = 1; // Index for Notes tab
 
@@ -28,7 +31,9 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Future<void> _initializeAndLoadNotes() async {
     await _noteService.initialize();
+    await _userService.initialize();
     await _loadNotes();
+    await _loadProgress();
   }
 
   Future<void> _loadNotes() async {
@@ -48,6 +53,28 @@ class _NotesScreenState extends State<NotesScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadProgress() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('❌ [NotesScreen] User not authenticated');
+        return;
+      }
+
+      final progressData = await _userService.getProgressByProblematique(userId);
+      
+      if (mounted) {
+        setState(() {
+          _progressByProblematique = progressData;
+        });
+      }
+      
+      debugPrint('✅ [NotesScreen] Progress loaded: $_progressByProblematique');
+    } catch (e) {
+      debugPrint('❌ [NotesScreen] Error loading progress: $e');
     }
   }
 
@@ -127,7 +154,10 @@ class _NotesScreenState extends State<NotesScreen> {
               color: AppTheme.lightTheme.colorScheme.primary,
               size: 6.w,
             ),
-            onPressed: _loadNotes,
+            onPressed: () async {
+              await _loadNotes();
+              await _loadProgress();
+            },
           ),
         ],
       ),
@@ -172,7 +202,10 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _loadNotes,
+                  onRefresh: () async {
+                    await _loadNotes();
+                    await _loadProgress();
+                  },
                   child: GridView.builder(
                     padding: EdgeInsets.all(4.w),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -262,22 +295,60 @@ class _NotesScreenState extends State<NotesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Badge problématique
+            // Badge problématique avec pourcentage
             if (note.problematique != null) ...[
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _getProblematiqueCouleur(note.problematique),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  note.problematique!,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _getProblematiqueCouleur(note.problematique),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      note.problematique!,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(width: 8),
+                  // Pourcentage d'avancement
+                  if (_progressByProblematique.containsKey(note.problematique)) ...[
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.green.shade300,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.trending_up,
+                            size: 14,
+                            color: Colors.green.shade700,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            '${_progressByProblematique[note.problematique]!['percentage']}%',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
               SizedBox(height: 12),
             ],
@@ -337,9 +408,10 @@ class _NotesScreenState extends State<NotesScreen> {
       ),
     );
 
-    // Reload notes if saved
+    // Reload notes and progress if saved
     if (result == true) {
       await _loadNotes();
+      await _loadProgress();
     }
   }
 }
