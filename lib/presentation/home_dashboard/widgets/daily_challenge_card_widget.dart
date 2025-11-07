@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
+import '../../../services/note_service.dart';
 
 class DailyChallengeCardWidget extends StatefulWidget {
   final String challengeTitle;
@@ -31,6 +32,9 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  final TextEditingController _noteController = TextEditingController();
+  final NoteService _noteService = NoteService();
+  bool _isSavingNote = false;
 
   @override
   void initState() {
@@ -46,12 +50,71 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
+    _initializeService();
+  }
+
+  Future<void> _initializeService() async {
+    await _noteService.initialize();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveNote() async {
+    if (_noteController.text.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('La note ne peut pas être vide'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isSavingNote = true);
+
+    try {
+      final note = await _noteService.createNote(
+        content: _noteController.text.trim(),
+        challengeId: widget.challengeId,
+        challengeTitle: widget.challengeTitle,
+        problematique: widget.problematique,
+      );
+      
+      if (note != null && mounted) {
+        _noteController.clear();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Note enregistrée ✓'),
+            duration: Duration(seconds: 2),
+            backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
+          ),
+        );
+      } else {
+        throw Exception('Échec de création de la note');
+      }
+    } catch (e) {
+      debugPrint('Error saving note: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'enregistrement'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingNote = false);
+      }
+    }
   }
 
   void _handleTap() {
@@ -159,6 +222,78 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                   style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
                     color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
                     height: 1.5,
+                  ),
+                ),
+
+                SizedBox(height: 3.h),
+
+                // Notes section (Google Keep style) - sans titre
+                Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFFF9C4), // Jaune Google Keep
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Color(0xFFFBC02D).withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _noteController,
+                        maxLines: 4,
+                        style: AppTheme.lightTheme.textTheme.bodyMedium
+                            ?.copyWith(
+                          color: Color(0xFF5D4037),
+                        ),
+                        decoration: InputDecoration(
+                          hintText:
+                              'Écris tes réflexions, tes ressentis...',
+                          hintStyle: AppTheme.lightTheme.textTheme.bodyMedium
+                              ?.copyWith(
+                            color: Color(0xFF5D4037).withOpacity(0.5),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: (value) {
+                          // Auto-save après 1 seconde d'inactivité
+                          Future.delayed(Duration(seconds: 1), () {
+                            if (_noteController.text == value) {
+                              _saveNote();
+                            }
+                          });
+                        },
+                      ),
+                      if (_isSavingNote)
+                        Padding(
+                          padding: EdgeInsets.only(top: 1.h),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 3.w,
+                                height: 3.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Color(0xFFF57F17),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 2.w),
+                              Text(
+                                'Enregistrement...',
+                                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                                  color: Color(0xFFF57F17),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ),
 
