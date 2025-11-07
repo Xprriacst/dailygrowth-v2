@@ -254,9 +254,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                           SizedBox(width: 2.w),
                           Expanded(
                             child: Text(
-                              _noteController.text.isEmpty
-                                  ? 'Ajouter une note...'
-                                  : 'Ma note',
+                              'Ajouter une note...',
                               style: AppTheme.lightTheme.textTheme.bodyMedium
                                   ?.copyWith(
                                 color: Color(0xFFF57F17),

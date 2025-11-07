@@ -28,7 +28,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   final _userService = UserService();
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController _titleController;
   late TextEditingController _contentController;
 
   String? _selectedProblematique;
@@ -39,7 +38,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.note?.title ?? '');
     _contentController = TextEditingController(text: widget.note?.content ?? '');
     _selectedProblematique = widget.note?.problematique ?? widget.initialProblematique;
 
@@ -50,7 +48,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
 
   @override
   void dispose() {
-    _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
@@ -95,16 +92,13 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       if (widget.note == null) {
         // Création d'une nouvelle note
         await _noteService.createNote(
-          userId: userId,
-          title: _titleController.text.trim(),
           content: _contentController.text.trim(),
           problematique: _selectedProblematique!,
         );
       } else {
         // Mise à jour d'une note existante
         await _noteService.updateNote(
-          noteId: widget.note!.id,
-          title: _titleController.text.trim(),
+          noteId: widget.note!.id!,
           content: _contentController.text.trim(),
           problematique: _selectedProblematique,
         );
@@ -343,70 +337,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
 
               SizedBox(height: 2.h),
 
-              // Champ Titre
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.dividerLight,
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Titre',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimaryLight,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '*',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppTheme.errorLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 1.h),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        hintText: 'Titre de votre note',
-                        filled: true,
-                        fillColor: AppTheme.backgroundLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 3.w,
-                          vertical: 1.5.h,
-                        ),
-                      ),
-                      style: TextStyle(fontSize: 14.sp),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Veuillez entrer un titre';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 2.h),
-
               // Champ Contenu
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
@@ -448,6 +378,12 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                       style: TextStyle(fontSize: 14.sp),
                       maxLines: 10,
                       minLines: 5,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Veuillez entrer du contenu pour votre note';
+                        }
+                        return null;
+                      },
                     ),
                   ],
                 ),

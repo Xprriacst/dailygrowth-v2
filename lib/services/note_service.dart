@@ -88,6 +88,7 @@ class NoteService {
   Future<Note?> updateNote({
     required String noteId,
     required String content,
+    String? problematique,
   }) async {
     try {
       if (_currentUserId == null) {
@@ -100,6 +101,7 @@ class NoteService {
 
       final updateData = {
         'content': content.trim(),
+        'problematique': problematique,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
