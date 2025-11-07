@@ -181,6 +181,22 @@ class _NotesScreenState extends State<NotesScreen> {
                     },
                   ),
                 ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showNoteEditor(),
+        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+        icon: CustomIconWidget(
+          iconName: 'add',
+          color: Colors.white,
+          size: 6.w,
+        ),
+        label: Text(
+          'Nouvelle note',
+          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       bottomNavigationBar: BottomNavigationWidget(
         currentIndex: _currentBottomNavIndex,
         onTap: _handleBottomNavigation,
@@ -192,8 +208,10 @@ class _NotesScreenState extends State<NotesScreen> {
     final dateFormat = DateFormat('d MMM yyyy', 'fr_FR');
     final formattedDate = dateFormat.format(note.createdAt);
 
-    return Container(
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () => _showNoteEditor(note: note),
+      child: Container(
+        decoration: BoxDecoration(
         color: AppTheme.lightTheme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
@@ -295,6 +313,154 @@ class _NotesScreenState extends State<NotesScreen> {
           ),
         ],
       ),
+      ),
     );
+  }
+
+  Future<void> _showNoteEditor({Note? note}) async {
+    final isEditing = note != null;
+    final TextEditingController contentController = TextEditingController(
+      text: note?.content ?? '',
+    );
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: 80.h,
+          decoration: BoxDecoration(
+            color: AppTheme.lightTheme.colorScheme.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: CustomIconWidget(
+                        iconName: 'close',
+                        color: AppTheme.lightTheme.colorScheme.onSurface,
+                        size: 6.w,
+                      ),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    Expanded(
+                      child: Text(
+                        isEditing ? 'Modifier la note' : 'Nouvelle note',
+                        style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        if (contentController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('La note ne peut pas être vide'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
+                        bool success = false;
+                        if (isEditing) {
+                          final updatedNote = await _noteService.updateNote(
+                            noteId: note.id!,
+                            content: contentController.text.trim(),
+                          );
+                          success = updatedNote != null;
+                        } else {
+                          final newNote = await _noteService.createNote(
+                            content: contentController.text.trim(),
+                          );
+                          success = newNote != null;
+                        }
+
+                        if (success) {
+                          Navigator.pop(context, true);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erreur lors de la sauvegarde'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      child: Text(
+                        'Sauvegarder',
+                        style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                          color: AppTheme.lightTheme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content editor
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(4.w),
+                  child: TextField(
+                    controller: contentController,
+                    maxLines: null,
+                    expands: true,
+                    autofocus: true,
+                    textAlignVertical: TextAlignVertical.top,
+                    style: AppTheme.lightTheme.textTheme.bodyLarge,
+                    decoration: InputDecoration(
+                      hintText: 'Écrivez votre note ici...',
+                      hintStyle: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Reload notes if saved
+    if (result == true) {
+      await _loadNotes();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isEditing ? 'Note mise à jour' : 'Note créée'),
+            backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+          ),
+        );
+      }
+    }
   }
 }
