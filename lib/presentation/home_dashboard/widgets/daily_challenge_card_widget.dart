@@ -128,29 +128,6 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
     widget.onToggleCompletion();
   }
 
-  void _toggleNoteExpansion() {
-    setState(() {
-      _isNoteExpanded = !_isNoteExpanded;
-    });
-    HapticFeedback.selectionClick();
-  }
-
-  void _saveNote() async {
-    if (widget.onNoteChanged != null) {
-      setState(() => _isNoteSaving = true);
-      
-      // Simuler un délai de sauvegarde
-      await Future.delayed(Duration(milliseconds: 500));
-      
-      widget.onNoteChanged!(_noteController.text);
-      
-      if (mounted) {
-        setState(() => _isNoteSaving = false);
-        HapticFeedback.lightImpact();
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -289,7 +266,7 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                                 ),
                               ),
                             ),
-                            if (_isNoteSaving)
+                            if (_isSavingNote)
                               SizedBox(
                                 width: 4.w,
                                 height: 4.w,
@@ -299,18 +276,9 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                                     Color(0xFFF57F17),
                                   ),
                                 ),
-                              )
-                            else
-                              CustomIconWidget(
-                                iconName: _isNoteExpanded
-                                    ? 'expand_less'
-                                    : 'expand_more',
-                                color: Color(0xFFF57F17),
-                                size: 5.w,
                               ),
                           ],
                         ),
-                        if (_isNoteExpanded) ...[
                           SizedBox(height: 2.h),
                           TextField(
                             controller: _noteController,
