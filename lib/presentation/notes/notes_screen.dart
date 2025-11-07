@@ -236,48 +236,45 @@ class _NotesScreenState extends State<NotesScreen> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Contenu de la note
-            Expanded(
-              child: Text(
-                note.content,
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-                maxLines: 8,
-                overflow: TextOverflow.ellipsis,
+            Text(
+              note.content,
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
+              maxLines: 6,
+              overflow: TextOverflow.ellipsis,
             ),
             
-            SizedBox(height: 2.h),
+            SizedBox(height: 12),
             
             // Ligne du bas : date + bouton supprimer
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Date
-                Expanded(
-                  child: Text(
-                    formattedDate,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 11,
-                    ),
+                Text(
+                  formattedDate,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 
                 // Bouton supprimer
                 InkWell(
                   onTap: () => _deleteNote(note.id!),
-                  child: Padding(
-                    padding: EdgeInsets.all(2.w),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: Colors.red.shade400,
-                      size: 18,
-                    ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red.shade600,
+                    size: 20,
                   ),
                 ),
               ],
