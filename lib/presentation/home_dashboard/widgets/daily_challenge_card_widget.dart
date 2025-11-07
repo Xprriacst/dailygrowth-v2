@@ -50,7 +50,12 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    _loadNote();
+    _initializeAndLoadNote();
+  }
+
+  Future<void> _initializeAndLoadNote() async {
+    await _noteService.initialize();
+    await _loadNote();
   }
 
   @override
@@ -378,14 +383,45 @@ class _DailyChallengeCardWidgetState extends State<DailyChallengeCardWidget>
                           contentPadding: EdgeInsets.all(3.w),
                         ),
                         style: AppTheme.lightTheme.textTheme.bodyMedium,
-                        onChanged: (value) {
-                          // Auto-save after 1 second of inactivity
-                          Future.delayed(Duration(seconds: 1), () {
-                            if (_noteController.text == value) {
-                              _saveNote();
-                            }
-                          });
-                        },
+                      ),
+                      SizedBox(height: 2.h),
+                      // Save button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSavingNote ? null : _saveNote,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 1.5.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: _isSavingNote
+                              ? SizedBox(
+                                  width: 4.w,
+                                  height: 4.w,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : CustomIconWidget(
+                                  iconName: 'save',
+                                  color: Colors.white,
+                                  size: 4.w,
+                                ),
+                          label: Text(
+                            _isSavingNote ? 'Enregistrement...' : 'Enregistrer la note',
+                            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),

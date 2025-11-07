@@ -22,7 +22,12 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadNotes();
+    _initializeAndLoadNotes();
+  }
+
+  Future<void> _initializeAndLoadNotes() async {
+    await _noteService.initialize();
+    await _loadNotes();
   }
 
   Future<void> _loadNotes() async {
