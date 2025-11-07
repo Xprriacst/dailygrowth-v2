@@ -181,19 +181,35 @@ class _NotesScreenState extends State<NotesScreen> {
                 )
               : RefreshIndicator(
                   onRefresh: _loadNotes,
-                  child: GridView.builder(
-                    padding: EdgeInsets.all(4.w),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 3.w,
-                      mainAxisSpacing: 2.h,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemCount: _notes.length,
-                    itemBuilder: (context, index) {
-                      final note = _notes[index];
-                      return _buildNoteCard(note);
-                    },
+                  child: Column(
+                    children: [
+                      // Debug info
+                      Container(
+                        padding: EdgeInsets.all(2.w),
+                        color: Colors.blue,
+                        child: Text(
+                          'AFFICHAGE: ${_notes.length} notes en mémoire',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Expanded(
+                        child: GridView.builder(
+                          padding: EdgeInsets.all(4.w),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 3.w,
+                            mainAxisSpacing: 2.h,
+                            childAspectRatio: 0.75,
+                          ),
+                          itemCount: _notes.length,
+                          itemBuilder: (context, index) {
+                            debugPrint('🎨 Construction carte $index / ${_notes.length}');
+                            final note = _notes[index];
+                            return _buildNoteCard(note);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
       floatingActionButton: FloatingActionButton.extended(
