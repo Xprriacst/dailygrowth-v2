@@ -406,83 +406,18 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
       );
     }
 
-    return Column(
-      children: [
-        // Search Bar
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-          decoration: BoxDecoration(
-            color: AppTheme.lightTheme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
-              width: 1,
+    return _filteredChallenges.isEmpty
+        ? _buildEmptySearchResults()
+        : RefreshIndicator(
+            onRefresh: _refreshChallenges,
+            color: AppTheme.lightTheme.colorScheme.primary,
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                ..._buildGroupedChallenges(),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
-            onChanged: (query) {
-              setState(() => _searchQuery = query);
-              _applyFilters();
-            },
-            decoration: InputDecoration(
-              hintText: 'Rechercher dans l\'historique...',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-              ),
-              prefixIcon: Padding(
-                padding: EdgeInsets.all(3.w),
-                child: CustomIconWidget(
-                  iconName: 'search',
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                  size: 20,
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 3.h),
-            ),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface,
-            ),
-          ),
-        ),
-
-        // Results count
-        if (_filteredChallenges.isNotEmpty)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-            child: Text(
-              '${_filteredChallenges.length} défi${_filteredChallenges.length > 1 ? 's' : ''} trouvé${_filteredChallenges.length > 1 ? 's' : ''}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ),
-
-        // Challenge List
-        Expanded(
-          child: _filteredChallenges.isEmpty
-              ? _buildEmptySearchResults()
-              : RefreshIndicator(
-                  onRefresh: _refreshChallenges,
-                  color: AppTheme.lightTheme.colorScheme.primary,
-                  child: CustomScrollView(
-                    controller: _scrollController,
-                    slivers: [
-                      ..._buildGroupedChallenges(),
-                    ],
-                  ),
-                ),
-        ),
-      ],
-    );
+          );
   }
 
   List<Widget> _buildGroupedChallenges() {
