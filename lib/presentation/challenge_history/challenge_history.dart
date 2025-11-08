@@ -322,39 +322,12 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.all(2.w),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.lightTheme.colorScheme.outline
-                                .withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: CustomIconWidget(
-                          iconName: 'arrow_back',
-                          color: AppTheme.lightTheme.colorScheme.onSurface,
-                          size: 20,
-                        ),
+                child: Text(
+                  'Historique des défis',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.lightTheme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: Text(
-                        'Historique des défis',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppTheme.lightTheme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
 
@@ -436,13 +409,48 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
     return Column(
       children: [
         // Search Bar
-        SearchBarWidget(
-          onSearchChanged: (query) {
-            setState(() => _searchQuery = query);
-            _applyFilters();
-          },
-          onFilterTap: _showFilterBottomSheet,
-          searchQuery: _searchQuery,
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+          decoration: BoxDecoration(
+            color: AppTheme.lightTheme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.05),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            onChanged: (query) {
+              setState(() => _searchQuery = query);
+              _applyFilters();
+            },
+            decoration: InputDecoration(
+              hintText: 'Rechercher dans l\'historique...',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+              ),
+              prefixIcon: Padding(
+                padding: EdgeInsets.all(3.w),
+                child: CustomIconWidget(
+                  iconName: 'search',
+                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                  size: 20,
+                ),
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 3.h),
+            ),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppTheme.lightTheme.colorScheme.onSurface,
+            ),
+          ),
         ),
 
         // Results count
