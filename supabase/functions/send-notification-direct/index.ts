@@ -29,7 +29,7 @@ serve(async (req) => {
         title: title,
         body: body,
         icon: '/icons/Icon-192.png',
-        click_action: 'https://dailygrowth-pwa.netlify.app/#/challenges'
+        click_action: 'https://challengeme.ch/#/challenges'
       },
       data: {
         type: 'daily-reminder',
