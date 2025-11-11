@@ -57,8 +57,11 @@ class SimpleWebNotificationService {
   /// Détecte si on est sur iOS
   bool _detectIOS() {
     try {
-      final userAgent = js.context.callMethod('eval', ['navigator.userAgent']);
-      return userAgent.toString().contains(RegExp(r'iPhone|iPad|iPod'));
+      final userAgent = js.context.callMethod('eval', ['navigator.userAgent']).toString();
+      debugPrint('🧭 User agent: ${userAgent.isNotEmpty ? userAgent : 'unknown'}');
+      final isIOS = userAgent.contains(RegExp(r'iPhone|iPad|iPod'));
+      debugPrint('🧭 Detected iOS via userAgent: $isIOS');
+      return isIOS;
     } catch (e) {
       debugPrint('⚠️ Could not detect iOS platform: $e');
       return false;
@@ -69,8 +72,15 @@ class SimpleWebNotificationService {
   bool _detectPWA() {
     try {
       final isStandalone = js.context.callMethod('eval', ['window.navigator.standalone']);
-      final displayMode = js.context.callMethod('eval', ['window.matchMedia("(display-mode: standalone)").matches']);
-      return isStandalone == true || displayMode == true;
+      final displayMode = js.context.callMethod(
+        'eval',
+        ['window.matchMedia("(display-mode: standalone)").matches'],
+      );
+      debugPrint('🏠 navigator.standalone: $isStandalone');
+      debugPrint('🏠 display-mode standalone: $displayMode');
+      final detectedPwa = isStandalone == true || displayMode == true;
+      debugPrint('🏠 Detected PWA mode: $detectedPwa');
+      return detectedPwa;
     } catch (e) {
       debugPrint('⚠️ Could not detect PWA mode: $e');
       return false;
@@ -123,10 +133,24 @@ class SimpleWebNotificationService {
 
     try {
       debugPrint('🔔 Requesting notification permission...');
-      
+
       // Méthode moderne pour iOS/Safari récents
       String permission;
-      
+
+      // Diagnostics des API disponibles
+      try {
+        final navigator = js.context['navigator'];
+        final hasPermissionsApi =
+            navigator is js.JsObject && navigator.hasProperty('permissions');
+        final notification = js.context['Notification'];
+        final hasLegacyRequest =
+            notification is js.JsObject && notification.hasProperty('requestPermission');
+        debugPrint('🔍 navigator.permissions available: $hasPermissionsApi');
+        debugPrint('🔍 Notification.requestPermission available: $hasLegacyRequest');
+      } catch (e) {
+        debugPrint('⚠️ Error inspecting permission APIs: $e');
+      }
+
       try {
         // Essayer la nouvelle méthode (iOS 15+)
         final permissionStatus = await js_util.promiseToFuture(
