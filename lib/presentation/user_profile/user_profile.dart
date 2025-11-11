@@ -200,6 +200,13 @@ class _UserProfileState extends State<UserProfile> {
                   iconName: 'admin_panel_settings',
                   color: AppTheme.lightTheme.colorScheme.secondary,
                   size: 6.w)),
+            // Diagnostics button for web notifications
+            IconButton(
+              onPressed: _showNotificationDiagnostics,
+              icon: CustomIconWidget(
+                iconName: 'bug_report',
+                color: AppTheme.lightTheme.colorScheme.tertiary,
+                size: 6.w)),
             // Add notification test button
             IconButton(
               onPressed: _triggerTestNotification,
@@ -1160,6 +1167,30 @@ class _UserProfileState extends State<UserProfile> {
       _showDiagnosticDialog('🔔 Diagnostic Notifications', diagnosticResult);
     } catch (e) {
       _showDiagnosticDialog('❌ Erreur Notifications', e.toString());
+    }
+  }
+
+  void _showNotificationDiagnostics() async {
+    try {
+      if (!kIsWeb) {
+        _showDiagnosticDialog(
+          'ℹ️ Diagnostic Notifications',
+          'Disponible uniquement sur la version web/PWA.',
+        );
+        return;
+      }
+
+      await _simpleWebNotificationService.initialize();
+      final diagnostics = await _simpleWebNotificationService.collectDiagnostics();
+
+      final buffer = StringBuffer();
+      diagnostics.forEach((key, value) {
+        buffer.writeln('$key: $value');
+      });
+
+      _showDiagnosticDialog('🛠️ Diagnostic Notifications', buffer.toString());
+    } catch (e) {
+      _showDiagnosticDialog('❌ Diagnostic Notifications', e.toString());
     }
   }
   

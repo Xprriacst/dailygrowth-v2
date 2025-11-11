@@ -277,6 +277,46 @@ class SimpleWebNotificationService {
     );
   }
 
+  /// Fournit un diagnostic complet de l'environnement web actuel
+  Future<Map<String, dynamic>> collectDiagnostics() async {
+    final diagnostics = <String, dynamic>{};
+
+    try {
+      final userAgent = js.context.callMethod('eval', ['navigator.userAgent']).toString();
+      diagnostics['userAgent'] = userAgent;
+    } catch (e) {
+      diagnostics['userAgentError'] = e.toString();
+    }
+
+    diagnostics['isIOS'] = _detectIOS();
+    diagnostics['isPWA'] = _detectPWA();
+    diagnostics['notificationsSupported'] = _isNotificationSupported();
+
+    try {
+      final navigator = js.context['navigator'];
+      diagnostics['hasNavigatorPermissions'] =
+          navigator is js.JsObject && navigator.hasProperty('permissions');
+    } catch (e) {
+      diagnostics['navigatorPermissionsError'] = e.toString();
+    }
+
+    try {
+      final notification = js.context['Notification'];
+      diagnostics['hasLegacyRequestPermission'] =
+          notification is js.JsObject && notification.hasProperty('requestPermission');
+    } catch (e) {
+      diagnostics['legacyRequestPermissionError'] = e.toString();
+    }
+
+    if (diagnostics['notificationsSupported'] == true) {
+      diagnostics['permissionStatus'] = await _getNotificationPermission();
+    } else {
+      diagnostics['permissionStatus'] = 'unsupported';
+    }
+
+    return diagnostics;
+  }
+
   /// Notification de défi
   Future<void> showChallengeNotification({
     String? title,
