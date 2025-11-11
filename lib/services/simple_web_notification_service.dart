@@ -189,12 +189,19 @@ class SimpleWebNotificationService {
       return;
     }
 
+    // Vérifier les permissions actuelles avec une méthode simple
+    try {
+      final currentPermission = js.context['Notification']['permission'];
+      _permission = currentPermission.toString();
+      debugPrint('🔔 Current permission: $_permission');
+    } catch (e) {
+      debugPrint('⚠️ Could not check permission: $e');
+    }
+
     if (_permission != 'granted') {
-      final granted = await requestNotificationPermission();
-      if (!granted) {
-        debugPrint('❌ Notification permission denied');
-        return;
-      }
+      debugPrint('❌ Notification permission not granted: $_permission');
+      debugPrint('💡 Please enable notifications in iOS Settings → ChallengeMe');
+      return;
     }
 
     try {
