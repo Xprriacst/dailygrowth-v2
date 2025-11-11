@@ -142,24 +142,52 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Force l'enregistrement de notre service worker principal
+        // Enregistrer le service worker unifié
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const delay = isIOS ? 2000 : 1000; // Plus de délai sur iOS
+        console.log('🔧 iOS device detected:', isIOS);
         
-        setTimeout(function() {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(registration) {
-              console.log('✅ Custom ServiceWorker registration successful');
-              window.unifiedServiceWorkerRegistration = registration;
-              // Force activation sur iOS
-              if (isIOS && registration.waiting) {
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-            })
-            .catch(function(error) {
-              console.log('❌ Custom ServiceWorker registration failed: ', error);
-            });
-        }, delay);
+        // Désinscrire tous les anciens service workers d'abord
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          console.log('📋 Found', registrations.length, 'existing service workers');
+          
+          // Désinscrire tous sauf sw.js
+          const unregisterPromises = registrations.map(function(registration) {
+            if (!registration.active || !registration.active.scriptURL.includes('/sw.js')) {
+              console.log('🗑️ Unregistering old SW:', registration.active?.scriptURL || 'unknown');
+              return registration.unregister();
+            }
+            return Promise.resolve();
+          });
+          
+          return Promise.all(unregisterPromises);
+        }).then(function() {
+          // Enregistrer le nouveau service worker
+          const delay = isIOS ? 1500 : 500;
+          
+          setTimeout(function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .then(function(registration) {
+                console.log('✅ ServiceWorker registered successfully');
+                window.unifiedServiceWorkerRegistration = registration;
+                
+                // Force activation immédiate
+                if (registration.waiting) {
+                  console.log('🔄 Forcing SW activation...');
+                  registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+                
+                // Sur iOS, attendre que le SW soit actif avant Firebase
+                if (isIOS) {
+                  registration.addEventListener('updatefound', function() {
+                    console.log('🔄 iOS: SW update found');
+                  });
+                }
+              })
+              .catch(function(error) {
+                console.error('❌ ServiceWorker registration failed:', error);
+              });
+          }, delay);
+        });
       });
     }
   </script>
