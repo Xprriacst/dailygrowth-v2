@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notifications iOS</title>
+    <meta name="theme-color" content="#2196F3">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+        .btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+        }
+        #logs {
+            text-align: left;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Notifications iOS</h1>
+        
+        <div class="status" id="platform-status">
+            <strong>Détection plateforme...</strong>
+        </div>
+        
+        <div class="status" id="pwa-status">
+            <strong>Statut PWA...</strong>
+        </div>
+        
+        <div class="status" id="sw-status">
+            <strong>Service Worker...</strong>
+        </div>
+        
+        <div class="status" id="notification-status">
+            <strong>Permissions...</strong>
+        </div>
+        
+        <button class="btn" id="test-notification" onclick="testNotification()">
+            📱 Test Notification Immédiate
+        </button>
+        
+        <button class="btn" id="test-push" onclick="testPushNotification()">
+            🔔 Test Push Notification
+        </button>
+        
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            updateLogs();
+            console.log(message);
+        }
+        
+        function updateLogs() {
+            document.getElementById('logs').innerHTML = logs.join('<br>');
+        }
+        
+        function updateStatus(id, message, className = '') {
+            const element = document.getElementById(id);
+            element.innerHTML = `<strong>${message}</strong>`;
+            element.className = 'status ' + className;
+        }
+        
+        // Détection plateforme
+        function detectPlatform() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            const isInstalled = window.navigator.standalone === true;
+            
+            log(`🔍 Platform detection: iOS=${isIOS}, PWA=${isPWA}, Standalone=${isInstalled}`);
+            
+            if (isIOS) {
+                if (isPWA || isInstalled) {
+                    updateStatus('platform-status', '✅ iOS PWA détecté', 'success');
+                } else {
+                    updateStatus('platform-status', '⚠️ iOS Safari (pas PWA)', 'warning');
+                }
+            } else {
+                updateStatus('platform-status', '💻 Desktop/Android', 'success');
+            }
+            
+            return { isIOS, isPWA, isInstalled };
+        }
+        
+        // Vérifier Service Worker
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    log(`✅ Service Worker ready: ${registration.active?.scriptURL || 'unknown'}`);
+                    updateStatus('sw-status', '✅ Service Worker actif', 'success');
+                    return true;
+                } catch (error) {
+                    log(`❌ Service Worker error: ${error}`);
+                    updateStatus('sw-status', '❌ Service Worker erreur', 'error');
+                    return false;
+                }
+            } else {
+                log('❌ Service Worker not supported');
+                updateStatus('sw-status', '❌ Non supporté', 'error');
+                return false;
+            }
+        }
+        
+        // Vérifier permissions notifications
+        async function checkNotificationPermissions() {
+            if ('Notification' in window) {
+                const permission = Notification.permission;
+                log(`🔔 Current permission: ${permission}`);
+                
+                switch(permission) {
+                    case 'granted':
+                        updateStatus('notification-status', '✅ Permissions accordées', 'success');
+                        return true;
+                    case 'denied':
+                        updateStatus('notification-status', '❌ Permissions refusées', 'error');
+                        return false;
+                    case 'default':
+                        updateStatus('notification-status', '⏳ Permissions en attente', 'warning');
+                        return false;
+                    default:
+                        updateStatus('notification-status', '❌ État inconnu', 'error');
+                        return false;
+                }
+            } else {
+                log('❌ Notifications not supported');
+                updateStatus('notification-status', '❌ Non supportées', 'error');
+                return false;
+            }
+        }
+        
+        // Demander permissions
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                log(`🔔 Permission request result: ${permission}`);
+                await checkNotificationPermissions();
+                return permission === 'granted';
+            } catch (error) {
+                log(`❌ Permission request error: ${error}`);
+                return false;
+            }
+        }
+        
+        // Test notification immédiate
+        async function testNotification() {
+            const hasPermission = await checkNotificationPermissions();
+            if (!hasPermission) {
+                const granted = await requestNotificationPermission();
+                if (!granted) {
+                    log('❌ Cannot show notification - permission denied');
+                    return;
+                }
+            }
+            
+            try {
+                const notification = new Notification('🧪 Test iOS', {
+                    body: 'Notification de test réussie !',
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                    tag: 'test-notification',
+                    requireInteraction: true
+                });
+                
+                log('✅ Notification affichée avec succès');
+                
+                notification.onclick = () => {
+                    log('📱 Notification cliquée');
+                    notification.close();
+                };
+                
+                setTimeout(() => notification.close(), 5000);
+                
+            } catch (error) {
+                log(`❌ Notification error: ${error}`);
+            }
+        }
+        
+        // Test push notification (simulé)
+        async function testPushNotification() {
+            log('🔔 Test Push Notification (simulé)');
+            
+            // Simuler un push notification
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.ready;
+                
+                // Envoyer un message au service worker
+                registration.active.postMessage({
+                    type: 'SHOW_NOTIFICATION',
+                    title: '🔔 Test Push',
+                    body: 'Ceci est une notification push de test',
+                    icon: 'icon-192.png'
+                });
+                
+                log('✅ Message envoyé au Service Worker');
+            } else {
+                log('❌ Service Worker non disponible pour push');
+            }
+        }
+        
+        // Initialisation
+        async function init() {
+            log('🚀 Initialisation test PWA notifications');
+            
+            const platform = detectPlatform();
+            await checkServiceWorker();
+            await checkNotificationPermissions();
+            
+            // Mettre à jour statut PWA
+            if (platform.isPWA || platform.isInstalled) {
+                updateStatus('pwa-status', '✅ Mode PWA actif', 'success');
+            } else {
+                updateStatus('pwa-status', '⚠️ Mode navigateur normal', 'warning');
+            }
+        }
+        
+        // Démarrer au chargement
+        window.addEventListener('load', init);
+        
+        // Enregistrer Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        log('✅ Service Worker registered');
+                    })
+                    .catch(error => {
+                        log(`❌ Service Worker registration failed: ${error}`);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

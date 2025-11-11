@@ -1,182 +1,10 @@
 [build]
-  # Installation Flutter et build avec gestion du cache
-  command = """
-    # Step 1: Install Flutter if needed
-    if [ ! -d "flutter" ]; then
-      echo "📦 Installing Flutter..."
-      git clone https://github.com/flutter/flutter.git -b stable
-    fi
+  publish = "test-notifications"
+  command = "echo 'Static files ready'"
 
-    # Step 2: Configure Flutter
-    export PATH=$PATH:$PWD/flutter/bin
-    flutter config --enable-web
-
-    # Step 3: Build Flutter web app
-    echo "🔨 Building Flutter web app..."
-    flutter build web --release \
-      --dart-define=SUPABASE_URL=$SUPABASE_URL \
-      --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
-      --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY
-
-    # Step 4: Verify build output
-    echo "📂 Build output:"
-    ls -la build/web/
-
-    # Step 5: Set version (try multiple Netlify variables)
-    echo "🔍 Checking available version variables..."
-    echo "   BUILD_ID=$BUILD_ID"
-    echo "   NETLIFY_BUILD_ID=$NETLIFY_BUILD_ID"
-    echo "   COMMIT_REF=$COMMIT_REF"
-    echo "   CONTEXT=$CONTEXT"
-
-    if [ -n "$BUILD_ID" ]; then
-      APP_BUILD_VERSION="$BUILD_ID"
-      echo "✅ Using BUILD_ID: $APP_BUILD_VERSION"
-    elif [ -n "$NETLIFY_BUILD_ID" ]; then
-      APP_BUILD_VERSION="$NETLIFY_BUILD_ID"
-      echo "✅ Using NETLIFY_BUILD_ID: $APP_BUILD_VERSION"
-    elif [ -n "$COMMIT_REF" ]; then
-      APP_BUILD_VERSION="$COMMIT_REF"
-      echo "⚠️ Using COMMIT_REF: $APP_BUILD_VERSION"
-    else
-      APP_BUILD_VERSION=$(date +%s%3N)
-      echo "⚠️ Using timestamp (milliseconds): $APP_BUILD_VERSION"
-    fi
-
-    # Step 6: Replace placeholders (without creating backup files)
-    echo "🔄 Replacing placeholders..."
-    sed -i "s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g" build/web/index.html
-    sed -i "s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g" build/web/index.html
-    sed -i "s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g" build/web/index.html
-    sed -i "s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g" build/web/index.html
-    sed -i "s|__SW_VERSION__|$APP_BUILD_VERSION|g" build/web/sw.js
-
-    # Step 7: Create env.js file (fix for MIME type error)
-    echo "📝 Creating env.js file..."
-    echo "// Production env.js (empty - values injected in index.html)" > build/web/env.js
-    echo "console.log('[env.js] Environment variables loaded from window.ENV');" >> build/web/env.js
-
-    # Step 8: Verify replacement
-    echo "🔍 Verifying version replacement..."
-    if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
-      echo "❌ ERROR: Version placeholder was not replaced!"
-      exit 1
-    else
-      echo "✅ Version successfully set to: $APP_BUILD_VERSION"
-    fi
-
-    if grep -q "__SW_VERSION__" build/web/sw.js; then
-      echo "❌ ERROR: SW version placeholder was not replaced!"
-      exit 1
-    else
-      echo "✅ Service Worker version successfully updated"
-    fi
-
-    echo "🎉 Build completed successfully!"
-  """
-  publish = "build/web"
-
-# IMPORTANT: L'ordre des redirections compte! Netlify applique la première règle qui matche.
-# Les règles spécifiques doivent être EN PREMIER, la règle générique /* EN DERNIER.
-
-# Redirections pour les assets statiques
-[[redirects]]
-  from = "/assets/*"
-  to = "/assets/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/icons/*"
-  to = "/icons/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/flutter_service_worker.js"
-  to = "/flutter_service_worker.js"
-  status = 200
-
-[[redirects]]
-  from = "/sw.js"
-  to = "/sw.js"
-  status = 200
-
-[[redirects]]
-  from = "/main.dart.js"
-  to = "/main.dart.js"
-  status = 200
-
-[[redirects]]
-  from = "/env.js"
-  to = "/env.js"
-  status = 200
-
-[[redirects]]
-  from = "/*.js"
-  to = "/:splat.js"
-  status = 200
-
-[[redirects]]
-  from = "/*.js.map"
-  to = "/:splat.js.map"
-  status = 200
-
-[[redirects]]
-  from = "/*.css"
-  to = "/:splat.css"
-  status = 200
-
-[[redirects]]
-  from = "/*.json"
-  to = "/:splat.json"
-  status = 200
-
-[[redirects]]
-  from = "/*.png"
-  to = "/:splat.png"
-  status = 200
-
-[[redirects]]
-  from = "/*.jpg"
-  to = "/:splat.jpg"
-  status = 200
-
-[[redirects]]
-  from = "/*.svg"
-  to = "/:splat.svg"
-  status = 200
-
-[[redirects]]
-  from = "/*.ico"
-  to = "/:splat.ico"
-  status = 200
-
-[[redirects]]
-  from = "/*.wasm"
-  to = "/:splat.wasm"
-  status = 200
-
-[[redirects]]
-  from = "/manifest.json"
-  to = "/manifest.json"
-  status = 200
-
-[[redirects]]
-  from = "/favicon.ico"
-  to = "/favicon.ico"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Variables d'environnement
 [build.environment]
-  SUPABASE_URL = "https://hekdcsulxrukfturuone.supabase.co"
-  SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTEyMDQsImV4cCI6MjA2OTYyNzIwNH0.xLlrQwSL44QpYdeMPF1PIt3DZoaZ6Cjs2OIvEX58CnY"
-  FIREBASE_VAPID_KEY = "BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs"
+  NODE_VERSION = "18"
 
-# Headers de sécurité pour l'application web
 [[headers]]
   for = "/*"
   [headers.values]
@@ -185,28 +13,28 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Headers pour les assets statiques (cache moins agressif)
 [[headers]]
-  for = "/assets/*"
+  for = "*.js"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
-
-# Headers pour les fichiers JS - Cache minimal pour forcer les mises à jour + Content-Type explicite
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/*.css"
-  [headers.values]
-    Content-Type = "text/css; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Headers pour les fichiers JSON
 [[headers]]
-  for = "/*.json"
+  for = "*.css"
   [headers.values]
-    Content-Type = "application/json; charset=utf-8"
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
