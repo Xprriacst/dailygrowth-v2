@@ -89,8 +89,25 @@ class SimpleWebNotificationService {
   /// Récupère les permissions de notification actuelles
   Future<String> _getNotificationPermission() async {
     try {
-      final permission = js_util.callMethod(js.context['Notification'], 'permission', []);
-      return permission.toString();
+      // Méthode moderne
+      try {
+        final permissionStatus = await js_util.promiseToFuture(
+          js_util.callMethod(
+            js_util.callMethod(js.context['navigator'], 'permissions', []), 
+            'query', 
+            [js_util.jsify({'name': 'notifications'})]
+          )
+        );
+        final state = js_util.getProperty(permissionStatus, 'state').toString();
+        debugPrint('✅ Got permission via modern API: $state');
+        return state;
+      } catch (e) {
+        debugPrint('⚠️ Modern API failed, trying legacy: $e');
+        // Fallback vers l'ancienne méthode
+        final permission = js_util.callMethod(js.context['Notification'], 'permission', []);
+        debugPrint('✅ Got permission via legacy API: $permission');
+        return permission.toString();
+      }
     } catch (e) {
       debugPrint('⚠️ Could not get notification permission: $e');
       return 'default';
@@ -107,17 +124,36 @@ class SimpleWebNotificationService {
     try {
       debugPrint('🔔 Requesting notification permission...');
       
-      // Appeler Notification.requestPermission()
-      final permission = await js_util.promiseToFuture(
-        js_util.callMethod(js.context['Notification'], 'requestPermission', [])
-      );
+      // Méthode moderne pour iOS/Safari récents
+      String permission;
       
-      _permission = permission.toString();
+      try {
+        // Essayer la nouvelle méthode (iOS 15+)
+        final permissionStatus = await js_util.promiseToFuture(
+          js_util.callMethod(
+            js_util.callMethod(js.context['navigator'], 'permissions', []), 
+            'request', 
+            [js_util.jsify({'name': 'notifications'})]
+          )
+        );
+        permission = js_util.getProperty(permissionStatus, 'state').toString();
+        debugPrint('✅ Used modern permissions API');
+      } catch (e) {
+        debugPrint('⚠️ Modern permissions API failed, trying legacy: $e');
+        // Fallback vers l'ancienne méthode
+        permission = await js_util.promiseToFuture(
+          js_util.callMethod(js.context['Notification'], 'requestPermission', [])
+        );
+        debugPrint('✅ Used legacy Notification.requestPermission');
+      }
+      
+      _permission = permission;
       debugPrint('🔔 Permission result: $_permission');
       
       return _permission == 'granted';
     } catch (e) {
       debugPrint('❌ Error requesting notification permission: $e');
+      debugPrint('💡 Try accessing from PWA (Home Screen) on iOS');
       return false;
     }
   }
