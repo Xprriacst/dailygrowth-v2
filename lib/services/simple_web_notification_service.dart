@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js' as js;
 import 'dart:js_util' as js_util;
 import 'package:flutter/foundation.dart';
@@ -30,6 +31,67 @@ class SimpleWebNotificationService {
         debugPrint('⚠️ iOS detected but NOT running as PWA!');
         debugPrint('💡 Notifications require: Safari → Share → Add to Home Screen');
       }
+
+  Future<String> _requestPermissionLegacyWithCallback() async {
+    try {
+      final notification = js.context['Notification'];
+      if (notification == null) {
+        debugPrint('❌ Notification API not available for legacy fallback');
+        return 'denied';
+      }
+
+      final completer = Completer<String>();
+      dynamic result;
+
+      try {
+        result = js_util.callMethod(notification, 'requestPermission', [
+          js.allowInterop((value) {
+            if (!completer.isCompleted) {
+              final permission = value?.toString() ?? 'default';
+              debugPrint('🔔 Legacy callback result: $permission');
+              completer.complete(permission);
+            }
+          })
+        ]);
+        debugPrint('ℹ️ requestPermission invoked with callback parameter');
+      } catch (callbackError) {
+        debugPrint('⚠️ Callback signature failed: $callbackError');
+        try {
+          result = js_util.callMethod(notification, 'requestPermission', []);
+          debugPrint('ℹ️ requestPermission invoked without callback');
+        } catch (noArgError) {
+          debugPrint('❌ requestPermission invocation failed: $noArgError');
+          return 'default';
+        }
+      }
+
+      if (result is String) {
+        if (!completer.isCompleted) {
+          completer.complete(result);
+        }
+      } else if (result != null) {
+        try {
+          final promiseResult = await js_util.promiseToFuture(result);
+          if (!completer.isCompleted) {
+            completer.complete(promiseResult?.toString() ?? 'default');
+          }
+        } catch (promiseError) {
+          debugPrint('ℹ️ requestPermission does not return Promise: $promiseError');
+        }
+      }
+
+      if (!completer.isCompleted) {
+        // Ensure completion even if neither callback nor promise triggered
+        debugPrint('⚠️ Legacy requestPermission returned without result');
+        completer.complete('default');
+      }
+
+      return await completer.future;
+    } catch (e) {
+      debugPrint('❌ Legacy permission fallback failed: $e');
+      return 'default';
+    }
+  }
 
       // Vérifier permissions actuelles
       if (_isNotificationSupported()) {
@@ -164,11 +226,9 @@ class SimpleWebNotificationService {
         debugPrint('✅ Used modern permissions API');
       } catch (e) {
         debugPrint('⚠️ Modern permissions API failed, trying legacy: $e');
-        // Fallback vers l'ancienne méthode
-        permission = await js_util.promiseToFuture(
-          js_util.callMethod(js.context['Notification'], 'requestPermission', [])
-        );
-        debugPrint('✅ Used legacy Notification.requestPermission');
+        // Fallback vers l'ancienne méthode avec gestion callback/promise
+        permission = await _requestPermissionLegacyWithCallback();
+        debugPrint('✅ Used legacy Notification.requestPermission with fallback');
       }
       
       _permission = permission;
