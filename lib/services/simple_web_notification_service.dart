@@ -1,0 +1,236 @@
+import 'dart:js' as js;
+import 'dart:js_util' as js_util;
+import 'package:flutter/foundation.dart';
+
+/// Service de notifications web simplifié qui fonctionne sur iOS
+/// Basé sur la mini PWA testée et validée
+class SimpleWebNotificationService {
+  static SimpleWebNotificationService? _instance;
+  static SimpleWebNotificationService get instance => _instance ??= SimpleWebNotificationService._();
+  
+  SimpleWebNotificationService._();
+
+  bool _isInitialized = false;
+  String _permission = 'default';
+
+  /// Initialise le service de notifications web
+  Future<void> initialize() async {
+    if (_isInitialized || !kIsWeb) return;
+    
+    try {
+      debugPrint('🔧 Initializing Simple Web Notification Service...');
+      
+      // Détection plateforme iOS
+      final isIOS = _detectIOS();
+      final isPWA = _detectPWA();
+      
+      debugPrint('🔍 Platform detection: iOS=$isIOS, PWA=$isPWA');
+      
+      if (isIOS && !isPWA) {
+        debugPrint('⚠️ iOS detected but NOT running as PWA!');
+        debugPrint('💡 Notifications require: Safari → Share → Add to Home Screen');
+      }
+
+      // Vérifier permissions actuelles
+      if (_isNotificationSupported()) {
+        _permission = await _getNotificationPermission();
+        debugPrint('🔔 Current notification permission: $_permission');
+        
+        if (_permission == 'denied' && isIOS) {
+          debugPrint('❌ iOS: Permissions denied. Check Settings → ChallengeMe → Notifications');
+        }
+      } else {
+        _permission = 'denied';
+        debugPrint('⚠️ Notifications not supported on this browser');
+      }
+
+      // Enregistrer le service worker
+      await _registerServiceWorker();
+
+      _isInitialized = true;
+      debugPrint('✅ Simple Web Notification Service initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize Simple Web Notification Service: $e');
+    }
+  }
+
+  /// Détecte si on est sur iOS
+  bool _detectIOS() {
+    try {
+      final userAgent = js.context.callMethod('eval', ['navigator.userAgent']);
+      return userAgent.toString().contains(RegExp(r'iPhone|iPad|iPod'));
+    } catch (e) {
+      debugPrint('⚠️ Could not detect iOS platform: $e');
+      return false;
+    }
+  }
+
+  /// Détecte si on est en mode PWA
+  bool _detectPWA() {
+    try {
+      final isStandalone = js.context.callMethod('eval', ['window.navigator.standalone']);
+      final displayMode = js.context.callMethod('eval', ['window.matchMedia("(display-mode: standalone)").matches']);
+      return isStandalone == true || displayMode == true;
+    } catch (e) {
+      debugPrint('⚠️ Could not detect PWA mode: $e');
+      return false;
+    }
+  }
+
+  /// Vérifie si les notifications sont supportées
+  bool _isNotificationSupported() {
+    try {
+      return js.context.hasProperty('Notification');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Récupère les permissions de notification actuelles
+  Future<String> _getNotificationPermission() async {
+    try {
+      final permission = js_util.callMethod(js.context['Notification'], 'permission', []);
+      return permission.toString();
+    } catch (e) {
+      debugPrint('⚠️ Could not get notification permission: $e');
+      return 'default';
+    }
+  }
+
+  /// Demande les permissions de notification
+  Future<bool> requestNotificationPermission() async {
+    if (!_isNotificationSupported()) {
+      debugPrint('❌ Notifications not supported on this device');
+      return false;
+    }
+
+    try {
+      debugPrint('🔔 Requesting notification permission...');
+      
+      // Appeler Notification.requestPermission()
+      final permission = await js_util.promiseToFuture(
+        js_util.callMethod(js.context['Notification'], 'requestPermission', [])
+      );
+      
+      _permission = permission.toString();
+      debugPrint('🔔 Permission result: $_permission');
+      
+      return _permission == 'granted';
+    } catch (e) {
+      debugPrint('❌ Error requesting notification permission: $e');
+      return false;
+    }
+  }
+
+  /// Enregistre le service worker
+  Future<void> _registerServiceWorker() async {
+    try {
+      if (js.context.hasProperty('serviceWorker') && js.context['serviceWorker'].hasProperty('register')) {
+        debugPrint('🔧 Registering service worker...');
+        
+        final registration = await js_util.promiseToFuture(
+          js_util.callMethod(js.context['serviceWorker'], 'register', ['/sw.js'])
+        );
+        
+        debugPrint('✅ Service Worker registered successfully');
+      } else {
+        debugPrint('⚠️ Service Worker not supported');
+      }
+    } catch (e) {
+      debugPrint('❌ Service Worker registration failed: $e');
+    }
+  }
+
+  /// Affiche une notification immédiate
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    String? icon,
+    String? tag,
+  }) async {
+    if (!_isNotificationSupported()) {
+      debugPrint('❌ Notifications not supported');
+      return;
+    }
+
+    if (_permission != 'granted') {
+      final granted = await requestNotificationPermission();
+      if (!granted) {
+        debugPrint('❌ Notification permission denied');
+        return;
+      }
+    }
+
+    try {
+      debugPrint('📱 Showing web notification: $title - $body');
+      
+      final options = js_util.jsify({
+        'body': body,
+        'icon': icon ?? '/icon-192.png',
+        'badge': '/icon-192.png',
+        'tag': tag ?? 'dailygrowth-notification',
+        'requireInteraction': true,
+      });
+
+      final notification = js.context.callMethod('eval', ['new Notification(title, options)']);
+      
+      debugPrint('✅ Notification displayed successfully');
+      
+      // Auto-close après 5 secondes
+      js.context.callMethod('setTimeout', [
+        js.allowInterop(() {
+          js_util.callMethod(notification, 'close', []);
+        }),
+        5000
+      ]);
+      
+    } catch (e) {
+      debugPrint('❌ Error showing notification: $e');
+    }
+  }
+
+  /// Vérifie si on peut demander les permissions (iOS/PWA)
+  bool shouldRequestPermission() {
+    if (!kIsWeb) return false;
+    return _permission == 'default' && _isNotificationSupported();
+  }
+
+  /// Vérifie si les permissions sont accordées
+  bool hasPermission() {
+    if (!kIsWeb) return false;
+    return _permission == 'granted';
+  }
+
+  /// Test de notification
+  Future<void> showTestNotification() async {
+    await showNotification(
+      title: '🧪 Test ChallengeMe',
+      body: 'Notification de test réussie !',
+      tag: 'test-notification',
+    );
+  }
+
+  /// Notification de défi
+  Future<void> showChallengeNotification({
+    String? title,
+    String? body,
+  }) async {
+    await showNotification(
+      title: title ?? '🎯 Nouveau Défi',
+      body: body ?? 'Un nouveau défi vous attend !',
+      tag: 'challenge-notification',
+    );
+  }
+
+  /// Notification de rappel
+  Future<void> showReminderNotification({
+    String? title,
+    String? body,
+  }) async {
+    await showNotification(
+      title: title ?? '⏰ Rappel',
+      body: body ?? 'N\'oubliez pas votre défi du jour !',
+      tag: 'reminder-notification',
+    );
+  }
+}
