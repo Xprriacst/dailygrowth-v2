@@ -69,6 +69,26 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
+  <!-- Initialize Firebase compat BEFORE module for Dart access -->
+  <script>
+    // Firebase config for compat
+    const firebaseConfigCompat = {
+      apiKey: "AIzaSyCdJSoFjbBqFxtxxrlRV2zc7ow_Um7dC5U",
+      authDomain: "dailygrowth-pwa.firebaseapp.com",
+      projectId: "dailygrowth-pwa",
+      storageBucket: "dailygrowth-pwa.appspot.com",
+      messagingSenderId: "443167745906",
+      appId: "1:443167745906:web:c0e8f1c03571d440f3dfeb",
+      measurementId: "G-BXJW80Y4EF"
+    };
+    
+    // Initialize Firebase compat for Dart access
+    if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfigCompat);
+      console.log('Firebase compat initialized for Dart');
+    }
+  </script>
+
   <!-- Firebase Configuration -->
   <script type="module">
     // Import Firebase v9 modules (compatible with older versions)
@@ -122,24 +142,53 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // Force l'enregistrement de notre service worker principal
+        // Enregistrer le service worker unifié
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const delay = isIOS ? 2000 : 1000; // Plus de délai sur iOS
+        console.log('🔧 iOS device detected:', isIOS);
         
-        setTimeout(function() {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(function(registration) {
-              console.log('✅ Custom ServiceWorker registration successful');
-              window.unifiedServiceWorkerRegistration = registration;
-              // Force activation sur iOS
-              if (isIOS && registration.waiting) {
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-            })
-            .catch(function(error) {
-              console.log('❌ Custom ServiceWorker registration failed: ', error);
-            });
-        }, delay);
+        // Désinscrire tous les anciens service workers d'abord
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          console.log('📋 Found', registrations.length, 'existing service workers');
+          
+          // Désinscrire tous les anciens service workers
+          const unregisterPromises = registrations.map(function(registration) {
+            if (registration.active && registration.active.scope) {
+              console.log('🗑️ Found existing SW:', registration.active.scope);
+              // Garder tous les SW pour l'instant - le nouveau s'enregistrera quand même
+              return Promise.resolve();
+            }
+            return Promise.resolve();
+          });
+          
+          return Promise.all(unregisterPromises);
+        }).then(function() {
+          // Enregistrer le nouveau service worker
+          const delay = isIOS ? 1500 : 500;
+          
+          setTimeout(function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+              .then(function(registration) {
+                console.log('✅ ServiceWorker registered successfully');
+                window.unifiedServiceWorkerRegistration = registration;
+                
+                // Force activation immédiate
+                if (registration.waiting) {
+                  console.log('🔄 Forcing SW activation...');
+                  registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+                
+                // Sur iOS, attendre que le SW soit actif avant Firebase
+                if (isIOS) {
+                  registration.addEventListener('updatefound', function() {
+                    console.log('🔄 iOS: SW update found');
+                  });
+                }
+              })
+              .catch(function(error) {
+                console.error('❌ ServiceWorker registration failed:', error);
+              });
+          }, delay);
+        });
       });
     }
   </script>

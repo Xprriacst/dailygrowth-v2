@@ -134,7 +134,42 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     }
   }
 
+  Color _getProblematiqueCouleur(String? problematique) {
+    if (problematique == null) return Colors.grey;
+    
+    // Couleurs par catégorie
+    final prob = ChallengeProblematique.allProblematiques.firstWhere(
+      (p) => p.title == problematique,
+      orElse: () => ChallengeProblematique.allProblematiques.first,
+    );
+    
+    switch (prob.category) {
+      case 'Mental & émotionnel':
+        return Colors.purple;
+      case 'Relations & communication':
+        return Colors.blue;
+      case 'Argent & carrière':
+        return Colors.green;
+      case 'Santé & habitudes de vie':
+        return Colors.red;
+      case 'Productivité & concentration':
+        return Colors.orange;
+      case 'Confiance & identité':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildProblematiqueSelector() {
+    // Trouver la problématique sélectionnée
+    final problematique = ChallengeProblematique.allProblematiques.firstWhere(
+      (p) => p.title == _selectedProblematique,
+      orElse: () => ChallengeProblematique.allProblematiques.first,
+    );
+    
+    final couleur = _getProblematiqueCouleur(_selectedProblematique);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
@@ -148,74 +183,55 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Problématique',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '*',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppTheme.errorLight,
-                ),
-              ),
-            ],
+          Text(
+            'Problématique',
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimaryLight,
+            ),
           ),
-          SizedBox(height: 1.h),
-          DropdownButtonFormField<String>(
-            value: _selectedProblematique,
-            decoration: InputDecoration(
-              hintText: 'Sélectionnez une problématique',
-              filled: true,
-              fillColor: AppTheme.backgroundLight,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 3.w,
-                vertical: 1.5.h,
+          SizedBox(height: 1.5.h),
+          // Badge de problématique (statique, non modifiable)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+            decoration: BoxDecoration(
+              color: couleur.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: couleur.withOpacity(0.3),
+                width: 2,
               ),
             ),
-            items: ChallengeProblematique.allProblematiques.map((prob) {
-              return DropdownMenuItem<String>(
-                value: prob.title,
-                child: Row(
-                  children: [
-                    Text(
-                      prob.emoji,
-                      style: TextStyle(fontSize: 18.sp),
-                    ),
-                    SizedBox(width: 2.w),
-                    Expanded(
-                      child: Text(
-                        prob.title,
-                        style: TextStyle(fontSize: 13.sp),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+            child: Row(
+              children: [
+                Text(
+                  problematique.emoji,
+                  style: TextStyle(fontSize: 20.sp),
                 ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedProblematique = value;
-                _progressData = null;
-              });
-              _loadProgressData();
-            },
+                SizedBox(width: 3.w),
+                Expanded(
+                  child: Text(
+                    problematique.title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: couleur,
+                    ),
+                  ),
+                ),
+                // Icône de verrouillage pour indiquer que c'est fixe
+                Icon(
+                  Icons.lock_outline,
+                  size: 18.sp,
+                  color: AppTheme.textSecondaryLight,
+                ),
+              ],
+            ),
           ),
           // Afficher la progression si disponible
           if (_progressData != null) ...[
-            SizedBox(height: 1.h),
+            SizedBox(height: 1.5.h),
             _buildProgressIndicator(),
           ],
         ],
@@ -227,8 +243,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     if (_progressData == null) return const SizedBox.shrink();
 
     final percentage = _progressData!['percentage'] as int;
-    final completed = _progressData!['completed'] as int;
-    final total = _progressData!['total'] as int;
 
     Color progressColor;
     if (percentage >= 80) {
@@ -292,14 +306,6 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
               minHeight: 8,
             ),
           ),
-          SizedBox(height: 0.5.h),
-          Text(
-            '$completed/$total défis complétés',
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: AppTheme.textSecondaryLight,
-            ),
-          ),
         ],
       ),
     );
@@ -307,80 +313,69 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Format date modification style Google Keep
+    String modificationText = '';
+    if (widget.note != null) {
+      final now = DateTime.now();
+      final diff = now.difference(widget.note!.updatedAt);
+      if (diff.inDays == 0) {
+        modificationText = 'Modification : aujourd’hui, ${widget.note!.updatedAt.hour.toString().padLeft(2, '0')}:${widget.note!.updatedAt.minute.toString().padLeft(2, '0')}';
+      } else if (diff.inDays == 1) {
+        modificationText = 'Modification : hier, ${widget.note!.updatedAt.hour.toString().padLeft(2, '0')}:${widget.note!.updatedAt.minute.toString().padLeft(2, '0')}';
+      } else {
+        modificationText = 'Modification : ${widget.note!.updatedAt.day}/${widget.note!.updatedAt.month}/${widget.note!.updatedAt.year}';
+      }
+    }
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppTheme.surfaceLight,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimaryLight),
+          icon: Icon(Icons.arrow_back, color: Color(0xFF202124)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          widget.note == null ? 'Nouvelle note' : 'Modifier la note',
-          style: TextStyle(
-            color: AppTheme.textPrimaryLight,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: null, // Pas de titre dans Google Keep
       ),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(4.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Sélecteur de problématique
-              _buildProblematiqueSelector(),
-
-              SizedBox(height: 2.h),
-
-              // Champ Contenu
-              Container(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceLight,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppTheme.dividerLight,
-                    width: 1,
-                  ),
-                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Contenu',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimaryLight,
-                      ),
-                    ),
-                    SizedBox(height: 1.h),
+                    // Sélecteur de problématique (compact)
+                    _buildProblematiqueSelector(),
+
+                    SizedBox(height: 2.h),
+
+                    // Champ Contenu (style Google Keep)
                     TextFormField(
                       controller: _contentController,
+                      autofocus: widget.note == null,
                       decoration: InputDecoration(
-                        hintText: 'Écrivez vos réflexions, idées, objectifs...',
-                        filled: true,
-                        fillColor: AppTheme.backgroundLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
+                        hintText: 'Note',
+                        hintStyle: TextStyle(
+                          color: Color(0xFF5F6368),
+                          fontSize: 16.sp,
                         ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 3.w,
-                          vertical: 1.5.h,
-                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      style: TextStyle(fontSize: 14.sp),
-                      maxLines: 10,
-                      minLines: 5,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        color: Color(0xFF202124),
+                        height: 1.5,
+                      ),
+                      maxLines: null,
+                      minLines: 10,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Veuillez entrer du contenu pour votre note';
+                          return 'Veuillez entrer du contenu';
                         }
                         return null;
                       },
@@ -388,34 +383,45 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                   ],
                 ),
               ),
-
-              SizedBox(height: 3.h),
-
-              // Bouton de sauvegarde
-              GestureDetector(
-                onTap: _isSaving ? null : _saveNote,
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                  decoration: BoxDecoration(
-                    gradient: _isSaving
-                        ? LinearGradient(
-                            colors: [Colors.grey.shade400, Colors.grey.shade500],
-                          )
-                        : const LinearGradient(
-                            colors: [AppTheme.primaryLight, AppTheme.primaryVariantLight],
-                          ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: _isSaving
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: AppTheme.primaryLight.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+            ),
+            
+            // Toolbar en bas style Google Keep
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(
+                    color: Color(0xFFE0E0E0),
+                    width: 1,
                   ),
-                  child: Center(
+                ),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+              child: Row(
+                children: [
+                  // Timestamp de modification
+                  if (modificationText.isNotEmpty)
+                    Expanded(
+                      child: Text(
+                        modificationText,
+                        style: TextStyle(
+                          color: Color(0xFF5F6368),
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ),
+                  if (modificationText.isEmpty)
+                    Spacer(),
+                  
+                  // Bouton Fermer (sauvegarde auto)
+                  TextButton(
+                    onPressed: _isSaving ? null : () async {
+                      await _saveNote();
+                      if (mounted) Navigator.of(context).pop();
+                    },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+                    ),
                     child: _isSaving
                         ? SizedBox(
                             height: 20,
@@ -423,25 +429,23 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                AppTheme.onPrimaryLight,
+                                Color(0xFF1A73E8),
                               ),
                             ),
                           )
                         : Text(
-                            widget.note == null ? '💾 Sauvegarder la note' : '💾 Mettre à jour la note',
+                            'Fermer',
                             style: TextStyle(
-                              fontSize: 15.sp,
+                              color: Color(0xFF1A73E8),
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.onPrimaryLight,
                             ),
                           ),
                   ),
-                ),
+                ],
               ),
-
-              SizedBox(height: 2.h),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -90,7 +90,7 @@ class _LifeDomainsModalState extends State<LifeDomainsModal> {
           ),
           SizedBox(height: 2.h),
           Text(
-            'Sélectionnez les domaines qui vous intéressent le plus pour recevoir des défis personnalisés.',
+            'Sélectionnez le domaine qui vous intéresse le plus pour recevoir des défis personnalisés.',
             style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
               color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
             ),
@@ -111,8 +111,9 @@ class _LifeDomainsModalState extends State<LifeDomainsModal> {
                     onTap: () {
                       setState(() {
                         if (isSelected) {
-                          _selectedDomains.remove(domain["name"] as String);
+                          _selectedDomains.clear();
                         } else {
+                          _selectedDomains.clear();
                           _selectedDomains.add(domain["name"] as String);
                         }
                       });

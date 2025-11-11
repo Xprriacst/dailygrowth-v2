@@ -40,8 +40,6 @@ class NoteCardWidget extends StatelessWidget {
     );
 
     final percentage = progressInfo?['percentage'] as int? ?? 0;
-    final completed = progressInfo?['completed'] as int? ?? 0;
-    final total = progressInfo?['total'] as int? ?? 50;
     final progressColor = _getProgressColor(percentage);
 
     final formattedDate = DateFormat('d MMM yyyy', 'fr_FR').format(note.updatedAt);
@@ -154,17 +152,6 @@ class NoteCardWidget extends StatelessWidget {
                     backgroundColor: Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                     minHeight: 6,
-                  ),
-                ),
-
-                SizedBox(height: 0.5.h),
-
-                // Texte progression
-                Text(
-                  '$completed/$total défis complétés',
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: AppTheme.textSecondaryLight,
                   ),
                 ),
 

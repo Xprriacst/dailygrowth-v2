@@ -130,10 +130,7 @@ class _ProblematiqueProgressWidgetState
     required String problematique,
     required Map<String, dynamic> data,
   }) {
-    final completed = data['completed'] as int;
-    final total = data['total'] as int;
     final percentage = data['percentage'] as int;
-    final remaining = data['remaining'] as int;
 
     // Choose color based on progress
     Color progressColor;
@@ -227,27 +224,6 @@ class _ProblematiqueProgressWidgetState
                   ),
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 1.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$completed/$total défis complétés',
-                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              if (remaining > 0)
-                Text(
-                  '$remaining restants',
-                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant
-                        .withOpacity(0.7),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
             ],
           ),
           // Achievement message

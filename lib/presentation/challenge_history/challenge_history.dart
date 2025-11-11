@@ -322,39 +322,12 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: EdgeInsets.all(2.w),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppTheme.lightTheme.colorScheme.outline
-                                .withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: CustomIconWidget(
-                          iconName: 'arrow_back',
-                          color: AppTheme.lightTheme.colorScheme.onSurface,
-                          size: 20,
-                        ),
+                child: Text(
+                  'Historique des défis',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.lightTheme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: Text(
-                        'Historique des défis',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: AppTheme.lightTheme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
 
@@ -433,48 +406,18 @@ class _ChallengeHistoryState extends State<ChallengeHistory>
       );
     }
 
-    return Column(
-      children: [
-        // Search Bar
-        SearchBarWidget(
-          onSearchChanged: (query) {
-            setState(() => _searchQuery = query);
-            _applyFilters();
-          },
-          onFilterTap: _showFilterBottomSheet,
-          searchQuery: _searchQuery,
-        ),
-
-        // Results count
-        if (_filteredChallenges.isNotEmpty)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-            child: Text(
-              '${_filteredChallenges.length} défi${_filteredChallenges.length > 1 ? 's' : ''} trouvé${_filteredChallenges.length > 1 ? 's' : ''}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-                  ),
+    return _filteredChallenges.isEmpty
+        ? _buildEmptySearchResults()
+        : RefreshIndicator(
+            onRefresh: _refreshChallenges,
+            color: AppTheme.lightTheme.colorScheme.primary,
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                ..._buildGroupedChallenges(),
+              ],
             ),
-          ),
-
-        // Challenge List
-        Expanded(
-          child: _filteredChallenges.isEmpty
-              ? _buildEmptySearchResults()
-              : RefreshIndicator(
-                  onRefresh: _refreshChallenges,
-                  color: AppTheme.lightTheme.colorScheme.primary,
-                  child: CustomScrollView(
-                    controller: _scrollController,
-                    slivers: [
-                      ..._buildGroupedChallenges(),
-                    ],
-                  ),
-                ),
-        ),
-      ],
-    );
+          );
   }
 
   List<Widget> _buildGroupedChallenges() {

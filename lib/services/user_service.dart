@@ -227,6 +227,30 @@ class UserService {
     }
   }
 
+  // Get current user's selected problematique
+  Future<String?> getCurrentProblematique(String userId) async {
+    try {
+      final profile = await getUserProfile(userId);
+      if (profile != null) {
+        // Try to get from 'selected_problematique' or 'selected_life_domains'
+        final problematique = profile['selected_problematique'] as String?;
+        if (problematique != null && problematique.isNotEmpty) {
+          return problematique;
+        }
+        
+        // Fallback: get first from selected_life_domains
+        final selectedDomains = profile['selected_life_domains'] as List?;
+        if (selectedDomains != null && selectedDomains.isNotEmpty) {
+          return selectedDomains[0].toString();
+        }
+      }
+      return null;
+    } catch (error) {
+      debugPrint('Error getting current problematique: $error');
+      return null;
+    }
+  }
+
   // Get progress statistics by problematique
   // Returns a map with completion count and percentage for each problematique
   Future<Map<String, Map<String, dynamic>>> getProgressByProblematique(

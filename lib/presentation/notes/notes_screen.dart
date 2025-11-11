@@ -20,6 +20,7 @@ class _NotesScreenState extends State<NotesScreen> {
   final UserService _userService = UserService();
   List<Note> _notes = [];
   Map<String, Map<String, dynamic>> _progressByProblematique = {};
+  String? _currentProblematique;
   bool _isLoading = true;
   int _currentBottomNavIndex = 1; // Index for Notes tab
 
@@ -32,8 +33,31 @@ class _NotesScreenState extends State<NotesScreen> {
   Future<void> _initializeAndLoadNotes() async {
     await _noteService.initialize();
     await _userService.initialize();
+    await _loadCurrentProblematique();
     await _loadNotes();
     await _loadProgress();
+  }
+
+  Future<void> _loadCurrentProblematique() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        debugPrint('❌ [NotesScreen] User not authenticated');
+        return;
+      }
+
+      final problematique = await _userService.getCurrentProblematique(userId);
+      
+      if (mounted) {
+        setState(() {
+          _currentProblematique = problematique;
+        });
+      }
+      
+      debugPrint('✅ [NotesScreen] Current problematique loaded: $_currentProblematique');
+    } catch (e) {
+      debugPrint('❌ [NotesScreen] Error loading current problematique: $e');
+    }
   }
 
   Future<void> _loadNotes() async {
@@ -136,25 +160,28 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
+      backgroundColor: Color(0xFFF5F5F5), // Gris clair Google Keep
       appBar: AppBar(
-        backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.05),
         title: Text(
-          'Mes Notes',
-          style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
+          'Notes',
+          style: TextStyle(
+            color: Color(0xFF202124),
+            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
           ),
         ),
         actions: [
           IconButton(
-            icon: CustomIconWidget(
-              iconName: 'refresh',
-              color: AppTheme.lightTheme.colorScheme.primary,
-              size: 6.w,
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: Color(0xFF5F6368),
+              size: 24,
             ),
             onPressed: () async {
+              await _loadCurrentProblematique();
               await _loadNotes();
               await _loadProgress();
             },
@@ -203,16 +230,17 @@ class _NotesScreenState extends State<NotesScreen> {
                 )
               : RefreshIndicator(
                   onRefresh: () async {
+                    await _loadCurrentProblematique();
                     await _loadNotes();
                     await _loadProgress();
                   },
                   child: GridView.builder(
-                    padding: EdgeInsets.all(4.w),
+                    padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 3.w,
-                      mainAxisSpacing: 2.h,
-                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 2.w,
+                      mainAxisSpacing: 2.w,
+                      childAspectRatio: 0.85,
                     ),
                     itemCount: _notes.length,
                     itemBuilder: (context, index) {
@@ -221,20 +249,14 @@ class _NotesScreenState extends State<NotesScreen> {
                     },
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showNoteEditor(),
-        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-        icon: CustomIconWidget(
-          iconName: 'add',
-          color: Colors.white,
-          size: 6.w,
-        ),
-        label: Text(
-          'Nouvelle note',
-          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+        backgroundColor: Colors.white,
+        elevation: 4,
+        child: Icon(
+          Icons.add,
+          color: Color(0xFF202124),
+          size: 28,
         ),
       ),
       bottomNavigationBar: BottomNavigationWidget(
@@ -269,25 +291,35 @@ class _NotesScreenState extends State<NotesScreen> {
   Widget _buildNoteCard(Note note) {
     debugPrint('🎨 Rendu carte: "${note.content}"');
     
-    // Format simple sans locale pour éviter l'erreur
-    final formattedDate = '${note.createdAt.day}/${note.createdAt.month}/${note.createdAt.year}';
+    // Format date style Google Keep
+    final now = DateTime.now();
+    final difference = now.difference(note.updatedAt);
+    String formattedDate;
+    
+    if (difference.inDays == 0) {
+      formattedDate = '${note.updatedAt.hour.toString().padLeft(2, '0')}:${note.updatedAt.minute.toString().padLeft(2, '0')}';
+    } else if (difference.inDays < 7) {
+      formattedDate = '${difference.inDays}j';
+    } else {
+      formattedDate = '${note.updatedAt.day}/${note.updatedAt.month}';
+    }
 
     return GestureDetector(
       onTap: () => _showNoteEditor(note: note),
       child: Container(
-        padding: EdgeInsets.all(4.w),
+        padding: EdgeInsets.all(3.w),
         decoration: BoxDecoration(
-          color: Colors.amber.shade50, // Fond crème visible temporaire
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Colors.orange,
-            width: 2,
+            color: Color(0xFFE0E0E0),
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 2),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 1),
             ),
           ],
         ),
@@ -295,103 +327,92 @@ class _NotesScreenState extends State<NotesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Badge problématique avec pourcentage
+            // Badge problématique discret en haut
             if (note.problematique != null) ...[
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getProblematiqueCouleur(note.problematique),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      note.problematique!,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getProblematiqueCouleur(note.problematique).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  note.problematique!,
+                  style: TextStyle(
+                    color: _getProblematiqueCouleur(note.problematique),
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
                   ),
-                  SizedBox(width: 8),
-                  // Pourcentage d'avancement
-                  if (_progressByProblematique.containsKey(note.problematique)) ...[
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.green.shade300,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.trending_up,
-                            size: 14,
-                            color: Colors.green.shade700,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '${_progressByProblematique[note.problematique]!['percentage']}%',
-                            style: TextStyle(
-                              color: Colors.green.shade700,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
-              SizedBox(height: 12),
+              SizedBox(height: 2.w),
             ],
             
             // Contenu de la note
-            Text(
-              note.content,
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+            Expanded(
+              child: Text(
+                note.content,
+                style: TextStyle(
+                  color: Color(0xFF202124),
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w400,
+                  height: 1.4,
+                  letterSpacing: 0.2,
+                ),
+                maxLines: 10,
+                overflow: TextOverflow.fade,
               ),
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
             ),
             
-            SizedBox(height: 12),
+            SizedBox(height: 2.w),
             
-            // Ligne du bas : date + bouton supprimer
+            // Ligne du bas : date modifiée
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Date
+                // Date modifiée
                 Text(
-                  formattedDate,
+                  'Modifié : $formattedDate',
                   style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 12,
+                    color: Color(0xFF5F6368),
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
                 
-                // Bouton supprimer
-                InkWell(
-                  onTap: () => _deleteNote(note.id!),
+                // Menu 3 points (discret)
+                GestureDetector(
+                  onTap: () => _showNoteMenu(note),
                   child: Icon(
-                    Icons.delete_outline,
-                    color: Colors.red.shade600,
-                    size: 20,
+                    Icons.more_vert,
+                    color: Color(0xFF5F6368),
+                    size: 18,
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showNoteMenu(Note note) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: Colors.red),
+              title: Text('Supprimer'),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteNote(note.id!);
+              },
             ),
           ],
         ),
@@ -404,6 +425,7 @@ class _NotesScreenState extends State<NotesScreen> {
       MaterialPageRoute(
         builder: (context) => NoteEditScreen(
           note: note,
+          initialProblematique: note?.problematique ?? _currentProblematique,
         ),
       ),
     );
@@ -412,6 +434,7 @@ class _NotesScreenState extends State<NotesScreen> {
     if (result == true) {
       await _loadNotes();
       await _loadProgress();
+      await _loadCurrentProblematique();
     }
   }
 }

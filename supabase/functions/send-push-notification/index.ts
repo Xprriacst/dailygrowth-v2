@@ -133,10 +133,10 @@ serve(async (req) => {
             body: body,
             icon: '/icons/Icon-192.png',
             badge: '/icons/Icon-192.png',
-            tag: 'dailygrowth-notification',
+            tag: 'challengeme-notification',
           },
           fcm_options: {
-            link: `https://dailygrowth-pwa.netlify.app${url || '/'}`
+            link: `https://challengeme.ch${url || '/'}`
           }
         }
       }
