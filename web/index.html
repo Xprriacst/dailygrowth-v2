@@ -150,11 +150,12 @@
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           console.log('📋 Found', registrations.length, 'existing service workers');
           
-          // Désinscrire tous sauf sw.js
+          // Désinscrire tous les anciens service workers
           const unregisterPromises = registrations.map(function(registration) {
-            if (!registration.active || !registration.active.scriptURL.includes('/sw.js')) {
-              console.log('🗑️ Unregistering old SW:', registration.active?.scriptURL || 'unknown');
-              return registration.unregister();
+            if (registration.active && registration.active.scope) {
+              console.log('🗑️ Found existing SW:', registration.active.scope);
+              // Garder tous les SW pour l'instant - le nouveau s'enregistrera quand même
+              return Promise.resolve();
             }
             return Promise.resolve();
           });

@@ -70,7 +70,7 @@ class WebNotificationService {
       if (html.window.navigator.serviceWorker != null) {
         try {
           final registration = await html.window.navigator.serviceWorker!.ready;
-          debugPrint('✅ Service Worker ready: ${registration.active?.scriptURL ?? "unknown"}');
+          debugPrint('✅ Service Worker ready and active');
         } catch (e) {
           debugPrint('⚠️ Service Worker not ready: $e');
         }
