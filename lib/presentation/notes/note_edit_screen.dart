@@ -334,11 +334,15 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFF202124)),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              Navigator.of(context).pushReplacementNamed('/notes');
+          onPressed: () async {
+            // Sauvegarder automatiquement avant de naviguer
+            await _saveNote();
+            if (mounted) {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Navigator.of(context).pushReplacementNamed('/notes');
+              }
             }
           },
         ),
