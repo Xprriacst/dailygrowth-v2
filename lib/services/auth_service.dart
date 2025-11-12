@@ -190,10 +190,6 @@ class AuthService {
       if (error.toString().contains('Invalid login credentials') ||
           error.toString().contains('invalid_credentials')) {
         errorMessage += 'Email ou mot de passe incorrect.';
-      } else if (error.toString().contains('Email not confirmed') ||
-          error.toString().contains('email_not_confirmed')) {
-        errorMessage +=
-            'Veuillez confirmer votre email avant de vous connecter.';
       } else if (error.toString().contains('Too many requests') ||
           error.toString().contains('rate_limit')) {
         errorMessage +=
@@ -237,8 +233,6 @@ class AuthService {
       }
 
       debugPrint('Sign-up successful for user: ${response.user!.email}');
-      debugPrint(
-          'Email confirmation needed: ${response.user!.emailConfirmedAt == null ? "Yes" : "No"}');
 
       return response;
     } catch (error) {
@@ -307,8 +301,8 @@ class AuthService {
 
       await _client.auth.resetPasswordForEmail(
         email,
-        redirectTo: kIsWeb 
-          ? 'https://challengeme.ch/#/reset-password' 
+        redirectTo: kIsWeb
+          ? 'https://challengeme.ch/#/reset-password'
           : 'io.supabase.challengeme://reset-password/',
       );
 
@@ -316,24 +310,6 @@ class AuthService {
     } catch (error) {
       debugPrint('Reset password error: $error');
       throw Exception('Erreur de réinitialisation: $error');
-    }
-  }
-
-  // Resend email confirmation
-  Future<void> resendConfirmation(String email) async {
-    try {
-      debugPrint('Resending confirmation email to: $email');
-
-      await _client.auth.resend(
-        type: OtpType.signup,
-        email: email,
-        emailRedirectTo: kIsWeb ? null : 'io.supabase.challengeme://confirm/',
-      );
-
-      debugPrint('Confirmation email resent successfully');
-    } catch (error) {
-      debugPrint('Resend confirmation error: $error');
-      throw Exception('Erreur de renvoi de confirmation: $error');
     }
   }
 
