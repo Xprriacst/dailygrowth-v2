@@ -423,7 +423,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                   if (modificationText.isEmpty)
                     Spacer(),
                   
-                  // Bouton Fermer (sauvegarde auto)
+                  // Bouton Sauvegarder
                   TextButton(
                     onPressed: _isSaving ? null : () async {
                       await _saveNote();
@@ -450,7 +450,7 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                             ),
                           )
                         : Text(
-                            'Fermer',
+                            'Sauvegarder',
                             style: TextStyle(
                               color: Color(0xFF1A73E8),
                               fontSize: 14.sp,
