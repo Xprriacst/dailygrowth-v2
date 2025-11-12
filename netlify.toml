@@ -18,11 +18,19 @@
       --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
       --dart-define=OPENAI_API_KEY=$OPENAI_API_KEY
 
-    # Step 4: Verify build output
+    # Step 4: Copy critical PWA files that Flutter doesn't copy automatically
+    echo "📋 Copying critical PWA files..."
+    cp web/sw.js build/web/sw.js
+    cp web/firebase-messaging-sw.js build/web/firebase-messaging-sw.js
+    cp web/unified-sw.js build/web/unified-sw.js
+    cp web/manifest.json build/web/manifest.json
+    echo "✅ PWA files copied"
+
+    # Step 5: Verify build output
     echo "📂 Build output:"
     ls -la build/web/
 
-    # Step 5: Set version (try multiple Netlify variables)
+    # Step 6: Set version (try multiple Netlify variables)
     echo "🔍 Checking available version variables..."
     echo "   BUILD_ID=$BUILD_ID"
     echo "   NETLIFY_BUILD_ID=$NETLIFY_BUILD_ID"
@@ -43,7 +51,7 @@
       echo "⚠️ Using timestamp (milliseconds): $APP_BUILD_VERSION"
     fi
 
-    # Step 6: Replace placeholders (without creating backup files)
+    # Step 7: Replace placeholders (without creating backup files)
     echo "🔄 Replacing placeholders..."
     sed -i "s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g" build/web/index.html
     sed -i "s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g" build/web/index.html
@@ -51,20 +59,12 @@
     sed -i "s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g" build/web/index.html
     sed -i "s|__SW_VERSION__|$APP_BUILD_VERSION|g" build/web/sw.js
 
-    # Step 7: Create env.js file (fix for MIME type error)
+    # Step 8: Create env.js file (fix for MIME type error)
     echo "📝 Creating env.js file..."
     echo "// Production env.js (empty - values injected in index.html)" > build/web/env.js
     echo "console.log('[env.js] Environment variables loaded from window.ENV');" >> build/web/env.js
 
-    # Step 7b: Ensure manifest.json is present in build output
-    if [ ! -f "build/web/manifest.json" ]; then
-      echo "⚠️ manifest.json missing in build, copying from web/"
-      cp web/manifest.json build/web/manifest.json
-    else
-      echo "✅ manifest.json is present in build output"
-    fi
-
-    # Step 8: Verify replacement
+    # Step 9: Verify replacement
     echo "🔍 Verifying version replacement..."
     if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
       echo "❌ ERROR: Version placeholder was not replaced!"

@@ -181,13 +181,16 @@
       document.title = `ChallengeMe • build ${versionToken}`;
       console.log(`[ChallengeMe] Build version: ${versionToken}`);
 
+      // Load Flutter app without automatic service worker registration
+      // We manage our own service worker (sw.js) for PWA and notifications
       _flutter.loader.loadEntrypoint({
         entrypointUrl: `main.dart.js?v=${versionToken}`,
-        serviceWorker: {
-          serviceWorkerVersion: null, // Disable Flutter's default service worker - we use custom sw.js
-        },
         onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
+          engineInitializer.initializeEngine({
+            serviceWorker: {
+              serviceWorkerVersion: null
+            }
+          }).then(function(appRunner) {
             appRunner.runApp();
           });
         }
