@@ -13,7 +13,7 @@ class ProblematiqueProgressWidget extends StatefulWidget {
 }
 
 class _ProblematiqueProgressWidgetState
-    extends State<ProblematiqueProgressWidget> {
+    extends State<ProblematiqueProgressWidget> with WidgetsBindingObserver {
   final UserService _userService = UserService();
   bool _isLoading = true;
   Map<String, Map<String, dynamic>> _progressData = {};
@@ -21,25 +21,49 @@ class _ProblematiqueProgressWidgetState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProgressData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Rafraîchir les données quand l'app revient au premier plan
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('🔄 App resumed - Rafraîchissement de la progression');
+      _loadProgressData();
+    }
   }
 
   Future<void> _loadProgressData() async {
     try {
-      setState(() => _isLoading = true);
+      // Ne pas afficher le loader si on a déjà des données (refresh silencieux)
+      if (_progressData.isEmpty) {
+        setState(() => _isLoading = true);
+      }
 
       final currentUser = Supabase.instance.client.auth.currentUser;
       if (currentUser == null) return;
 
       final progress = await _userService.getProgressByProblematique(currentUser.id);
-      
-      setState(() {
-        _progressData = progress;
-        _isLoading = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _progressData = progress;
+          _isLoading = false;
+        });
+        debugPrint('✅ Progression rechargée: ${progress.length} problématiques');
+      }
     } catch (e) {
       debugPrint('⚠️ Erreur chargement progression: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

@@ -292,9 +292,7 @@ class _UserProfileState extends State<UserProfile> {
                             ]),
 
                           // Progress by Problematique Section
-                          // TODO: Temporairement masqué - pourcentage incohérent (basé sur défis assignés vs complétés)
-                          // Fix disponible sur branche development
-                          // const ProblematiqueProgressWidget(),
+                          const ProblematiqueProgressWidget(),
 
                           // Support Section
                           SettingsSectionWidget(
