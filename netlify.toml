@@ -20,11 +20,26 @@
 
     # Step 4: Copy critical PWA files that Flutter doesn't copy automatically
     echo "📋 Copying critical PWA files..."
+    echo "   Checking source files..."
+    ls -la web/sw.js web/firebase-messaging-sw.js web/unified-sw.js web/manifest.json
+
     cp web/sw.js build/web/sw.js
     cp web/firebase-messaging-sw.js build/web/firebase-messaging-sw.js
     cp web/unified-sw.js build/web/unified-sw.js
     cp web/manifest.json build/web/manifest.json
-    echo "✅ PWA files copied"
+
+    echo "   Verifying copied files..."
+    ls -la build/web/sw.js build/web/firebase-messaging-sw.js build/web/unified-sw.js build/web/manifest.json
+    echo "✅ PWA files copied successfully"
+
+    # Step 4b: Create empty flutter_service_worker.js to prevent 404 error
+    echo "📝 Creating empty flutter_service_worker.js..."
+    cat > build/web/flutter_service_worker.js << 'EOFJS'
+// Empty service worker - We use custom sw.js for PWA features
+// This file exists only to prevent 404 errors from flutter.js
+console.log('flutter_service_worker.js loaded (empty - using custom sw.js)');
+EOFJS
+    echo "✅ Empty flutter_service_worker.js created"
 
     # Step 5: Verify build output
     echo "📂 Build output:"
