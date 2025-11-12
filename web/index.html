@@ -184,7 +184,7 @@
       _flutter.loader.loadEntrypoint({
         entrypointUrl: `main.dart.js?v=${versionToken}`,
         serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
+          serviceWorkerVersion: null, // Disable Flutter's default service worker - we use custom sw.js
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
