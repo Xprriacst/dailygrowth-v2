@@ -334,7 +334,13 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFF202124)),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed('/notes');
+            }
+          },
         ),
         title: null, // Pas de titre dans Google Keep
       ),
@@ -417,7 +423,13 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
                   TextButton(
                     onPressed: _isSaving ? null : () async {
                       await _saveNote();
-                      if (mounted) Navigator.of(context).pop();
+                      if (mounted) {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).pushReplacementNamed('/notes');
+                        }
+                      }
                     },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
