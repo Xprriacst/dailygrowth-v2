@@ -46,12 +46,35 @@ class LifeDomainsWidget extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Objectifs sélectionnés',
-                style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.lightTheme.colorScheme.onSurface,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'Objectifs sélectionnés',
+                    style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.lightTheme.colorScheme.onSurface,
+                    ),
+                  ),
+                  SizedBox(width: 2.w),
+                  Tooltip(
+                    message: 'Un changement de problématique sera effectif 24h après la modification dans la plateforme',
+                    padding: EdgeInsets.all(3.w),
+                    textStyle: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.info_outline,
+                      size: 18.sp,
+                      color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.7),
+                    ),
+                  ),
+                ],
               ),
               TextButton(
                 onPressed: onEditTap,
