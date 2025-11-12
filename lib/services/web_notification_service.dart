@@ -39,6 +39,17 @@ class WebNotificationService {
     if (_isInitialized) return;
 
     try {
+      // Detect iOS
+      final isIOS = html.window.navigator.userAgent.contains(RegExp(r'iPhone|iPad|iPod'));
+      final isPWA = html.window.matchMedia('(display-mode: standalone)').matches;
+      
+      debugPrint('🔍 Platform detection: iOS=$isIOS, PWA=$isPWA');
+      
+      if (isIOS && !isPWA) {
+        debugPrint('⚠️ iOS detected but NOT running as PWA!');
+        debugPrint('💡 Notifications require: Safari → Share → Add to Home Screen');
+      }
+
       // Initialize Firebase in the main thread (for foreground messages)
       await _initializeFirebase();
 
@@ -46,9 +57,23 @@ class WebNotificationService {
       if (_isNotificationSupported()) {
         _permission = html.Notification.permission;
         debugPrint('🔔 Current notification permission: $_permission');
+        
+        if (_permission == 'denied' && isIOS) {
+          debugPrint('❌ iOS: Permissions denied. Check Settings → ChallengeMe → Notifications');
+        }
       } else {
         _permission = 'denied';
         debugPrint('⚠️ Notifications not supported on this browser');
+      }
+
+      // Wait for service worker to be ready
+      if (html.window.navigator.serviceWorker != null) {
+        try {
+          final registration = await html.window.navigator.serviceWorker!.ready;
+          debugPrint('✅ Service Worker ready and active');
+        } catch (e) {
+          debugPrint('⚠️ Service Worker not ready: $e');
+        }
       }
 
       _isInitialized = true;
