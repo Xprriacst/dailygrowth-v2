@@ -310,6 +310,12 @@ class _UserProfileState extends State<UserProfile> {
                                 title: 'Envoyer des commentaires',
                                 subtitle: 'Aidez-nous à améliorer l\'app',
                                 onTap: () => _showFeedbackDialog()),
+                              if (kIsWeb)
+                                SettingsItemWidget(
+                                  iconName: 'notifications',
+                                  title: '🔥 Test Notifications Push',
+                                  subtitle: 'Tester le système de notifications PWA',
+                                  onTap: () => Navigator.pushNamed(context, '/test-push-notifications')),
                               SettingsItemWidget(
                                 iconName: 'info',
                                 title: 'À propos',
