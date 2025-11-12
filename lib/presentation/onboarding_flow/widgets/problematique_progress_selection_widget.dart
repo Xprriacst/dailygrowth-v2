@@ -434,7 +434,7 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    'Suivez votre avancement pour chaque problématique. Objectif : 50 défis complétés par problématique.',
+                    'Suivez votre avancement pour chaque problématique. Le changement de problématique sera effectif le lendemain.',
                     style: TextStyle(
                       fontSize: 14.sp,
                       color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
