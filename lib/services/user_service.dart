@@ -106,12 +106,12 @@ class UserService {
           .eq('user_id', userId)
           .count();
 
-      // Get completed challenges count
+      // Get completed challenges count from user_micro_challenges
       final completedResult = await _client
-          .from('daily_challenges')
+          .from('user_micro_challenges')
           .select()
           .eq('user_id', userId)
-          .eq('status', 'completed')
+          .eq('is_used_as_daily', true)
           .count();
 
       // Get achievements count
