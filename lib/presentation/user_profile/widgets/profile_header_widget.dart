@@ -95,7 +95,7 @@ class ProfileHeaderWidget extends StatelessWidget {
                       //     'local_fire_department'),
                       // _buildStatDivider(),
                       _buildStatItem('Points',
-                          '${userStats!['total_points'] ?? 0}', 'star'),
+                          '${userStats!['completed_challenges'] ?? 0}', 'star'),
                       _buildStatDivider(),
                       _buildStatItem(
                           'Défis',
