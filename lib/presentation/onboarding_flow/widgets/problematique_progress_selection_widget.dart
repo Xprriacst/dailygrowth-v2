@@ -243,7 +243,7 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$completedCount/50 défis complétés',
+                  '$completedCount défis complétés',
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
