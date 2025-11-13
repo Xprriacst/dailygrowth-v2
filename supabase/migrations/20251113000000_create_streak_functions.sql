@@ -200,6 +200,8 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trigger_set_challenge_date_assigned ON public.daily_challenges;
+
 CREATE TRIGGER trigger_set_challenge_date_assigned
     BEFORE INSERT ON public.daily_challenges
     FOR EACH ROW
