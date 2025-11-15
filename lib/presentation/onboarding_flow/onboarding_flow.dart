@@ -75,7 +75,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       "imageUrl": "assets/images/pwa_tutorial/etape_3_ajouter.png",
       "title": "🏠 Ajouter à l'écran d'accueil",
       "description":
-          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application ChallengeMe à votre PWA.",
+          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application ChallengeMe.",
       "isPWATutorial": true,
       "step": 3,
     },
