@@ -38,7 +38,7 @@ class OnboardingPageWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'Tutoriel PWA – Étape $step/3',
+                  'Installation – Étape $step/3',
                   style: AppTheme.lightTheme.textTheme.labelMedium?.copyWith(
                     color: AppTheme.lightTheme.primaryColor,
                     fontWeight: FontWeight.w600,
