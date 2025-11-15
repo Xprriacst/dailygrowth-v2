@@ -42,7 +42,7 @@ class NoteCardWidget extends StatelessWidget {
     final percentage = progressInfo?['percentage'] as int? ?? 0;
     final progressColor = _getProgressColor(percentage);
 
-    final formattedDate = DateFormat('d MMM yyyy', 'fr_FR').format(note.updatedAt);
+    final formattedDate = DateFormat('d MMM yyyy', 'fr_FR').format(note.createdAt);
 
     return Container(
       margin: EdgeInsets.only(bottom: 2.h),
@@ -196,7 +196,7 @@ class NoteCardWidget extends StatelessWidget {
                     ),
                     SizedBox(width: 1.w),
                     Text(
-                      'Modifié le $formattedDate',
+                      'Créée le $formattedDate',
                       style: TextStyle(
                         fontSize: 11.sp,
                         color: AppTheme.textDisabledLight,
