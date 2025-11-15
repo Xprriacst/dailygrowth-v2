@@ -157,9 +157,12 @@ class NoteCardWidget extends StatelessWidget {
 
                 SizedBox(height: 1.5.h),
 
-                // Titre de la note
+                // Titre de la note (premiers mots du contenu ou titre du défi)
                 Text(
-                  note.title,
+                  note.challengeTitle ??
+                  (note.content.length > 50
+                    ? '${note.content.substring(0, 50)}...'
+                    : note.content),
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
@@ -169,9 +172,9 @@ class NoteCardWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                if (note.content.isNotEmpty) ...[
+                // Aperçu du contenu (seulement si on a un titre de défi)
+                if (note.challengeTitle != null && note.content.isNotEmpty) ...[
                   SizedBox(height: 1.h),
-                  // Aperçu du contenu
                   Text(
                     note.content,
                     style: TextStyle(
