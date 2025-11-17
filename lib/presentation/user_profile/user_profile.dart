@@ -10,6 +10,7 @@ import '../../core/app_export.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/simple_web_notification_service.dart';
 import '../../utils/auth_guard.dart';
 import 'widgets/problematique_selection_modal.dart';
 import './widgets/life_domains_widget.dart';
@@ -46,6 +47,8 @@ class _UserProfileState extends State<UserProfile> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
   final NotificationService _notificationService = NotificationService();
+  final SimpleWebNotificationService _simpleWebNotificationService =
+      SimpleWebNotificationService.instance;
 
   @override
   void initState() {
@@ -197,6 +200,13 @@ class _UserProfileState extends State<UserProfile> {
                   iconName: 'admin_panel_settings',
                   color: AppTheme.lightTheme.colorScheme.secondary,
                   size: 6.w)),
+            // Diagnostics button for web notifications
+            IconButton(
+              onPressed: _showNotificationDiagnostics,
+              icon: CustomIconWidget(
+                iconName: 'bug_report',
+                color: AppTheme.lightTheme.colorScheme.tertiary,
+                size: 6.w)),
             // Add notification test button
             IconButton(
               onPressed: _triggerTestNotification,
@@ -300,6 +310,12 @@ class _UserProfileState extends State<UserProfile> {
                                 title: 'Envoyer des commentaires',
                                 subtitle: 'Aidez-nous à améliorer l\'app',
                                 onTap: () => _showFeedbackDialog()),
+                              if (kIsWeb)
+                                SettingsItemWidget(
+                                  iconName: 'notifications',
+                                  title: '🔥 Test Notifications Push',
+                                  subtitle: 'Tester le système de notifications PWA',
+                                  onTap: () => Navigator.pushNamed(context, '/test-push-notifications')),
                               SettingsItemWidget(
                                 iconName: 'info',
                                 title: 'À propos',
@@ -1128,15 +1144,59 @@ class _UserProfileState extends State<UserProfile> {
 
   void _triggerTestNotification() async {
     try {
+      if (kIsWeb) {
+        await _simpleWebNotificationService.initialize();
+
+        if (_simpleWebNotificationService.shouldRequestPermission()) {
+          final granted =
+              await _simpleWebNotificationService.requestNotificationPermission();
+          if (!granted) {
+            _showBeautifulErrorMessage(
+              'Impossible d\'envoyer la notification de test. Activez les notifications dans les réglages de votre PWA ChallengeMe.',
+            );
+            return;
+          }
+        }
+
+        await _simpleWebNotificationService.showTestNotification();
+        _showBeautifulSuccessMessage(
+          'Notification de test envoyée 🎉\nVérifiez votre PWA ChallengeMe sur l\'écran d\'accueil.',
+        );
+        return;
+      }
+
       _showBeautifulSuccessMessage('Test en cours...');
-      
+
       final diagnosticResult = await _notificationService.triggerTestNotification();
-      
+
       // Afficher le diagnostic complet dans une dialog
       _showDiagnosticDialog('🔔 Diagnostic Notifications', diagnosticResult);
-      
     } catch (e) {
       _showDiagnosticDialog('❌ Erreur Notifications', e.toString());
+    }
+  }
+
+  void _showNotificationDiagnostics() async {
+    try {
+      if (!kIsWeb) {
+        _showDiagnosticDialog(
+          'ℹ️ Diagnostic Notifications',
+          'Disponible uniquement sur la version web/PWA.',
+        );
+        return;
+      }
+
+      await _simpleWebNotificationService.initialize();
+      final diagnostics = await _simpleWebNotificationService.collectDiagnostics();
+
+      final buffer = StringBuffer();
+      diagnostics.forEach((key, value) {
+        buffer.writeln('$key: $value');
+      });
+
+      _showDiagnosticDialog('🛠️ Diagnostic Notifications', buffer.toString());
+    } catch (e) {
+      _showDiagnosticDialog('❌ Diagnostic Notifications', e.toString());
     }
   }
   

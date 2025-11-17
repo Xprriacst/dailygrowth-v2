@@ -11,6 +11,7 @@ import './challenge_service.dart';
 import './quote_service.dart';
 import './user_service.dart';
 import './web_notification_service.dart';
+import './simple_web_notification_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -39,6 +40,8 @@ class NotificationService {
   final UserService _userService = UserService();
   final WebNotificationService _webNotificationService =
       WebNotificationService();
+  final SimpleWebNotificationService _simpleWebNotificationService =
+      SimpleWebNotificationService.instance;
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -71,7 +74,16 @@ class NotificationService {
 
     // Initialize web notifications for web platforms
     if (kIsWeb) {
-      await _webNotificationService.initialize();
+      debugPrint('🌐 Initializing web notifications...');
+      try {
+        // Utiliser le service simplifié qui fonctionne sur iOS
+        await _simpleWebNotificationService.initialize();
+        debugPrint('✅ Simple web notifications initialized');
+      } catch (e) {
+        debugPrint('⚠️ Simple web notifications failed, trying legacy: $e');
+        // Fallback vers l'ancien service si nécessaire
+        await _webNotificationService.initialize();
+      }
     }
 
     // Initialize services (defer Supabase-dependent services)
@@ -545,10 +557,19 @@ class NotificationService {
 
         // Send notification about the new challenge
         if (kIsWeb) {
-          await _webNotificationService.showChallengeNotification(
-            challengeName: challengeName,
-            challengeId: newChallenge['id']?.toString(),
-          );
+          try {
+            await _simpleWebNotificationService.showChallengeNotification(
+              title: '🎯 Nouveau micro-défi disponible !',
+              body: challengeName,
+            );
+            debugPrint('✅ Simple web notification sent for new challenge');
+          } catch (e) {
+            debugPrint('⚠️ Simple web notification failed, trying legacy: $e');
+            await _webNotificationService.showChallengeNotification(
+              challengeName: challengeName,
+              challengeId: newChallenge['id']?.toString(),
+            );
+          }
         } else {
           await sendInstantNotification(
             title: '🎯 Nouveau micro-défi disponible !',
@@ -754,14 +775,7 @@ class NotificationService {
 
       // Test basic notification
       try {
-        await _webNotificationService.showNotification(
-          title: '🧪 Test ChallengeMe',
-          body: 'Notification de test réussie !',
-          data: {
-            'test': true,
-            'timestamp': DateTime.now().millisecondsSinceEpoch
-          },
-        );
+        await _simpleWebNotificationService.showTestNotification();
         diagnosticMessage += '• Notification immédiate: ✅\n';
       } catch (e) {
         diagnosticMessage += '• Notification immédiate: ❌ $e\n';
@@ -770,8 +784,9 @@ class NotificationService {
       // Test challenge notification
       try {
         await Future.delayed(const Duration(seconds: 1));
-        await _webNotificationService.showChallengeNotification(
-          challengeName: 'Test: Sourire à 3 personnes',
+        await _simpleWebNotificationService.showChallengeNotification(
+          title: 'Test: Sourire à 3 personnes',
+          body: 'Un nouveau défi vous attend !',
         );
         diagnosticMessage += '• Notification défi: ✅\n';
       } catch (e) {

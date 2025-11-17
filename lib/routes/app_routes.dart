@@ -14,6 +14,7 @@ import '../presentation/challenge_selection/challenge_selection_screen.dart';
 import '../presentation/notes/notes_screen.dart';
 import '../presentation/notification_test/notification_test_screen.dart';
 import '../debug/test_notes_widget.dart';
+import '../presentation/test_push_notifications/test_push_notifications_screen.dart';
 
 class AppRoutes {
   // Route constants
