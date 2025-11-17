@@ -567,7 +567,7 @@ class _TestPushNotificationsScreenState
       child: Text(
         text,
         style: TextStyle(
-          color: color.shade800,
+          color: color,
           fontWeight: FontWeight.w500,
           fontSize: 13,
         ),

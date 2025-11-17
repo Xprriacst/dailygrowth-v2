@@ -75,15 +75,15 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
     try {
       // Vérifier les permissions
       _addLog('🔍 Vérification des permissions...');
-      final hasPermission = await _webNotificationService!.requestPermission();
+      final permissionResult = await _webNotificationService!.requestPermission();
 
       setState(() {
-        _permissionStatus = hasPermission ? 'Accordée ✅' : 'Refusée ❌';
+        _permissionStatus = permissionResult == 'granted' ? 'Accordée ✅' : 'Refusée ❌';
       });
       _addLog('🔐 Permission: $_permissionStatus');
 
       // Récupérer le token FCM
-      if (hasPermission) {
+      if (permissionResult == 'granted') {
         _addLog('🔑 Récupération du token FCM...');
         final token = await _webNotificationService!.getFCMToken();
 
@@ -243,14 +243,15 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
         await _webNotificationService!.showAchievementNotification(
           title: 'Premier test réussi !',
           description: 'Vous avez testé les notifications',
-          points: 10,
+          pointsEarned: 10,
         );
         _addLog('✅ Notification de succès web envoyée');
       } else {
         await _notificationService.sendAchievementNotification(
-          title: 'Premier test réussi !',
+          userId: 'test-user',
+          achievementName: 'Premier test réussi !',
           description: 'Vous avez testé les notifications',
-          points: 10,
+          pointsEarned: 10,
         );
         _addLog('✅ Notification de succès mobile envoyée');
       }

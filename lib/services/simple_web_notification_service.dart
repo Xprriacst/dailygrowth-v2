@@ -32,6 +32,30 @@ class SimpleWebNotificationService {
         debugPrint('💡 Notifications require: Safari → Share → Add to Home Screen');
       }
 
+      // Vérifier permissions actuelles
+      if (_isNotificationSupported()) {
+        _permission = await _getNotificationPermission();
+        debugPrint('🔔 Current notification permission: $_permission');
+        
+        if (_permission == 'denied' && isIOS) {
+          debugPrint('❌ iOS: Permissions denied. Check Settings → ChallengeMe → Notifications');
+        }
+      } else {
+        _permission = 'denied';
+        debugPrint('⚠️ Notifications not supported on this browser');
+      }
+
+      // Enregistrer le service worker
+      await _registerServiceWorker();
+
+      _isInitialized = true;
+      debugPrint('✅ Simple Web Notification Service initialized successfully');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize Simple Web Notification Service: $e');
+    }
+  }
+
+  /// Demande de permission avec support legacy callback
   Future<String> _requestPermissionLegacyWithCallback() async {
     try {
       final notification = js.context['Notification'];
@@ -90,29 +114,6 @@ class SimpleWebNotificationService {
     } catch (e) {
       debugPrint('❌ Legacy permission fallback failed: $e');
       return 'default';
-    }
-  }
-
-      // Vérifier permissions actuelles
-      if (_isNotificationSupported()) {
-        _permission = await _getNotificationPermission();
-        debugPrint('🔔 Current notification permission: $_permission');
-        
-        if (_permission == 'denied' && isIOS) {
-          debugPrint('❌ iOS: Permissions denied. Check Settings → ChallengeMe → Notifications');
-        }
-      } else {
-        _permission = 'denied';
-        debugPrint('⚠️ Notifications not supported on this browser');
-      }
-
-      // Enregistrer le service worker
-      await _registerServiceWorker();
-
-      _isInitialized = true;
-      debugPrint('✅ Simple Web Notification Service initialized successfully');
-    } catch (e) {
-      debugPrint('❌ Failed to initialize Simple Web Notification Service: $e');
     }
   }
 
