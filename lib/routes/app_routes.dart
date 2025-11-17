@@ -12,6 +12,7 @@ import '../presentation/admin_panel/admin_panel.dart';
 import '../presentation/reset_password/reset_password_screen.dart';
 import '../presentation/challenge_selection/challenge_selection_screen.dart';
 import '../presentation/notes/notes_screen.dart';
+import '../presentation/notification_test/notification_test_screen.dart';
 import '../debug/test_notes_widget.dart';
 import '../presentation/test_push_notifications/test_push_notifications_screen.dart';
 
@@ -30,7 +31,7 @@ class AppRoutes {
   static const String challengeSelection = '/challenge-selection';
   static const String notes = '/notes';
   static const String testNotes = '/test-notes';
-  static const String testPushNotifications = '/test-push-notifications';
+  static const String notificationTest = '/notification-test';
 
   // Route map
   static Map<String, WidgetBuilder> get routes => {
@@ -47,7 +48,7 @@ class AppRoutes {
         challengeSelection: (context) => const ChallengeSelectionScreen(),
         notes: (context) => const NotesScreen(),
         testNotes: (context) => const TestNotesWidget(),
-        testPushNotifications: (context) => const TestPushNotificationsScreen(),
+        notificationTest: (context) => const NotificationTestScreen(),
       };
 
   // Initial route
