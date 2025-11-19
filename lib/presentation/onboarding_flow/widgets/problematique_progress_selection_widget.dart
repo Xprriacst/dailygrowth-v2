@@ -64,18 +64,29 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
   /// Charge la progression de l'utilisateur pour chaque problématique
   Future<void> _loadUserProgress() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _userService.initialize();
       final currentUser = Supabase.instance.client.auth.currentUser;
-      
+
       if (currentUser != null) {
         // Récupérer les problématiques sélectionnées
         final profile = await _userService.getUserProfile(currentUser.id);
         final selectedProblematiquesData = profile?['selected_problematiques'] as List<dynamic>?;
-        
-        if (selectedProblematiquesData != null) {
-          _selectedProblematiqueDescriptions = selectedProblematiquesData.cast<String>().toSet();
+
+        if (selectedProblematiquesData != null && selectedProblematiquesData.isNotEmpty) {
+          // Limiter à une seule problématique : prendre uniquement la première
+          final firstProblematique = selectedProblematiquesData.first as String;
+          _selectedProblematiqueDescriptions = {firstProblematique};
+
+          // Si plusieurs problématiques étaient sélectionnées, nettoyer la base de données
+          if (selectedProblematiquesData.length > 1) {
+            await _userService.updateUserProfile(
+              userId: currentUser.id,
+              selectedProblematiques: [firstProblematique],
+            );
+            debugPrint('🧹 Nettoyage: ${selectedProblematiquesData.length} problématiques réduites à 1');
+          }
         }
 
         // Récupérer la progression pour chaque problématique en une seule requête
@@ -117,10 +128,13 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
   }
 
   void _toggleProblematique(ChallengeProblematique problematique) {
+    final description = problematique.description;
+    final wasSelected = _selectedProblematiqueDescriptions.contains(description);
+
     setState(() {
-      final description = problematique.description;
       // Limiter à une seule problématique sélectionnée
-      if (_selectedProblematiqueDescriptions.contains(description)) {
+      if (wasSelected) {
+        // Déselectionner la problématique actuelle
         _selectedProblematiqueDescriptions.remove(description);
       } else {
         // Remplacer la sélection actuelle par la nouvelle
@@ -130,10 +144,11 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
     });
 
     HapticFeedback.selectionClick();
-    _saveSelectedProblematiques();
+    // Passer un flag pour indiquer si on doit afficher la popup (seulement si on sélectionne, pas si on déselectionne)
+    _saveSelectedProblematiques(showPopup: !wasSelected);
   }
 
-  Future<void> _saveSelectedProblematiques() async {
+  Future<void> _saveSelectedProblematiques({bool showPopup = false}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final selectedDescriptions = _selectedProblematiqueDescriptions.toList();
@@ -150,8 +165,10 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
           selectedProblematiques: selectedDescriptions,
         );
 
-        // Afficher la popup de confirmation
-        _showConfirmationDialog();
+        // Afficher la popup de confirmation uniquement si une problématique a été sélectionnée
+        if (showPopup && selectedDescriptions.isNotEmpty) {
+          _showConfirmationDialog();
+        }
       }
 
       debugPrint('✅ Problématiques sauvegardées: ${selectedDescriptions.join(", ")}');
@@ -261,29 +278,39 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
     final isSelected = _selectedProblematiqueDescriptions.contains(problematique.description);
     final completedCount = _progressByProblematique[problematique.description] ?? 0;
     final progressPercentage = (completedCount / 50 * 100).clamp(0, 100).toInt();
-    
+
+    // Désactiver si une autre problématique est déjà sélectionnée
+    final hasOtherSelection = _selectedProblematiqueDescriptions.isNotEmpty && !isSelected;
+    final isEnabled = !hasOtherSelection;
+
     return GestureDetector(
-      onTap: () => _toggleProblematique(problematique),
+      onTap: isEnabled ? () => _toggleProblematique(problematique) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: EdgeInsets.only(bottom: 2.h),
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
-              : AppTheme.lightTheme.colorScheme.surface,
+              : isEnabled
+                  ? AppTheme.lightTheme.colorScheme.surface
+                  : AppTheme.lightTheme.colorScheme.surface.withOpacity(0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? AppTheme.lightTheme.colorScheme.primary
-                : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
+                : isEnabled
+                    ? AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2)
+                    : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.1),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected 
+              color: isSelected
                   ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.2)
-                  : AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.08),
+                  : isEnabled
+                      ? AppTheme.lightTheme.colorScheme.shadow.withOpacity(0.08)
+                      : Colors.transparent,
               blurRadius: isSelected ? 12 : 8,
               offset: const Offset(0, 2),
             ),
@@ -299,14 +326,17 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
                 Container(
                   padding: EdgeInsets.all(2.w),
                   decoration: BoxDecoration(
-                    color: isSelected 
+                    color: isSelected
                         ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    problematique.emoji,
-                    style: TextStyle(fontSize: 20.sp),
+                  child: Opacity(
+                    opacity: isEnabled ? 1.0 : 0.4,
+                    child: Text(
+                      problematique.emoji,
+                      style: TextStyle(fontSize: 20.sp),
+                    ),
                   ),
                 ),
                 SizedBox(width: 3.w),
@@ -318,9 +348,11 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected 
+                      color: isSelected
                           ? AppTheme.lightTheme.colorScheme.primary
-                          : AppTheme.lightTheme.colorScheme.onSurface,
+                          : isEnabled
+                              ? AppTheme.lightTheme.colorScheme.onSurface
+                              : AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.4),
                       height: 1.3,
                     ),
                     maxLines: 2,
@@ -329,12 +361,15 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
                 ),
                 
                 // Icône de sélection
-                Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: isSelected 
-                      ? AppTheme.lightTheme.colorScheme.primary
-                      : AppTheme.lightTheme.colorScheme.outline,
-                  size: 20.sp,
+                Opacity(
+                  opacity: isEnabled ? 1.0 : 0.4,
+                  child: Icon(
+                    isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: isSelected
+                        ? AppTheme.lightTheme.colorScheme.primary
+                        : AppTheme.lightTheme.colorScheme.outline,
+                    size: 20.sp,
+                  ),
                 ),
               ],
             ),
@@ -342,39 +377,45 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
             SizedBox(height: 2.h),
 
             // Texte progression
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$completedCount défis complétés',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
+            Opacity(
+              opacity: isEnabled ? 1.0 : 0.4,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$completedCount défis complétés',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppTheme.lightTheme.colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Text(
-                  '$progressPercentage%',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.lightTheme.colorScheme.primary,
+                  Text(
+                    '$progressPercentage%',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.lightTheme.colorScheme.primary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             SizedBox(height: 1.h),
 
             // Barre de progression
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progressPercentage / 100,
-                minHeight: 8,
-                backgroundColor: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.15),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  AppTheme.lightTheme.colorScheme.primary,
+            Opacity(
+              opacity: isEnabled ? 1.0 : 0.4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progressPercentage / 100,
+                  minHeight: 8,
+                  backgroundColor: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppTheme.lightTheme.colorScheme.primary,
+                  ),
                 ),
               ),
             ),
