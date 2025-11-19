@@ -365,13 +365,13 @@ class _NotesScreenState extends State<NotesScreen> {
             
             SizedBox(height: 2.w),
             
-            // Ligne du bas : date modifiée
+            // Ligne du bas : date de création
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Date modifiée
+                // Date de création
                 Text(
-                  'Modifié : $formattedDate',
+                  'Créée : $formattedDate',
                   style: TextStyle(
                     color: Color(0xFF5F6368),
                     fontSize: 10.sp,
