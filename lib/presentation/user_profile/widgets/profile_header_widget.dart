@@ -96,11 +96,12 @@ class ProfileHeaderWidget extends StatelessWidget {
                       // _buildStatDivider(),
                       _buildStatItem('Points',
                           '${userStats!['completed_challenges'] ?? 0}', 'star'),
-                      _buildStatDivider(),
-                      _buildStatItem(
-                          'Défis',
-                          '${userStats!['completed_challenges'] ?? 0}',
-                          'check_circle'),
+                      // Nombre de défis masqué
+                      // _buildStatDivider(),
+                      // _buildStatItem(
+                      //     'Défis',
+                      //     '${userStats!['completed_challenges'] ?? 0}',
+                      //     'check_circle'),
                     ])),
           ],
         ]));

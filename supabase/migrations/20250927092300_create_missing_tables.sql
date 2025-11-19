@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.user_micro_challenges (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. USER_ACHIEVEMENTS TABLE  
+-- 2. USER_ACHIEVEMENTS TABLE
 -- Used by user_service.dart and gamification_service.dart
 CREATE TABLE IF NOT EXISTS public.user_achievements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.user_achievements (
     achievement_type TEXT NOT NULL,
     achievement_name TEXT NOT NULL,
     description TEXT,
+    icon_name TEXT,
     points_earned INTEGER DEFAULT 0,
     unlocked_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -81,6 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_user_micro_challenges_used_as_daily_date ON publi
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON public.user_achievements(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_achievement_type ON public.user_achievements(achievement_type);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_unlocked_at ON public.user_achievements(unlocked_at);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_icon_name ON public.user_achievements(icon_name);
 
 CREATE INDEX IF NOT EXISTS idx_daily_challenges_user_id ON public.daily_challenges(user_id);
 CREATE INDEX IF NOT EXISTS idx_daily_challenges_status ON public.daily_challenges(status);
