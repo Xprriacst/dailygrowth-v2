@@ -65,7 +65,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     },
     {
       "imageUrl": "assets/images/pwa_tutorial/etape_2_partager.png",
-      "title": "📤 Étape 2 : Partager",
+      "title": "📤 Partager",
       "description":
           "Touchez Partager pour afficher les actions disponibles et continuer l'installation.",
       "isPWATutorial": true,
@@ -73,9 +73,9 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     },
     {
       "imageUrl": "assets/images/pwa_tutorial/etape_3_ajouter.png",
-      "title": "🏠 Étape 3 : Ajouter",
+      "title": "🏠 Ajouter à l'écran d'accueil",
       "description":
-          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application ChallengeMe à votre PWA.",
+          "Sélectionnez Sur l'écran d'accueil afin d'ajouter l'application ChallengeMe.",
       "isPWATutorial": true,
       "step": 3,
     },
