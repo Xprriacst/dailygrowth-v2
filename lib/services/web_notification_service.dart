@@ -162,40 +162,143 @@ class WebNotificationService {
     }
 
     try {
-      debugPrint('🔔 Requesting web notification permission...');
+      debugPrint('🔔 Requesting notification permission...');
 
-      // Use actual Notification API
-      if (html.Notification.supported) {
-        var permission = await html.Notification.requestPermission();
-        _permission = permission;
+      // Detect iOS
+      final isIOS = html.window.navigator.userAgent.contains(RegExp(r'iPhone|iPad|iPod'));
+      debugPrint('🧭 User agent: ${html.window.navigator.userAgent}');
+      debugPrint('🧭 Detected iOS via userAgent: $isIOS');
+
+      // Check standalone mode (PWA)
+      final isStandalone = html.window.navigator.standalone ?? false;
+      final isStandaloneMediaQuery = html.window.matchMedia('(display-mode: standalone)').matches;
+      final isPWA = isStandalone || isStandaloneMediaQuery;
+      debugPrint('🏠 navigator.standalone: $isStandalone');
+      debugPrint('🏠 display-mode standalone: $isStandaloneMediaQuery');
+      debugPrint('🏠 Detected PWA mode: $isPWA');
+
+      if (!html.Notification.supported) {
+        debugPrint('⚠️ Notifications not supported on this platform');
+        _permission = 'denied';
+        return 'denied';
+      }
+
+      // Check current permission first
+      final currentPermission = html.Notification.permission;
+      debugPrint('🔍 Current permission before request: $currentPermission');
+
+      if (currentPermission == 'granted') {
+        _permission = 'granted';
+        debugPrint('✅ Permission already granted, skipping request');
+
+        // Try to get FCM token
+        try {
+          _fcmToken = await _ensureFcmToken();
+          if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+            debugPrint('🔑 FCM Token: ${_fcmToken!.substring(0, 20)}...');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Could not get FCM token: $e');
+        }
+
+        return 'granted';
+      }
+
+      if (currentPermission == 'denied') {
+        _permission = 'denied';
+        debugPrint('❌ Permission previously denied by user');
+        return 'denied';
+      }
+
+      // Request permission - iOS Safari requires special handling
+      String? permission;
+
+      try {
+        debugPrint('🔔 Requesting notification permission...');
+
+        // Use JS interop for iOS compatibility
+        final result = js.context.callMethod('eval', ['''
+          (async function() {
+            try {
+              console.log('🔔 Requesting notification permission...');
+
+              if (!('Notification' in window)) {
+                console.log('❌ Notification API not available');
+                return 'denied';
+              }
+
+              if (typeof Notification.requestPermission !== 'function') {
+                console.log('❌ requestPermission not available');
+                return Notification.permission || 'denied';
+              }
+
+              // Try modern promise-based API
+              try {
+                const result = await Notification.requestPermission();
+                console.log('🔔 Permission result:', result);
+                return result;
+              } catch (e) {
+                console.log('⚠️ Modern API failed:', e);
+
+                // Fallback to callback-based API for older browsers/iOS
+                return new Promise((resolve) => {
+                  try {
+                    Notification.requestPermission(function(result) {
+                      console.log('🔔 Permission result (callback):', result);
+                      resolve(result);
+                    });
+                  } catch (callbackError) {
+                    console.log('❌ Callback API also failed:', callbackError);
+                    resolve('denied');
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('❌ Permission request error:', error);
+              return 'denied';
+            }
+          })()
+        ''']);
+
+        if (result != null) {
+          try {
+            final resolvedResult = await js_util.promiseToFuture(result);
+            permission = resolvedResult?.toString() ?? 'denied';
+          } catch (e) {
+            debugPrint('⚠️ Could not resolve promise: $e');
+            permission = result.toString();
+          }
+        } else {
+          permission = 'denied';
+        }
+
         debugPrint('🔔 Permission result: $permission');
+        _permission = permission;
 
-        // If permission granted, ensure we have a valid FCM token
+        // If granted, try to get FCM token
         if (permission == 'granted') {
           try {
             _fcmToken = await _ensureFcmToken();
             if (_fcmToken != null && _fcmToken!.isNotEmpty) {
-              debugPrint(
-                  '🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
-
-              // Send token to service worker
-              await sendMessageToServiceWorker(
-                  {'type': 'FCM_TOKEN', 'token': _fcmToken});
+              debugPrint('🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
+              await sendMessageToServiceWorker({'type': 'FCM_TOKEN', 'token': _fcmToken});
             } else {
               debugPrint('⚠️ Permission granted but no FCM token generated');
             }
           } catch (e) {
-            debugPrint('❌ Error ensuring FCM token after permission: $e');
+            debugPrint('❌ Error ensuring FCM token: $e');
           }
         }
 
-        return permission;
-      } else {
-        debugPrint('⚠️ Notifications not supported');
+        return permission ?? 'denied';
+      } catch (e) {
+        debugPrint('❌ requestPermission invocation failed: $e');
+        _permission = 'denied';
         return 'denied';
       }
     } catch (e) {
-      debugPrint('❌ Error requesting notification permission: $e');
+      debugPrint('❌ Error in requestPermission: $e');
+      _permission = 'denied';
       return 'denied';
     }
   }
