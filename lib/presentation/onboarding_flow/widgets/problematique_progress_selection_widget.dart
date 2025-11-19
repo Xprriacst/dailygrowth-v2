@@ -119,9 +119,12 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
   void _toggleProblematique(ChallengeProblematique problematique) {
     setState(() {
       final description = problematique.description;
+      // Limiter à une seule problématique sélectionnée
       if (_selectedProblematiqueDescriptions.contains(description)) {
         _selectedProblematiqueDescriptions.remove(description);
       } else {
+        // Remplacer la sélection actuelle par la nouvelle
+        _selectedProblematiqueDescriptions.clear();
         _selectedProblematiqueDescriptions.add(description);
       }
     });
@@ -134,24 +137,124 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
     try {
       final prefs = await SharedPreferences.getInstance();
       final selectedDescriptions = _selectedProblematiqueDescriptions.toList();
-      
+
       await prefs.setStringList('selected_problematiques', selectedDescriptions);
-      
+
       // Sauvegarder dans Supabase
       await _userService.initialize();
       final currentUser = Supabase.instance.client.auth.currentUser;
-      
+
       if (currentUser != null) {
         await _userService.updateUserProfile(
           userId: currentUser.id,
           selectedProblematiques: selectedDescriptions,
         );
+
+        // Afficher la popup de confirmation
+        _showConfirmationDialog();
       }
-      
+
       debugPrint('✅ Problématiques sauvegardées: ${selectedDescriptions.join(", ")}');
     } catch (e) {
       debugPrint('❌ Erreur lors de la sauvegarde: $e');
     }
+  }
+
+  void _showConfirmationDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.3),
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: AppTheme.lightTheme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de succès
+                Container(
+                  width: 20.w,
+                  height: 20.w,
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: AppTheme.lightTheme.colorScheme.primary,
+                    size: 12.w,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+
+                // Titre
+                Text(
+                  'Changement pris en compte',
+                  style: AppTheme.lightTheme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 2.h),
+
+                // Message
+                Text(
+                  'Votre nouvelle problématique sera effective à partir de demain.',
+                  style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4.h),
+
+                // Bouton OK
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+                      foregroundColor: AppTheme.lightTheme.colorScheme.onPrimary,
+                      padding: EdgeInsets.symmetric(vertical: 2.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'OK',
+                      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildProblematiqueProgressCard(ChallengeProblematique problematique) {
