@@ -189,7 +189,7 @@ class NoteCardWidget extends StatelessWidget {
 
                 SizedBox(height: 1.5.h),
 
-                // Footer: Date de modification
+                // Footer: Date de création
                 Row(
                   children: [
                     Icon(
