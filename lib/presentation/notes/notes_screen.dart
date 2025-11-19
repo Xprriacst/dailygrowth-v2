@@ -290,18 +290,18 @@ class _NotesScreenState extends State<NotesScreen> {
 
   Widget _buildNoteCard(Note note) {
     debugPrint('🎨 Rendu carte: "${note.content}"');
-    
-    // Format date style Google Keep
+
+    // Format date style Google Keep - utiliser la date de création
     final now = DateTime.now();
-    final difference = now.difference(note.updatedAt);
+    final difference = now.difference(note.createdAt);
     String formattedDate;
-    
+
     if (difference.inDays == 0) {
-      formattedDate = '${note.updatedAt.hour.toString().padLeft(2, '0')}:${note.updatedAt.minute.toString().padLeft(2, '0')}';
+      formattedDate = '${note.createdAt.hour.toString().padLeft(2, '0')}:${note.createdAt.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays < 7) {
       formattedDate = '${difference.inDays}j';
     } else {
-      formattedDate = '${note.updatedAt.day}/${note.updatedAt.month}';
+      formattedDate = '${note.createdAt.day}/${note.createdAt.month}';
     }
 
     return GestureDetector(
