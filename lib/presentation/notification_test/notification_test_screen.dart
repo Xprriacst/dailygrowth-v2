@@ -91,14 +91,18 @@ class _NotificationTestScreenState extends State<NotificationTestScreen> {
           setState(() {
             _fcmToken = token;
           });
-          _addLog('✅ Token FCM récupéré: ${token.substring(0, 20)}...');
+          final tokenPreview = token.length > 20 ? token.substring(0, 20) : token;
+          _addLog('✅ Token FCM récupéré: $tokenPreview...');
         } else {
           _addLog('⚠️ Aucun token FCM trouvé, génération...');
           final newToken = await _webNotificationService!.generateFCMToken();
           setState(() {
             _fcmToken = newToken;
           });
-          _addLog('✅ Nouveau token généré: ${newToken?.substring(0, 20) ?? 'erreur'}...');
+          final tokenPreview = newToken != null && newToken.length > 20
+              ? newToken.substring(0, 20)
+              : (newToken ?? 'erreur');
+          _addLog('✅ Nouveau token généré: $tokenPreview...');
         }
       }
     } catch (e) {
