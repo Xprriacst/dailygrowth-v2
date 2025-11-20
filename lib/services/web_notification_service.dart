@@ -343,7 +343,7 @@ class WebNotificationService {
       }
       final isStandaloneMediaQuery = html.window.matchMedia('(display-mode: standalone)').matches;
       final isPWA = isStandaloneFlag || isStandaloneMediaQuery;
-      debugPrint('🏠 navigator.standalone: $isStandalone');
+      debugPrint('🏠 navigator.standalone: $isStandaloneFlag');
       debugPrint('🏠 display-mode standalone: $isStandaloneMediaQuery');
       debugPrint('🏠 Detected PWA mode: $isPWA');
 
