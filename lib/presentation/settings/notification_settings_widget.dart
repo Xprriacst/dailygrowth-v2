@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_export.dart';
 import '../../services/notification_service.dart';
 import '../../services/user_service.dart';
+import '../../services/web_notification_service.dart';
 
 class NotificationSettingsWidget extends StatefulWidget {
   const NotificationSettingsWidget({Key? key}) : super(key: key);
@@ -68,6 +70,23 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
       if (user != null) {
         final userId = user.id;
         final timeString = '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}:00';
+
+        if (_notificationsEnabled && kIsWeb) {
+          try {
+            await WebNotificationService().syncSubscriptionWithServer();
+          } catch (e) {
+            debugPrint('Web push subscription failed: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('❌ Impossible d\'activer les notifications web. Réessayez après avoir autorisé le navigateur.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+        }
         
         await _notificationService.updateNotificationSettings(
           userId: userId,

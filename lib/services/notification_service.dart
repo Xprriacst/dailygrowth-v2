@@ -12,6 +12,7 @@ import './quote_service.dart';
 import './user_service.dart';
 import './web_notification_service.dart';
 import './simple_web_notification_service.dart';
+import './ios_push_notification_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -42,6 +43,8 @@ class NotificationService {
       WebNotificationService();
   final SimpleWebNotificationService _simpleWebNotificationService =
       SimpleWebNotificationService.instance;
+  final IOSPushNotificationService _iosPushNotificationService =
+      IOSPushNotificationService();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -83,6 +86,15 @@ class NotificationService {
         debugPrint('⚠️ Simple web notifications failed, trying legacy: $e');
         // Fallback vers l'ancien service si nécessaire
         await _webNotificationService.initialize();
+      }
+    }
+
+    // Initialize iOS push notifications for iOS native platform
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        await _iosPushNotificationService.initialize();
+      } catch (e) {
+        debugPrint('⚠️ iOS push notifications not available: $e');
       }
     }
 
@@ -364,10 +376,12 @@ class NotificationService {
     try {
       final client = await SupabaseService().client;
 
-      // Get FCM token if notifications are enabled and we're on web
+      // Get FCM token if notifications are enabled
       String? fcmToken;
       final timezoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
+      
       if (notificationsEnabled && kIsWeb) {
+        // Web platform: get FCM token from WebNotificationService
         try {
           final webNotificationService = WebNotificationService();
           fcmToken = await webNotificationService.getFCMToken();
@@ -380,7 +394,7 @@ class NotificationService {
 
           if (fcmToken != null && fcmToken.isNotEmpty) {
             debugPrint(
-                '📱 FCM Token récupéré: ${fcmToken.substring(0, 20)}...');
+                '📱 FCM Token récupéré (Web): ${fcmToken.substring(0, 20)}...');
             await webNotificationService.sendMessageToServiceWorker({
               'type': 'FCM_TOKEN',
               'token': fcmToken,
@@ -390,7 +404,32 @@ class NotificationService {
                 '⚠️ Impossible de récupérer ou générer un token FCM pour le web');
           }
         } catch (e) {
-          debugPrint('⚠️ Erreur récupération token FCM: $e');
+          debugPrint('⚠️ Erreur récupération token FCM (Web): $e');
+        }
+      } else if (notificationsEnabled && Platform.isIOS && !kIsWeb) {
+        // iOS native platform: get FCM token from IOSPushNotificationService
+        try {
+          fcmToken = await _iosPushNotificationService.getFCMToken();
+
+          if (fcmToken == null || fcmToken.isEmpty) {
+            debugPrint(
+                '🔄 Aucun token FCM iOS, tentative de récupération...');
+            // Ensure service is initialized
+            if (!_iosPushNotificationService.isInitialized) {
+              await _iosPushNotificationService.initialize();
+            }
+            fcmToken = await _iosPushNotificationService.getFCMToken();
+          }
+
+          if (fcmToken != null && fcmToken.isNotEmpty) {
+            debugPrint(
+                '📱 FCM Token récupéré (iOS): ${fcmToken.substring(0, 20)}...');
+          } else {
+            debugPrint(
+                '⚠️ Impossible de récupérer un token FCM pour iOS');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Erreur récupération token FCM (iOS): $e');
         }
       }
 
