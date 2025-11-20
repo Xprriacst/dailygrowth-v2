@@ -334,9 +334,15 @@ class WebNotificationService {
       debugPrint('🧭 Detected iOS via userAgent: $isIOS');
 
       // Check standalone mode (PWA)
-      final isStandalone = html.window.navigator.standalone ?? false;
+      bool isStandaloneFlag = false;
+      try {
+        isStandaloneFlag = js_util.hasProperty(html.window.navigator, 'standalone') &&
+            js_util.getProperty(html.window.navigator, 'standalone') == true;
+      } catch (_) {
+        isStandaloneFlag = false;
+      }
       final isStandaloneMediaQuery = html.window.matchMedia('(display-mode: standalone)').matches;
-      final isPWA = isStandalone || isStandaloneMediaQuery;
+      final isPWA = isStandaloneFlag || isStandaloneMediaQuery;
       debugPrint('🏠 navigator.standalone: $isStandalone');
       debugPrint('🏠 display-mode standalone: $isStandaloneMediaQuery');
       debugPrint('🏠 Detected PWA mode: $isPWA');
