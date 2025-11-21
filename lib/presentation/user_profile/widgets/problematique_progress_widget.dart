@@ -107,13 +107,6 @@ class _ProblematiqueProgressWidgetState
               color: AppTheme.lightTheme.colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: 1.h),
-          Text(
-            'Objectif : 50 défis par problématique',
-            style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
-            ),
-          ),
           SizedBox(height: 2.h),
           ..._progressData.entries.map((entry) {
             return _buildProgressItem(
