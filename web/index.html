@@ -40,10 +40,6 @@
   <title>ChallengeMe</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
-  </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   
@@ -212,8 +208,9 @@
 
       _flutter.loader.loadEntrypoint({
         entrypointUrl: `main.dart.js?v=${versionToken}`,
+        // Désactiver le Service Worker par défaut de Flutter car nous utilisons sw.js personnalisé
         serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
+          serviceWorkerVersion: null,
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
