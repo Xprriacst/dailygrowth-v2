@@ -23,6 +23,7 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isTesting = false;
 
   @override
   void initState() {
@@ -118,6 +119,56 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
       setState(() {
         _isSaving = false;
       });
+    }
+  }
+
+  Future<void> _sendTestNotification() async {
+    if (_isTesting) return;
+
+    setState(() {
+      _isTesting = true;
+    });
+
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Vous devez être connecté pour tester les notifications.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      await _notificationService.sendWebPushTestNotification(userId: user.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notification de test envoyée. Vérifiez vos notifications.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error sending test notification: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible d\'envoyer la notification de test.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTesting = false;
+        });
+      }
     }
   }
 
@@ -395,8 +446,37 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
               ),
             ),
             
+            SizedBox(height: 1.5.h),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed:
+                    _isSaving || _isTesting ? null : _sendTestNotification,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor:
+                      Theme.of(context).colorScheme.primary,
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 1.8.h),
+                ),
+                child: _isTesting
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      )
+                    : const Text('Envoyer une notification de test'),
+              ),
+            ),
+
             SizedBox(height: 2.h),
-            
             
             // Info text
             Container(

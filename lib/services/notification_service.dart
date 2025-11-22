@@ -470,6 +470,40 @@ class NotificationService {
     }
   }
 
+  Future<void> sendWebPushTestNotification({String? userId}) async {
+    try {
+      if (!kIsWeb) {
+        await sendInstantNotification(
+          title: 'Test ChallengeMe',
+          body: 'Notification de test envoyée depuis les réglages.',
+        );
+        return;
+      }
+
+      final client = await SupabaseService().client;
+      final currentUser = client.auth.currentUser;
+      final targetUserId = userId ?? currentUser?.id;
+
+      if (targetUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      await client.functions.invoke('send-webpush-notification', body: {
+        'user_id': targetUserId,
+        'title': 'Test ChallengeMe',
+        'body': 'Notification de test ChallengeMe (Web Push).',
+        'data': {
+          'type': 'test_notification',
+        },
+      });
+
+      debugPrint('✅ Web push test notification triggered for user $targetUserId');
+    } catch (e) {
+      debugPrint('❌ Failed to send web push test notification: $e');
+      rethrow;
+    }
+  }
+
   // Get user notification settings
   Future<Map<String, dynamic>?> getUserNotificationSettings(
       String userId) async {
