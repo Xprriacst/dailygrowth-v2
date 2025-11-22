@@ -56,14 +56,6 @@
     echo "// Production env.js (empty - values injected in index.html)" > build/web/env.js
     echo "console.log('[env.js] Environment variables loaded from window.ENV');" >> build/web/env.js
 
-    # Step 7b: Ensure manifest.json is present in build output
-    if [ ! -f "build/web/manifest.json" ]; then
-      echo "⚠️ manifest.json missing in build, copying from web/"
-      cp web/manifest.json build/web/manifest.json
-    else
-      echo "✅ manifest.json is present in build output"
-    fi
-
     # Step 8: Verify replacement
     echo "🔍 Verifying version replacement..."
     if grep -q "__APP_BUILD_VERSION__" build/web/index.html; then
@@ -96,6 +88,11 @@
 [[redirects]]
   from = "/icons/*"
   to = "/icons/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/flutter_service_worker.js"
+  to = "/flutter_service_worker.js"
   status = 200
 
 [[redirects]]

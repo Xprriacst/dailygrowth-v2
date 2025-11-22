@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'dart:js' as js;
 import 'dart:js_util' as js_util;
 import 'dart:html' as html;
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'supabase_service.dart';
 
 // Note: This service only works on web platform
 // All methods include kIsWeb guards to prevent errors on other platforms
@@ -16,6 +19,7 @@ class WebNotificationService {
   bool _isInitialized = false;
   String? _permission;
   String? _fcmToken;
+  final SupabaseService _supabaseService = SupabaseService();
 
   // Firebase configuration (matching service worker)
   static const firebaseConfig = {
@@ -80,6 +84,166 @@ class WebNotificationService {
       debugPrint('✅ WebNotificationService initialized with Firebase FCM');
     } catch (e) {
       debugPrint('❌ Failed to initialize WebNotificationService: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _ensureWebPushSubscription({bool forceResubscribe = false}) async {
+    if (!kIsWeb) {
+      throw Exception('Web Push non disponible sur cette plateforme');
+    }
+
+    if (html.window.navigator.serviceWorker == null) {
+      throw Exception('Service Worker indisponible – impossible d\'activer les notifications');
+    }
+
+    final script = '''
+      (async function() {
+        try {
+          const forceResubscribe = ${forceResubscribe ? 'true' : 'false'};
+
+          if (!('serviceWorker' in navigator)) {
+            return { error: 'service-worker-unavailable' };
+          }
+
+          const registration = await navigator.serviceWorker.ready;
+          if (!registration.pushManager) {
+            return { error: 'push-manager-unavailable' };
+          }
+
+          const vapidKey = window.firebaseVapidKey || (window.ENV && window.ENV.FIREBASE_VAPID_KEY);
+          if (!vapidKey) {
+            return { error: 'missing-vapid-key' };
+          }
+
+          function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+              outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+          }
+
+          if (forceResubscribe) {
+            const existing = await registration.pushManager.getSubscription();
+            if (existing) {
+              try {
+                await existing.unsubscribe();
+              } catch (unsubscribeError) {
+                console.warn('⚠️ Unable to unsubscribe previous push registration', unsubscribeError);
+              }
+            }
+          }
+
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidKey)
+            });
+          }
+
+          const json = subscription.toJSON();
+          return {
+            endpoint: subscription.endpoint,
+            keys: json && json.keys ? json.keys : null,
+            expirationTime: subscription.expirationTime || null
+          };
+        } catch (error) {
+          return { error: error?.message || 'web-push-subscription-failed' };
+        }
+      })()
+    ''';
+
+    final jsResult = js.context.callMethod('eval', [script]);
+    dynamic resolved;
+    try {
+      resolved = await js_util.promiseToFuture(jsResult);
+    } catch (_) {
+      resolved = jsResult;
+    }
+
+    final dartified = js_util.dartify(resolved);
+    if (dartified is! Map) {
+      throw Exception('Réponse invalide lors de la création de l\'abonnement Web Push');
+    }
+
+    final result = Map<String, dynamic>.from(dartified);
+    if (result.containsKey('error') && result['error'] != null) {
+      throw Exception('Web Push indisponible: ${result['error']}');
+    }
+
+    return result;
+  }
+
+  String _detectWebPlatformLabel() {
+    if (!kIsWeb) return 'unknown';
+
+    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final isStandalone = () {
+      try {
+        return js_util.hasProperty(html.window.navigator, 'standalone') &&
+            js_util.getProperty(html.window.navigator, 'standalone') == true;
+      } catch (_) {
+        return false;
+      }
+    }();
+
+    if (userAgent.contains('iphone') || userAgent.contains('ipad') || userAgent.contains('ipod')) {
+      return isStandalone ? 'ios-pwa' : 'ios-browser';
+    }
+
+    if (userAgent.contains('android')) {
+      return isStandalone ? 'android-pwa' : 'android-browser';
+    }
+
+    if (userAgent.contains('macintosh')) {
+      return 'macos-browser';
+    }
+
+    if (userAgent.contains('windows')) {
+      return 'windows-browser';
+    }
+
+    return 'web';
+  }
+
+  Future<void> syncSubscriptionWithServer({bool forceResubscribe = false}) async {
+    if (!kIsWeb) return;
+
+    final subscription = await _ensureWebPushSubscription(forceResubscribe: forceResubscribe);
+    final endpoint = subscription['endpoint'] as String?;
+    final keys = subscription['keys'];
+
+    if (endpoint == null || keys == null) {
+      throw Exception('Impossible de récupérer un abonnement Web Push valide');
+    }
+
+    final client = await _supabaseService.client;
+    final currentUser = client.auth.currentUser;
+
+    if (currentUser == null) {
+      throw Exception('Utilisateur non connecté');
+    }
+
+    final payload = {
+      'user_id': currentUser.id,
+      'endpoint': endpoint,
+      'keys': keys,
+      'platform': _detectWebPlatformLabel(),
+    };
+
+    try {
+      await client
+          .from('web_push_subscriptions')
+          .upsert(payload, onConflict: 'endpoint')
+          .select()
+          .maybeSingle();
+      debugPrint('✅ Abonnement Web Push synchronisé pour ${currentUser.id}');
+    } catch (e) {
+      throw Exception('Impossible d\'enregistrer l\'abonnement Web Push: $e');
     }
   }
 
@@ -162,40 +326,149 @@ class WebNotificationService {
     }
 
     try {
-      debugPrint('🔔 Requesting web notification permission...');
+      debugPrint('🔔 Requesting notification permission...');
 
-      // Use actual Notification API
-      if (html.Notification.supported) {
-        var permission = await html.Notification.requestPermission();
-        _permission = permission;
+      // Detect iOS
+      final isIOS = html.window.navigator.userAgent.contains(RegExp(r'iPhone|iPad|iPod'));
+      debugPrint('🧭 User agent: ${html.window.navigator.userAgent}');
+      debugPrint('🧭 Detected iOS via userAgent: $isIOS');
+
+      // Check standalone mode (PWA)
+      bool isStandaloneFlag = false;
+      try {
+        isStandaloneFlag = js_util.hasProperty(html.window.navigator, 'standalone') &&
+            js_util.getProperty(html.window.navigator, 'standalone') == true;
+      } catch (_) {
+        isStandaloneFlag = false;
+      }
+      final isStandaloneMediaQuery = html.window.matchMedia('(display-mode: standalone)').matches;
+      final isPWA = isStandaloneFlag || isStandaloneMediaQuery;
+      debugPrint('🏠 navigator.standalone: $isStandaloneFlag');
+      debugPrint('🏠 display-mode standalone: $isStandaloneMediaQuery');
+      debugPrint('🏠 Detected PWA mode: $isPWA');
+
+      if (!html.Notification.supported) {
+        debugPrint('⚠️ Notifications not supported on this platform');
+        _permission = 'denied';
+        return 'denied';
+      }
+
+      // Check current permission first
+      final currentPermission = html.Notification.permission;
+      debugPrint('🔍 Current permission before request: $currentPermission');
+
+      if (currentPermission == 'granted') {
+        _permission = 'granted';
+        debugPrint('✅ Permission already granted, skipping request');
+
+        // Try to get FCM token
+        try {
+          _fcmToken = await _ensureFcmToken();
+          if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+            debugPrint('🔑 FCM Token: ${_fcmToken!.substring(0, 20)}...');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Could not get FCM token: $e');
+        }
+
+        return 'granted';
+      }
+
+      if (currentPermission == 'denied') {
+        _permission = 'denied';
+        debugPrint('❌ Permission previously denied by user');
+        return 'denied';
+      }
+
+      // Request permission - iOS Safari requires special handling
+      String? permission;
+
+      try {
+        debugPrint('🔔 Requesting notification permission...');
+
+        // Use JS interop for iOS compatibility
+        final result = js.context.callMethod('eval', ['''
+          (async function() {
+            try {
+              console.log('🔔 Requesting notification permission...');
+
+              if (!('Notification' in window)) {
+                console.log('❌ Notification API not available');
+                return 'denied';
+              }
+
+              if (typeof Notification.requestPermission !== 'function') {
+                console.log('❌ requestPermission not available');
+                return Notification.permission || 'denied';
+              }
+
+              // Try modern promise-based API
+              try {
+                const result = await Notification.requestPermission();
+                console.log('🔔 Permission result:', result);
+                return result;
+              } catch (e) {
+                console.log('⚠️ Modern API failed:', e);
+
+                // Fallback to callback-based API for older browsers/iOS
+                return new Promise((resolve) => {
+                  try {
+                    Notification.requestPermission(function(result) {
+                      console.log('🔔 Permission result (callback):', result);
+                      resolve(result);
+                    });
+                  } catch (callbackError) {
+                    console.log('❌ Callback API also failed:', callbackError);
+                    resolve('denied');
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('❌ Permission request error:', error);
+              return 'denied';
+            }
+          })()
+        ''']);
+
+        if (result != null) {
+          try {
+            final resolvedResult = await js_util.promiseToFuture(result);
+            permission = resolvedResult?.toString() ?? 'denied';
+          } catch (e) {
+            debugPrint('⚠️ Could not resolve promise: $e');
+            permission = result.toString();
+          }
+        } else {
+          permission = 'denied';
+        }
+
         debugPrint('🔔 Permission result: $permission');
+        _permission = permission;
 
-        // If permission granted, ensure we have a valid FCM token
+        // If granted, try to get FCM token
         if (permission == 'granted') {
           try {
             _fcmToken = await _ensureFcmToken();
             if (_fcmToken != null && _fcmToken!.isNotEmpty) {
-              debugPrint(
-                  '🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
-
-              // Send token to service worker
-              await sendMessageToServiceWorker(
-                  {'type': 'FCM_TOKEN', 'token': _fcmToken});
+              debugPrint('🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
+              await sendMessageToServiceWorker({'type': 'FCM_TOKEN', 'token': _fcmToken});
             } else {
               debugPrint('⚠️ Permission granted but no FCM token generated');
             }
           } catch (e) {
-            debugPrint('❌ Error ensuring FCM token after permission: $e');
+            debugPrint('❌ Error ensuring FCM token: $e');
           }
         }
 
-        return permission;
-      } else {
-        debugPrint('⚠️ Notifications not supported');
+        return permission ?? 'denied';
+      } catch (e) {
+        debugPrint('❌ requestPermission invocation failed: $e');
+        _permission = 'denied';
         return 'denied';
       }
     } catch (e) {
-      debugPrint('❌ Error requesting notification permission: $e');
+      debugPrint('❌ Error in requestPermission: $e');
+      _permission = 'denied';
       return 'denied';
     }
   }
