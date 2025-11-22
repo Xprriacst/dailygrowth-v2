@@ -166,8 +166,8 @@ class SimpleWebNotificationService {
       try {
         final permissionStatus = await js_util.promiseToFuture(
           js_util.callMethod(
-            js_util.callMethod(js.context['navigator'], 'permissions', []), 
-            'query', 
+            js_util.getProperty(js.context['navigator'], 'permissions'),
+            'query',
             [js_util.jsify({'name': 'notifications'})]
           )
         );
@@ -177,7 +177,7 @@ class SimpleWebNotificationService {
       } catch (e) {
         debugPrint('⚠️ Modern API failed, trying legacy: $e');
         // Fallback vers l'ancienne méthode
-        final permission = js_util.callMethod(js.context['Notification'], 'permission', []);
+        final permission = js_util.getProperty(js.context['Notification'], 'permission');
         debugPrint('✅ Got permission via legacy API: $permission');
         return permission.toString();
       }
@@ -218,8 +218,8 @@ class SimpleWebNotificationService {
         // Essayer la nouvelle méthode (iOS 15+)
         final permissionStatus = await js_util.promiseToFuture(
           js_util.callMethod(
-            js_util.callMethod(js.context['navigator'], 'permissions', []), 
-            'request', 
+            js_util.getProperty(js.context['navigator'], 'permissions'),
+            'request',
             [js_util.jsify({'name': 'notifications'})]
           )
         );
