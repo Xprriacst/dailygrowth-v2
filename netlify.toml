@@ -48,6 +48,7 @@
     sed -i "s|NETLIFY_SUPABASE_URL_PLACEHOLDER|$SUPABASE_URL|g" build/web/index.html
     sed -i "s|NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER|$SUPABASE_ANON_KEY|g" build/web/index.html
     sed -i "s|NETLIFY_FIREBASE_VAPID_KEY_PLACEHOLDER|$FIREBASE_VAPID_KEY|g" build/web/index.html
+    sed -i "s|NETLIFY_WEB_PUSH_VAPID_PUBLIC_KEY_PLACEHOLDER|$WEB_PUSH_VAPID_PUBLIC_KEY|g" build/web/index.html
     sed -i "s|__APP_BUILD_VERSION__|$APP_BUILD_VERSION|g" build/web/index.html
     sed -i "s|__SW_VERSION__|$APP_BUILD_VERSION|g" build/web/sw.js
 
@@ -178,6 +179,8 @@
   SUPABASE_URL = "https://hekdcsulxrukfturuone.supabase.co"
   SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhla2Rjc3VseHJ1a2Z0dXJ1b25lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTEyMDQsImV4cCI6MjA2OTYyNzIwNH0.xLlrQwSL44QpYdeMPF1PIt3DZoaZ6Cjs2OIvEX58CnY"
   FIREBASE_VAPID_KEY = "BJe790aSYySweHjaldtDhKaWTx5BBQ0dskvXly3urJWFnFifeoWY1EA8wJnDvyUhIu_s_AZODY9ucqBi0FgMxXs"
+  # Clé publique VAPID pour Web Push iOS PWA (différente de Firebase VAPID)
+  WEB_PUSH_VAPID_PUBLIC_KEY = "BDoQsFQp4iutcbtRxpZRIYZp6DyZpR0xF0ol9S-r-2uUhzu2iQTxVOH1oByc0WzQl8ZkdslbfpWZ4MSlrJrebko"
 
 # Headers de sécurité pour l'application web
 [[headers]]

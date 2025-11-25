@@ -110,10 +110,26 @@ class WebNotificationService {
             return { error: 'push-manager-unavailable' };
           }
 
-          const vapidKey = window.firebaseVapidKey || (window.ENV && window.ENV.FIREBASE_VAPID_KEY);
+          // Priorité: Web Push VAPID pour iOS, sinon Firebase VAPID
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          let vapidKey = null;
+          
+          if (isIOS) {
+            // iOS PWA utilise Web Push standard, pas FCM
+            vapidKey = window.WEB_PUSH_VAPID_PUBLIC_KEY || (window.ENV && window.ENV.WEB_PUSH_VAPID_PUBLIC_KEY);
+            console.log('📱 iOS détecté - utilisation de la clé Web Push VAPID');
+          }
+          
+          // Fallback sur Firebase VAPID pour autres plateformes
+          if (!vapidKey) {
+            vapidKey = window.firebaseVapidKey || (window.ENV && window.ENV.FIREBASE_VAPID_KEY);
+          }
+          
           if (!vapidKey) {
             return { error: 'missing-vapid-key' };
           }
+          
+          console.log('🔑 Utilisation VAPID:', vapidKey.substring(0, 20) + '...');
 
           function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -445,18 +461,41 @@ class WebNotificationService {
         debugPrint('🔔 Permission result: $permission');
         _permission = permission;
 
-        // If granted, try to get FCM token
+        // If granted, setup push notifications
         if (permission == 'granted') {
-          try {
-            _fcmToken = await _ensureFcmToken();
-            if (_fcmToken != null && _fcmToken!.isNotEmpty) {
-              debugPrint('🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
-              await sendMessageToServiceWorker({'type': 'FCM_TOKEN', 'token': _fcmToken});
-            } else {
-              debugPrint('⚠️ Permission granted but no FCM token generated');
+          // Detect iOS to use Web Push instead of FCM
+          final isIOSDevice = html.window.navigator.userAgent.contains(RegExp(r'iPhone|iPad|iPod'));
+          
+          if (isIOSDevice) {
+            // iOS PWA: Use standard Web Push with VAPID
+            debugPrint('📱 iOS PWA: Synchronisation Web Push...');
+            try {
+              await syncSubscriptionWithServer();
+              debugPrint('✅ Web Push subscription synchronized for iOS');
+            } catch (e) {
+              debugPrint('❌ Error syncing Web Push subscription: $e');
             }
-          } catch (e) {
-            debugPrint('❌ Error ensuring FCM token: $e');
+          } else {
+            // Other platforms: Try FCM first, fallback to Web Push
+            try {
+              _fcmToken = await _ensureFcmToken();
+              if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+                debugPrint('🔑 FCM Token obtained: ${_fcmToken!.substring(0, 20)}...');
+                await sendMessageToServiceWorker({'type': 'FCM_TOKEN', 'token': _fcmToken});
+              } else {
+                debugPrint('⚠️ FCM token not available, trying Web Push fallback...');
+                await syncSubscriptionWithServer();
+                debugPrint('✅ Web Push subscription synchronized as fallback');
+              }
+            } catch (e) {
+              debugPrint('⚠️ FCM failed, trying Web Push: $e');
+              try {
+                await syncSubscriptionWithServer();
+                debugPrint('✅ Web Push subscription synchronized as fallback');
+              } catch (webPushError) {
+                debugPrint('❌ Both FCM and Web Push failed: $webPushError');
+              }
+            }
           }
         }
 
@@ -517,7 +556,31 @@ class WebNotificationService {
 
     try {
       debugPrint('📱 Showing web notification: $title - $body');
-      // On web platform, would show actual notification
+      
+      // Utiliser le service worker pour afficher la notification
+      if (html.window.navigator.serviceWorker != null) {
+        final registration = await html.window.navigator.serviceWorker!.ready;
+        final controller = registration.active;
+        
+        if (controller != null) {
+          final message = js_util.jsify({
+            'type': 'SHOW_NOTIFICATION',
+            'title': title,
+            'body': body,
+            'icon': icon ?? '/icons/Icon-192.png',
+            'tag': tag ?? 'challengeme-notification',
+            'data': data ?? {},
+          });
+          controller.postMessage(message);
+          debugPrint('✅ Notification envoyée au service worker');
+        } else {
+          // Fallback: utiliser l'API Notification directement
+          if (html.Notification.permission == 'granted') {
+            html.Notification(title, body: body, icon: icon ?? '/icons/Icon-192.png', tag: tag);
+            debugPrint('✅ Notification affichée via API directe');
+          }
+        }
+      }
     } catch (e) {
       debugPrint('❌ Error showing notification: $e');
     }

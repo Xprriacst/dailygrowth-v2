@@ -1,7 +1,7 @@
 {
     "name": "ChallengeMe",
     "short_name": "ChallengeMe",
-    "start_url": "./",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#47C5FB",
@@ -15,11 +15,8 @@
     ],
     "screenshots": [],
     "lang": "fr",
-    "scope": "./",
-    "id": "dailygrowth-pwa",
-    "permissions": [
-        "notifications"
-    ],
+    "scope": "/",
+    "id": "/",
     "icons": [
         {
             "src": "icons/Icon-192.png",

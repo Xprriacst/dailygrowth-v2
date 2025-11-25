@@ -1,87 +1,113 @@
-// Service Worker simplifié pour DailyGrowth - basé sur la version testée et fonctionnelle
-const CACHE_NAME = 'dailygrowth-notifications-v1';
+// Service Worker pour ChallengeMe PWA - Optimisé pour iOS Safari 16.4+
+// IMPORTANT: iOS Safari est très strict sur le timing des notifications push
+const CACHE_NAME = 'challengeme-v2';
+const SW_VERSION = '__SW_VERSION__';
+
+// Détecter iOS
+const isIOS = () => {
+  return /iPad|iPhone|iPod/.test(self.navigator?.userAgent || '');
+};
+
+console.log('🚀 ChallengeMe SW loading, version:', SW_VERSION, 'iOS:', isIOS());
 
 // Installation du service worker
 self.addEventListener('install', (event) => {
-  console.log('🔧 DailyGrowth SW installé');
+  console.log('🔧 ChallengeMe SW installé, version:', SW_VERSION);
+  // Skip waiting pour activer immédiatement le nouveau SW
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('📦 Cache ouvert');
+        // Cache minimal pour PWA - éviter de bloquer l'installation
         return cache.addAll([
           '/',
           '/index.html',
-          '/manifest.json',
-          '/main.dart.js',
-          '/flutter.js',
-          '/sw.js'
-        ]);
+          '/manifest.json'
+        ]).catch(err => {
+          console.warn('⚠️ Cache addAll failed (non-fatal):', err);
+        });
       })
   );
 });
 
 // Activation du service worker
 self.addEventListener('activate', (event) => {
-  console.log('🔄 DailyGrowth SW activé');
+  console.log('🔄 ChallengeMe SW activé, version:', SW_VERSION);
+  // Prendre le contrôle immédiatement
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ Suppression ancien cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('🗑️ Suppression ancien cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    ])
   );
 });
 
-// Gestion des push notifications
+// Gestion des push notifications - CRITIQUE POUR iOS
+// iOS Safari révoque les permissions si on ne montre pas la notification IMMÉDIATEMENT
 self.addEventListener('push', (event) => {
-  console.log('📨 Push notification reçu:', event);
+  console.log('📨 Push notification reçu sur', isIOS() ? 'iOS' : 'autre plateforme');
   
+  // Préparer les données par défaut AVANT tout traitement
   let notificationData = {
-    title: '🔔 DailyGrowth',
-    body: 'Vous avez une nouvelle notification !',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: 'dailygrowth-push',
+    title: '🎯 ChallengeMe',
+    body: 'Votre défi vous attend !',
+    icon: '/icons/Icon-192.png',
+    badge: '/icons/Icon-192.png',
+    tag: 'challengeme-push-' + Date.now(),
+    renotify: true,
+    requireInteraction: !isIOS(), // iOS gère différemment
     data: {
       url: '/',
       timestamp: Date.now()
-    },
-    actions: [
-      {
-        action: 'open',
-        title: 'Ouvrir',
-        icon: '/icon-192.png'
-      },
-      {
-        action: 'dismiss',
-        title: 'Ignorer',
-        icon: '/icon-192.png'
-      }
-    ]
+    }
   };
 
-  // Essayer de parser les données du push
+  // Essayer de parser les données du push - avec gestion d'erreur robuste
   if (event.data) {
     try {
       const pushData = event.data.json();
       console.log('📋 Données push reçues:', pushData);
       
-      notificationData = {
-        ...notificationData,
-        ...pushData
-      };
+      // Fusionner avec les données par défaut
+      if (pushData.title) notificationData.title = pushData.title;
+      if (pushData.body) notificationData.body = pushData.body;
+      if (pushData.icon) notificationData.icon = pushData.icon;
+      if (pushData.url) notificationData.data.url = pushData.url;
+      if (pushData.tag) notificationData.tag = pushData.tag;
+      if (pushData.data) notificationData.data = { ...notificationData.data, ...pushData.data };
     } catch (e) {
-      console.warn('⚠️ Erreur parsing push data:', e);
+      console.warn('⚠️ Erreur parsing push data (utilisation des valeurs par défaut):', e);
+      // On continue avec les valeurs par défaut - NE PAS bloquer la notification
     }
   }
 
+  // CRITIQUE: Afficher la notification IMMÉDIATEMENT dans waitUntil
+  // Ne pas faire d'opérations asynchrones lourdes avant showNotification sur iOS
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      renotify: notificationData.renotify,
+      requireInteraction: notificationData.requireInteraction,
+      data: notificationData.data
+    }).then(() => {
+      console.log('✅ Notification affichée avec succès');
+    }).catch(err => {
+      console.error('❌ Erreur affichage notification:', err);
+    })
   );
 });
 
@@ -124,19 +150,26 @@ self.addEventListener('notificationclose', (event) => {
   console.log('🔕 Notification fermée:', event.notification.data);
 });
 
-// Écouter les messages du client (pour les notifications programmées)
+// Écouter les messages du client
 self.addEventListener('message', (event) => {
   console.log('💬 Message reçu du client:', event.data);
   
+  // Demande de skip waiting (mise à jour du SW)
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('🔄 Skip waiting demandé');
+    self.skipWaiting();
+  }
+  
+  // Affichage d'une notification depuis le client
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const notificationData = {
-      title: event.data.title || '🔔 DailyGrowth',
-      body: event.data.body || 'Message de DailyGrowth',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: event.data.tag || 'dailygrowth-message',
+      title: event.data.title || '🎯 ChallengeMe',
+      body: event.data.body || 'Message de ChallengeMe',
+      icon: '/icons/Icon-192.png',
+      badge: '/icons/Icon-192.png',
+      tag: event.data.tag || 'challengeme-message',
       data: event.data.data || {},
-      requireInteraction: event.data.requireInteraction || false
+      requireInteraction: !isIOS()
     };
     
     event.waitUntil(
@@ -144,20 +177,26 @@ self.addEventListener('message', (event) => {
     );
   }
   
-  if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
-    console.log('⏰ Notification programmée reçue:', event.data);
-    // Ici on pourrait implémenter une logique de programmation simple
-    // Pour l'instant on affiche juste un message de confirmation
+  // Test de notification
+  if (event.data && event.data.type === 'TEST_NOTIFICATION') {
+    console.log('🧪 Test notification demandé');
     const notificationData = {
-      title: '⏰ DailyGrowth',
-      body: `Notification programmée pour ${event.data.time}`,
-      icon: '/icon-192.png',
-      tag: 'scheduled-confirmation',
-      data: { scheduled: true, time: event.data.time }
+      title: '🧪 Test ChallengeMe',
+      body: 'Les notifications push fonctionnent sur votre appareil !',
+      icon: '/icons/Icon-192.png',
+      badge: '/icons/Icon-192.png',
+      tag: 'test-' + Date.now(),
+      data: { test: true, timestamp: Date.now() }
     };
     
     event.waitUntil(
       self.registration.showNotification(notificationData.title, notificationData)
+        .then(() => {
+          // Répondre au client
+          if (event.source) {
+            event.source.postMessage({ type: 'TEST_SUCCESS', timestamp: Date.now() });
+          }
+        })
     );
   }
 });
