@@ -1,0 +1,389 @@
+{
+  "name": "ChallengeMe - Génération Micro-Défis v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e4b66ea3-6195-4b11-89fe-85d05d23cae9",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "c3613fee-ad8f-4011-9b10-b7e6276e723f",
+      "name": "Webhook Reception",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-2400, 0],
+      "webhookId": "e4b66ea3-6195-4b11-89fe-85d05d23cae9"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse les données du formulaire HTML avec progression détaillée\nconst body = $input.first().json.body;\nlet problematique, nombreDefis, progression_par_problematique, niveau_actuel, userId;\n\n// Si les données arrivent en x-www-form-urlencoded\nif (typeof body === 'string') {\n  const params = new URLSearchParams(body);\n  problematique = params.get('Je veux...') || '';\n  nombreDefis = parseInt(params.get('Combien de défi à tu relevé') || '0');\n  progression_par_problematique = params.get('progression_par_problematique') || '{}';\n  niveau_actuel = params.get('niveau_actuel') || '';\n  userId = params.get('user_id') || '';\n} else {\n  // Si les données arrivent en JSON\n  problematique = body['Je veux...'] || body.problematique || '';\n  nombreDefis = parseInt(body['Combien de défi à tu relevé'] || body.nombreDefis || '0');\n  progression_par_problematique = body.progression_par_problematique || '{}';\n  niveau_actuel = body.niveau_actuel || '';\n  userId = body.user_id || '';\n}\n\n// Parser la progression si c'est une string\nlet progressionData = {};\ntry {\n  if (typeof progression_par_problematique === 'string' && progression_par_problematique.trim()) {\n    progressionData = JSON.parse(progression_par_problematique);\n  }\n} catch (e) {\n  console.log('Erreur parsing progression:', e.message);\n  progressionData = {};\n}\n\n// Nettoyer la problématique (enlever \"Je veux travailler sur: \")\nlet cleanProblematique = problematique\n  .replace(/^Je veux travailler sur:\\s*/i, '')\n  .replace(/^Je veux\\s*/i, '')\n  .trim();\n\n// Le numéro du prochain défi\nconst numeroDefi = nombreDefis + 1;\n\n// Déterminer le niveau basé sur le numéro du défi\nlet niveau;\nif (numeroDefi <= 10) {\n  niveau = 'débutant';\n} else if (numeroDefi <= 20) {\n  niveau = 'intermédiaire';\n} else if (numeroDefi <= 30) {\n  niveau = 'avancé';\n} else {\n  niveau = 'expert';\n}\n\n// Utiliser le niveau envoyé si disponible\nif (niveau_actuel && niveau_actuel.trim()) {\n  niveau = niveau_actuel;\n}\n\n// Déterminer si on doit générer via IA (défis 31-50) ou récupérer du CSV (1-30)\nconst useAI = numeroDefi > 30;\n\nreturn {\n  problematique: cleanProblematique,\n  nombreDefis,\n  numeroDefi,\n  niveau,\n  useAI,\n  progression_par_problematique: progressionData,\n  userId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "eb4bd4a9-60f1-4a29-9eb9-2d16392bae36",
+      "name": "Parse Input Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-2176, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.useAI }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "router-csv-vs-ai",
+      "name": "Router CSV vs AI",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-1952, 0]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bX1qAIwkGqfBDdT2XfXvBKVJvHJNgDiao3ZSYtIpH8c",
+          "mode": "list",
+          "cachedResultName": "ChallengeMe (Dailygrowth)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bX1qAIwkGqfBDdT2XfXvBKVJvHJNgDiao3ZSYtIpH8c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Micro-Défis",
+          "mode": "list",
+          "cachedResultName": "Micro-Défis"
+        },
+        "options": {}
+      },
+      "id": "get-csv-challenges",
+      "name": "Get CSV Challenges",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [-1728, -160],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RTdk2CC4XVeQOgqd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chercher le défi correspondant dans les données du CSV\nconst csvData = $('Get CSV Challenges').all();\nconst inputData = $('Parse Input Data').first().json;\n\nconst problematique = inputData.problematique.toLowerCase();\nconst numeroDefi = inputData.numeroDefi;\n\nconsole.log(`Recherche: problématique=\"${problematique}\", numéro=${numeroDefi}`);\nconsole.log(`Nombre de lignes CSV: ${csvData.length}`);\n\n// Chercher le défi correspondant\nlet defiTrouve = null;\n\nfor (const row of csvData) {\n  const rowData = row.json;\n  const csvProblematique = (rowData.problematique || '').toLowerCase();\n  const csvNumero = parseInt(rowData.defi_numero || '0');\n  \n  // Vérifier si la problématique correspond (recherche partielle)\n  const matchProblematique = csvProblematique.includes(problematique) || \n                              problematique.includes(csvProblematique.replace(/[^a-zA-Zàâäéèêëïîôùûüç\\s]/g, '').trim());\n  \n  if (matchProblematique && csvNumero === numeroDefi) {\n    defiTrouve = {\n      numero: csvNumero,\n      nom: `Défi ${csvNumero}`,\n      mission: rowData.defi_mission || 'Mission non définie',\n      pourquoi: 'Ce défi fait partie de ta progression personnalisée.',\n      bonus: null,\n      duree_estimee: rowData['Durée défi min'] || '',\n      difficulte: parseInt(rowData['dificulté defi 1 à 3'] || '1')\n    };\n    console.log(`✅ Défi trouvé: ${defiTrouve.mission.substring(0, 50)}...`);\n    break;\n  }\n}\n\n// Si pas trouvé, essayer une recherche plus souple\nif (!defiTrouve) {\n  console.log('Recherche souple...');\n  \n  // Extraire les mots clés de la problématique\n  const keywords = problematique\n    .replace(/[^a-zA-Zàâäéèêëïîôùûüç\\s]/g, '')\n    .split(' ')\n    .filter(w => w.length > 3);\n  \n  for (const row of csvData) {\n    const rowData = row.json;\n    const csvProblematique = (rowData.problematique || '').toLowerCase();\n    const csvNumero = parseInt(rowData.defi_numero || '0');\n    \n    // Vérifier si au moins un mot clé correspond\n    const hasKeyword = keywords.some(kw => csvProblematique.includes(kw));\n    \n    if (hasKeyword && csvNumero === numeroDefi) {\n      defiTrouve = {\n        numero: csvNumero,\n        nom: `Défi ${csvNumero}`,\n        mission: rowData.defi_mission || 'Mission non définie',\n        pourquoi: 'Ce défi fait partie de ta progression personnalisée.',\n        bonus: null,\n        duree_estimee: rowData['Durée défi min'] || '',\n        difficulte: parseInt(rowData['dificulté defi 1 à 3'] || '1')\n      };\n      console.log(`✅ Défi trouvé (recherche souple): ${defiTrouve.mission.substring(0, 50)}...`);\n      break;\n    }\n  }\n}\n\n// Si toujours pas trouvé, générer un fallback\nif (!defiTrouve) {\n  console.log('❌ Défi non trouvé, utilisation du fallback');\n  \n  let niveau = inputData.niveau;\n  \n  if (niveau === 'débutant') {\n    defiTrouve = {\n      numero: numeroDefi,\n      nom: 'Observation du jour',\n      mission: `Prends un moment aujourd'hui pour observer une situation liée à ta problématique (${inputData.problematique}) et note ce que tu ressens.`,\n      pourquoi: \"L'observation est le premier pas vers le changement.\",\n      bonus: null,\n      duree_estimee: '10',\n      difficulte: 1\n    };\n  } else if (niveau === 'intermédiaire') {\n    defiTrouve = {\n      numero: numeroDefi,\n      nom: 'Action progressive',\n      mission: `Fais une petite action concrète aujourd'hui pour progresser sur ta problématique (${inputData.problematique}).`,\n      pourquoi: 'Les petites actions créent une dynamique positive.',\n      bonus: 'Note tes sensations avant et après',\n      duree_estimee: '15',\n      difficulte: 2\n    };\n  } else {\n    defiTrouve = {\n      numero: numeroDefi,\n      nom: 'Défi challenging',\n      mission: `Sors de ta zone de confort avec une action significative liée à ta problématique (${inputData.problematique}).`,\n      pourquoi: 'La croissance se produit en dehors de la zone de confort.',\n      bonus: 'Partage ton expérience avec quelqu\\'un',\n      duree_estimee: '30',\n      difficulte: 3\n    };\n  }\n}\n\nreturn {\n  problematique: inputData.problematique,\n  niveau_detecte: inputData.niveau,\n  source: 'csv',\n  defis: [defiTrouve]\n};"
+      },
+      "id": "find-csv-challenge",
+      "name": "Find CSV Challenge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1504, -160]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1bX1qAIwkGqfBDdT2XfXvBKVJvHJNgDiao3ZSYtIpH8c",
+          "mode": "list",
+          "cachedResultName": "ChallengeMe (Dailygrowth)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bX1qAIwkGqfBDdT2XfXvBKVJvHJNgDiao3ZSYtIpH8c/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 77179658,
+          "mode": "list",
+          "cachedResultName": "Prompt Expert",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bX1qAIwkGqfBDdT2XfXvBKVJvHJNgDiao3ZSYtIpH8c/edit#gid=77179658"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange",
+              "firstDataRow": 1
+            }
+          }
+        }
+      },
+      "id": "get-prompt-expert",
+      "name": "Get Prompt Expert",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [-1728, 160],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RTdk2CC4XVeQOgqd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Créer le prompt final pour les défis expert (31-50)\nconst sheetsData = $('Get Prompt Expert').first().json;\nconst inputData = $('Parse Input Data').first().json;\n\n// Extraire le prompt depuis le format complexe de Google Sheets\nlet promptTemplate;\nif (sheetsData && typeof sheetsData === 'object') {\n  const keys = Object.keys(sheetsData);\n  const promptKey = keys.find(key => key !== 'row_number');\n  promptTemplate = sheetsData[promptKey];\n} else {\n  promptTemplate = 'Génère un défi expert pour la problématique.';\n}\n\n// Construire le contexte de progression\nlet progressionContext = '';\nif (inputData.progression_par_problematique && Object.keys(inputData.progression_par_problematique).length > 0) {\n  progressionContext = `\\n\\nPROGRESSION DÉTAILLÉE PAR PROBLÉMATIQUE:\\n`;\n  for (const [prob, data] of Object.entries(inputData.progression_par_problematique)) {\n    progressionContext += `- ${prob}: ${data.completed || 0} défis complétés (${data.percentage || 0}%)\\n`;\n  }\n}\n\n// Remplacer les variables dans le prompt\nlet finalPrompt = promptTemplate\n  .replace(/\\{\\{ \\$json\\.problematique \\}\\}/g, inputData.problematique)\n  .replace(/\\{\\{ \\$json\\.nombreDefis \\}\\}/g, inputData.nombreDefis)\n  .replace(/\\{\\{ \\$json\\.numeroDefi \\}\\}/g, inputData.numeroDefi)\n  .replace(/\\{\\{ \\$json\\.niveau \\}\\}/g, inputData.niveau);\n\n// Ajouter le contexte de progression\nfinalPrompt += progressionContext;\n\nreturn {\n  chatInput: finalPrompt,\n  inputData: inputData\n};"
+      },
+      "id": "create-expert-prompt",
+      "name": "Create Expert Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1504, 160]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [-1280, 160],
+      "id": "ai-agent-expert",
+      "name": "AI Agent Expert"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [-1184, 352],
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "d0E506dFuSTzUq4p",
+          "name": "OpenAi account dailygrowth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nettoie et valide la réponse de l'IA pour UN SEUL défi expert\nconst inputData = $input.first().json;\nconst parseData = $('Parse Input Data').first().json;\n\n// Pour l'AI Agent, la réponse est dans output\nlet response = inputData.output || 'undefined';\n\nconsole.log('Response extracted:', typeof response === 'string' ? response.substring(0, 200) : 'object');\n\ntry {\n  let cleanResponse = response;\n  \n  // Nettoyer la réponse si elle contient des blocs markdown\n  if (typeof response === 'string') {\n    cleanResponse = response\n      .replace(/```json\\s*/g, '')\n      .replace(/```\\s*/g, '')\n      .trim();\n  }\n  \n  let data;\n  \n  if (typeof cleanResponse === 'object') {\n    data = cleanResponse;\n  } else {\n    data = JSON.parse(cleanResponse);\n  }\n  \n  // VALIDATION : vérifier qu'on a bien 1 SEUL défi\n  if (!data.defis || !Array.isArray(data.defis) || data.defis.length !== 1) {\n    throw new Error(`Nombre de défis incorrect: ${data.defis?.length || 0} au lieu de 1`);\n  }\n  \n  // Validation du défi unique\n  const defi = data.defis[0];\n  if (!defi.nom || !defi.mission) {\n    throw new Error(`Défi incomplet - manque: ${!defi.nom ? 'nom ' : ''}${!defi.mission ? 'mission ' : ''}`);\n  }\n  \n  // S'assurer que les champs existent\n  defi.numero = parseData.numeroDefi;\n  defi.duree_estimee = defi.duree_estimee || '';\n  defi.pourquoi = defi.pourquoi || 'Ce défi avancé te permet de consolider tes acquis.';\n  defi.bonus = defi.bonus || null;\n  \n  // Ajouter la source\n  data.source = 'ai_expert';\n  \n  return data;\n  \n} catch (error) {\n  console.error('Erreur parsing IA:', error.message);\n  \n  // Fallback expert (défis 31-50)\n  const defiParDefaut = {\n    numero: parseData.numeroDefi,\n    nom: 'Transformation profonde',\n    mission: `Engage-toi dans une action de transformation durable cette semaine liée à ta problématique (${parseData.problematique}). Pratique régulièrement pendant 7 jours.`,\n    pourquoi: 'L\\'expertise vient de la pratique délibérée et régulière sur une longue période.',\n    bonus: 'Tiens un journal quotidien de cette expérience',\n    duree_estimee: '7j',\n    difficulte: 5\n  };\n  \n  return {\n    problematique: parseData.problematique,\n    niveau_detecte: 'expert',\n    source: 'fallback_expert',\n    erreur: error.message,\n    defis: [defiParDefaut]\n  };\n}"
+      },
+      "id": "validate-expert-response",
+      "name": "Validate Expert Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1056, 160]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [-832, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sélectionner le résultat correct (CSV ou AI)\nconst items = $input.all();\n\n// Trouver le premier item avec des données valides\nfor (const item of items) {\n  if (item.json && item.json.defis && item.json.defis.length > 0) {\n    return item.json;\n  }\n}\n\n// Fallback si rien trouvé\nreturn {\n  problematique: 'Non défini',\n  niveau_detecte: 'débutant',\n  source: 'fallback',\n  defis: [{\n    numero: 1,\n    nom: 'Premier pas',\n    mission: 'Prends un moment pour réfléchir à ton objectif.',\n    pourquoi: 'La réflexion est le premier pas vers le changement.',\n    bonus: null,\n    duree_estimee: '10'\n  }]\n};"
+      },
+      "id": "select-result",
+      "name": "Select Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-608, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "response-final",
+      "name": "Response Final",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-384, 0]
+    }
+  ],
+  "connections": {
+    "Webhook Reception": {
+      "main": [
+        [
+          {
+            "node": "Parse Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input Data": {
+      "main": [
+        [
+          {
+            "node": "Router CSV vs AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router CSV vs AI": {
+      "main": [
+        [
+          {
+            "node": "Get Prompt Expert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get CSV Challenges",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CSV Challenges": {
+      "main": [
+        [
+          {
+            "node": "Find CSV Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find CSV Challenge": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Prompt Expert": {
+      "main": [
+        [
+          {
+            "node": "Create Expert Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Expert Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Expert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Expert": {
+      "main": [
+        [
+          {
+            "node": "Validate Expert Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Expert Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Select Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Result": {
+      "main": [
+        [
+          {
+            "node": "Response Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Expert",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "affee3ba0c3444abe5ebd6fd0c8dda58f2afe224cea71a171c9061c1bbf58abf"
+  }
+}

@@ -38,7 +38,6 @@ serve(async (req) => {
       .from('user_profiles')
       .select('id, fcm_token, notifications_enabled, reminder_notifications_enabled, notification_time, notification_timezone_offset_minutes, last_notification_sent_at')
       .eq('notifications_enabled', true)
-      .not('fcm_token', 'is', null)
 
     if (usersError) {
       console.error('Error fetching users:', usersError)
@@ -207,12 +206,9 @@ serve(async (req) => {
           ? 'Continuez votre progression quotidienne'
           : 'Un nouveau micro-défi personnalisé vous attend'
 
-        // Use Firebase Cloud Messaging REST API v1 (requires service account)
-        // For simplicity, call the existing send-push-notification function
-        const notificationPayload = {
-          token: user.fcm_token,
-          title: title,
-          body: body,
+        const deliveryPayload = {
+          title,
+          body,
           data: {
             type: 'daily-reminder',
             url: '/#/challenges',
@@ -220,29 +216,134 @@ serve(async (req) => {
           }
         }
 
-        // Call the send-push-notification function
-        const fcmResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify(notificationPayload)
-        })
+        const sendViaFcm = async () => {
+          const notificationPayload = {
+            token: user.fcm_token,
+            ...deliveryPayload,
+          }
 
-        const fcmResult = await fcmResponse.json()
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify(notificationPayload)
+          })
 
-        if (fcmResponse.ok) {
+          return { response, result: await response.json() }
+        }
+
+        const sendViaWebPush = async () => {
+          const payload = {
+            user_id: user.id,
+            title,
+            body,
+            url: '/#/challenges',
+            data: deliveryPayload.data,
+          }
+
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-webpush-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify(payload)
+          })
+
+          return { response, result: await response.json() }
+        }
+
+        const attemptWebPush = async () => {
+          const { data: subscriptions, error: subscriptionsError } = await supabase
+            .from('web_push_subscriptions')
+            .select('id')
+            .eq('user_id', user.id)
+
+          if (subscriptionsError) {
+            console.error('❌ Error fetching web push subscriptions:', subscriptionsError)
+            return { ok: false, result: subscriptionsError }
+          }
+
+          if (!subscriptions || subscriptions.length === 0) {
+            return { ok: false, skip: 'no_webpush_subscription' }
+          }
+
+          const { response, result } = await sendViaWebPush()
+          if (response.ok && result.sent > 0) {
+            return { ok: true, result }
+          }
+          return { ok: false, result }
+        }
+
+        const useFcm = !!user.fcm_token
+        let deliveryResult: any = null
+        let deliverySuccess = false
+        let deliveryChannel: 'fcm' | 'webpush' | null = null
+
+        if (useFcm) {
+          const { response, result } = await sendViaFcm()
+          deliveryResult = result
+          deliveryChannel = 'fcm'
+
+          if (response.ok) {
+            deliverySuccess = true
+          } else {
+            console.error(`❌ Failed to send FCM notification to user ${user.id}:`, result)
+
+            if (result.error?.code === 'INVALID_ARGUMENT' ||
+                result.error?.details?.find((d: any) => d.errorCode === 'UNREGISTERED')) {
+              await supabase
+                .from('user_profiles')
+                .update({ fcm_token: null })
+                .eq('id', user.id)
+
+              console.log(`🗑️ Cleared invalid FCM token for user ${user.id}`)
+            }
+          }
+        }
+
+        if (!deliverySuccess) {
+          const webPushAttempt = await attemptWebPush()
+          if (webPushAttempt.ok) {
+            deliverySuccess = true
+            deliveryChannel = 'webpush'
+            deliveryResult = webPushAttempt.result
+          } else if (webPushAttempt.skip === 'no_webpush_subscription') {
+            skipReason = 'no_delivery_channel'
+            console.log(`⚠️ No delivery channel for user ${user.id}`)
+
+            await logNotificationAttempt({
+              user_id: user.id,
+              trigger_type: 'cron',
+              notification_sent: false,
+              skip_reason: skipReason,
+              notification_time: notificationTime,
+              timezone_offset_minutes: timezoneOffsetMinutes,
+              target_utc_time: targetUtcTime,
+              actual_utc_time: currentTime,
+              time_diff_minutes: diffMinutes,
+              fcm_token_present: !!user.fcm_token,
+            })
+
+            continue
+          } else if (webPushAttempt.result) {
+            deliveryChannel = deliveryChannel ?? 'webpush'
+            deliveryResult = webPushAttempt.result
+          }
+        }
+
+        if (deliverySuccess) {
           notificationsSent++
           notificationSent = true
-          console.log(`✅ Daily notification sent to user ${user.id}`)
+          console.log(`✅ Daily notification sent to user ${user.id} via ${deliveryChannel}`)
 
           await supabase
             .from('user_profiles')
             .update({ last_notification_sent_at: new Date().toISOString() })
             .eq('id', user.id)
-          
-          // Log success
+
           await logNotificationAttempt({
             user_id: user.id,
             trigger_type: 'cron',
@@ -254,46 +355,33 @@ serve(async (req) => {
             actual_utc_time: currentTime,
             time_diff_minutes: diffMinutes,
             fcm_token_present: !!user.fcm_token,
-            fcm_response: fcmResult,
+            fcm_response: deliveryResult,
             challenge_id: todaysChallenge?.id || null,
             challenge_name: todaysChallenge?.nom || null
           })
         } else {
-          console.error(`❌ Failed to send notification to user ${user.id}:`, fcmResult)
-          
-          // Clear invalid tokens
-          if (fcmResult.error?.code === 'INVALID_ARGUMENT' || 
-              fcmResult.error?.details?.find((d: any) => d.errorCode === 'UNREGISTERED')) {
-            
-            await supabase
-              .from('user_profiles')
-              .update({ fcm_token: null })
-              .eq('id', user.id)
-              
-            console.log(`🗑️ Cleared invalid FCM token for user ${user.id}`)
-          }
-          
-          // Log failure
+          console.error(`❌ Failed to deliver notification to user ${user.id}:`, deliveryResult)
+
           await logNotificationAttempt({
             user_id: user.id,
             trigger_type: 'cron',
             notification_sent: false,
-            skip_reason: 'fcm_error',
-            error_message: JSON.stringify(fcmResult),
+            skip_reason: 'delivery_error',
+            error_message: JSON.stringify(deliveryResult),
             notification_time: notificationTime,
             timezone_offset_minutes: timezoneOffsetMinutes,
             target_utc_time: targetUtcTime,
             actual_utc_time: currentTime,
             time_diff_minutes: diffMinutes,
             fcm_token_present: !!user.fcm_token,
-            fcm_response: fcmResult,
+            fcm_response: deliveryResult,
             challenge_id: todaysChallenge?.id || null,
             challenge_name: todaysChallenge?.nom || null
           })
-          
+
           errors.push({
             user_id: user.id,
-            error: fcmResult
+            error: deliveryResult
           })
         }
 

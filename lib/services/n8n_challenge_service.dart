@@ -35,20 +35,27 @@ class N8nChallengeService {
     return _dio!;
   }
 
-  /// Génère UN SEUL micro-défi via le workflow n8n
+  /// Génère UN SEUL micro-défi via le workflow n8n avec progression détaillée
   Future<Map<String, dynamic>> generateSingleMicroChallenge({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
+    Map<String, Map<String, dynamic>>? progressionParProblematique,
   }) async {
     try {
       debugPrint('🎯 Generating challenges for: $problematique (défis relevés: $nombreDefisReleves)');
+      if (progressionParProblematique != null) {
+        debugPrint('📊 Progression par problématique: $progressionParProblematique');
+      }
 
-      // Préparer les données au format attendu par le workflow
+      // Préparer les données enrichies pour le workflow n8n
       final requestData = {
         'Je veux...': 'Je veux travailler sur: $problematique',
         'Combien de défi à tu relevé': nombreDefisReleves.toString(),
         if (userId != null) 'user_id': userId,
+        if (progressionParProblematique != null) 
+          'progression_par_problematique': jsonEncode(progressionParProblematique),
+        'niveau_actuel': _determineNiveauFromProgression(nombreDefisReleves, progressionParProblematique),
       };
 
       final response = await _client.post(
@@ -140,11 +147,28 @@ class N8nChallengeService {
     }
   }
 
+  /// Détermine le niveau basé sur la progression totale et par problématique
+  String _determineNiveauFromProgression(
+    int nombreDefisReleves, 
+    Map<String, Map<String, dynamic>>? progressionParProblematique
+  ) {
+    // Logique de base basée sur le nombre total
+    if (nombreDefisReleves <= 2) return 'débutant';
+    if (nombreDefisReleves <= 7) return 'intermédiaire';
+    if (nombreDefisReleves <= 15) return 'avancé';
+    return 'expert';
+    
+    // TODO: Affiner avec la progression par problématique
+    // - Si une problématique > 25% : niveau avancé sur cette problématique
+    // - Si toutes les problématiques < 10% : niveau débutant
+  }
+
   /// Génère UN défi avec fallback en cas d'erreur
   Future<Map<String, dynamic>> generateSingleMicroChallengeWithFallback({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
+    Map<String, Map<String, dynamic>>? progressionParProblematique,
   }) async {
     try {
       // Essayer d'abord le webhook n8n
@@ -152,6 +176,7 @@ class N8nChallengeService {
         problematique: problematique,
         nombreDefisReleves: nombreDefisReleves,
         userId: userId,
+        progressionParProblematique: progressionParProblematique,
       );
       
       // Ajouter des métadonnées
@@ -161,7 +186,7 @@ class N8nChallengeService {
       
       // Sauvegarder le micro-défi en base de données si userId fourni
       if (userId != null) {
-        await _saveSingleMicroChallengeToDatabase(result, userId, problematique, nombreDefisReleves);
+        await _saveSingleMicroChallengeToDatabase(result, userId, problematique, nombreDefisReleves, progressionParProblematique);
       }
       
       return result;
@@ -177,7 +202,7 @@ class N8nChallengeService {
       
       // Sauvegarder le micro-défi fallback en base de données si userId fourni
       if (userId != null) {
-        await _saveSingleMicroChallengeToDatabase(fallbackResult, userId, problematique, nombreDefisReleves);
+        await _saveSingleMicroChallengeToDatabase(fallbackResult, userId, problematique, nombreDefisReleves, progressionParProblematique);
       }
       
       return fallbackResult;
@@ -190,6 +215,7 @@ class N8nChallengeService {
     String userId,
     String problematique,
     int nombreDefisReleves,
+    Map<String, Map<String, dynamic>>? progressionParProblematique,
   ) async {
     try {
       final client = Supabase.instance.client;
@@ -207,6 +233,9 @@ class N8nChallengeService {
         'duree_estimee': defi['duree_estimee'] ?? '15',
         'niveau_detecte': challengeData['niveau_detecte'],
         'source': challengeData['source'] ?? 'n8n_workflow',
+        // Ajouter les métadonnées de progression pour suivi
+        'progression_data': progressionParProblematique,
+        'total_defis_releves': nombreDefisReleves,
       };
 
       await client.from('user_micro_challenges').insert(microChallenge);
