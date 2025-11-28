@@ -485,6 +485,10 @@ class ChallengeService {
       
       debugPrint('📊 [CHALLENGE SERVICE] Défis complétés: $nombreDefisReleves');
       
+      // 🆕 Récupérer la progression par problématique
+      final progressionParProblematique = await userService.getProgressByProblematique(userId);
+      debugPrint('📈 [CHALLENGE SERVICE] Progression par problématique: $progressionParProblematique');
+      
       // Get user's selected problematique (single selection)
       String problematique = lifeDomain;
       if (userProfile['selected_problematiques'] != null) {
@@ -503,13 +507,14 @@ class ChallengeService {
       }
       
       debugPrint('🎯 [CHALLENGE SERVICE] Final problematique: "$problematique"');
-      debugPrint('🚀 [CHALLENGE SERVICE] Calling n8n webhook...');
+      debugPrint('🚀 [CHALLENGE SERVICE] Calling n8n webhook with progression data...');
       
-      // Generate single challenge via n8n
+      // Generate single challenge via n8n avec progression détaillée
       final result = await n8nService.generateSingleMicroChallengeWithFallback(
         problematique: problematique,
         nombreDefisReleves: nombreDefisReleves,
         userId: userId,
+        progressionParProblematique: progressionParProblematique,
       );
       
       debugPrint('✅ [CHALLENGE SERVICE] N8n webhook returned result');
