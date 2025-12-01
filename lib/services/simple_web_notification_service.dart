@@ -262,6 +262,28 @@ class SimpleWebNotificationService {
     }
   }
 
+  /// Récupère l'enregistrement du Service Worker actif
+  Future<dynamic> _getServiceWorkerRegistration() async {
+    try {
+      final navigator = js.context['navigator'];
+      if (navigator == null || !navigator.hasProperty('serviceWorker')) {
+        return null;
+      }
+      
+      final sw = navigator['serviceWorker'];
+      if (sw == null) return null;
+      
+      final registration = await js_util.promiseToFuture(
+        js_util.getProperty(sw, 'ready')
+      );
+      
+      return registration;
+    } catch (e) {
+      debugPrint('⚠️ Could not get SW registration: $e');
+      return null;
+    }
+  }
+
   /// Affiche une notification immédiate
   Future<void> showNotification({
     required String title,
@@ -292,26 +314,43 @@ class SimpleWebNotificationService {
     try {
       debugPrint('📱 Showing web notification: $title - $body');
       
-      final options = js_util.jsify({
-        'body': body,
-        'icon': icon ?? '/icons/Icon-192.png',
-        'badge': '/icons/Icon-192.png',
-        'tag': tag ?? 'dailygrowth-notification',
-        'requireInteraction': true,
-      });
-
-      // Créer la notification via le constructeur JavaScript Notification
-      final notificationConstructor = js_util.getProperty(js.context, 'Notification');
-      final notification = js_util.callConstructor(notificationConstructor, [title, options]);
-      
-      debugPrint('✅ Notification displayed successfully');
-      
-      // Auto-close après 5 secondes
-      Future.delayed(const Duration(seconds: 5), () {
-        try {
-          js_util.callMethod(notification, 'close', []);
-        } catch (_) {}
-      });
+      // Utiliser le Service Worker pour afficher la notification (meilleure compatibilité iOS)
+      final swRegistration = await _getServiceWorkerRegistration();
+      if (swRegistration != null) {
+        final optionsMap = js_util.jsify({
+          'body': body,
+          'icon': icon ?? '/icons/Icon-192.png',
+          'badge': '/icons/Icon-192.png',
+          'tag': tag ?? 'dailygrowth-notification',
+          'requireInteraction': false,
+        });
+        
+        await js_util.promiseToFuture(
+          js_util.callMethod(swRegistration, 'showNotification', [title, optionsMap])
+        );
+        debugPrint('✅ Notification displayed via Service Worker');
+      } else {
+        // Fallback: créer directement via JavaScript new Notification()
+        final jsCode = '''
+          (function(t, b, i, tag) {
+            try {
+              var n = new Notification(t, {body: b, icon: i, tag: tag});
+              setTimeout(function() { n.close(); }, 5000);
+              return true;
+            } catch(e) {
+              console.error('Notification error:', e);
+              return false;
+            }
+          })
+        ''';
+        final createNotif = js.context.callMethod('eval', [jsCode]);
+        final result = createNotif.apply([title, body, icon ?? '/icons/Icon-192.png', tag ?? 'dailygrowth-notification']);
+        if (result == true) {
+          debugPrint('✅ Notification displayed via direct JS');
+        } else {
+          debugPrint('⚠️ Notification creation returned false');
+        }
+      }
       
     } catch (e) {
       debugPrint('❌ Error showing notification: $e');
