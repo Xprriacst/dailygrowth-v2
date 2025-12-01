@@ -957,25 +957,41 @@ class WebNotificationService {
     try {
       debugPrint('📨 Sending message to service worker: $message');
 
-      // Simple approach using JavaScript eval (working method from development)
-      final messageJson =
-          js.context['JSON'].callMethod('stringify', [js_util.jsify(message)]);
+      // Build JSON string manually to avoid jsify wrapper issues
+      String messageJson = '{';
+      final entries = message.entries.toList();
+      for (int i = 0; i < entries.length; i++) {
+        final key = entries[i].key;
+        final value = entries[i].value;
+        if (value is String) {
+          // Escape quotes in strings
+          final escapedValue = value.replaceAll('"', '\\"').replaceAll('\n', '\\n');
+          messageJson += '"$key": "$escapedValue"';
+        } else if (value is num || value is bool) {
+          messageJson += '"$key": $value';
+        } else {
+          messageJson += '"$key": "${value.toString()}"';
+        }
+        if (i < entries.length - 1) messageJson += ', ';
+      }
+      messageJson += '}';
+      
       js.context.callMethod('eval', [
         '''
         (function() {
           var message = $messageJson;
-          console.log('📨 About to send message:', message);
+          console.log('📨 Sending to SW:', message);
           
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(function(registration) {
               if (registration.active) {
                 registration.active.postMessage(message);
-                console.log('📨 Message sent to service worker successfully');
+                console.log('✅ Message sent to SW successfully');
               } else {
                 console.log('⚠️ No active service worker found');
               }
             }).catch(function(error) {
-              console.error('❌ Error sending message to service worker:', error);
+              console.error('❌ Error sending message to SW:', error);
             });
           } else {
             console.log('⚠️ Service worker not supported');
