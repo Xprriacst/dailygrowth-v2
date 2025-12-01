@@ -294,23 +294,24 @@ class SimpleWebNotificationService {
       
       final options = js_util.jsify({
         'body': body,
-        'icon': icon ?? '/icon-192.png',
-        'badge': '/icon-192.png',
+        'icon': icon ?? '/icons/Icon-192.png',
+        'badge': '/icons/Icon-192.png',
         'tag': tag ?? 'dailygrowth-notification',
         'requireInteraction': true,
       });
 
-      final notification = js.context.callMethod('eval', ['new Notification(title, options)']);
+      // Créer la notification via le constructeur JavaScript Notification
+      final notificationConstructor = js_util.getProperty(js.context, 'Notification');
+      final notification = js_util.callConstructor(notificationConstructor, [title, options]);
       
       debugPrint('✅ Notification displayed successfully');
       
       // Auto-close après 5 secondes
-      js.context.callMethod('setTimeout', [
-        js.allowInterop(() {
+      Future.delayed(const Duration(seconds: 5), () {
+        try {
           js_util.callMethod(notification, 'close', []);
-        }),
-        5000
-      ]);
+        } catch (_) {}
+      });
       
     } catch (e) {
       debugPrint('❌ Error showing notification: $e');
