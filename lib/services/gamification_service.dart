@@ -57,13 +57,9 @@ class GamificationService {
         pointsEarned: pointsEarned,
       );
 
-      // Send notification
-      await _notificationService.sendAchievementNotification(
-        userId: userId,
-        achievementName: achievementName,
-        description: description,
-        pointsEarned: pointsEarned,
-      );
+      // NOTE: Push notification supprimée ici - l'UI gère l'affichage des popups
+      // Les push notifications sont réservées aux rappels quotidiens
+      debugPrint('🏆 Achievement unlocked: $achievementName (UI popup only, no push)');
 
       return achievement;
     } catch (error) {
@@ -104,12 +100,10 @@ class GamificationService {
         }
       }
 
-      // Send streak milestone notification
+      // NOTE: Push notification de milestone supprimée - l'UI home_dashboard gère les popups
+      // Les push notifications sont réservées aux rappels quotidiens
       if ([3, 7, 14, 30, 60, 100, 365].contains(streakCount)) {
-        await _notificationService.sendStreakMilestoneNotification(
-          userId: userId,
-          streakCount: streakCount,
-        );
+        debugPrint('🔥 Streak milestone $streakCount (UI popup only, no push)');
       }
     } catch (error) {
       debugPrint('Error checking streak achievements: $error');
