@@ -480,7 +480,19 @@ class NotificationService {
         throw Exception('User not authenticated');
       }
 
-      // Utiliser send-push-notification (FCM) qui fonctionne sur toutes les plateformes
+      // Sur iOS PWA, FCM ne fonctionne pas - afficher une notification locale
+      if (kIsWeb) {
+        debugPrint('📱 Showing local notification for iOS PWA...');
+        await _simpleWebNotificationService.showNotification(
+          title: '🎯 Test ChallengeMe',
+          body: 'Notification de test envoyée avec succès !',
+          tag: 'test-notification',
+        );
+        debugPrint('✅ Local notification triggered');
+        return;
+      }
+
+      // Pour les autres plateformes, utiliser FCM
       await client.functions.invoke('send-push-notification', body: {
         'user_id': targetUserId,
         'title': '🎯 Test ChallengeMe',
