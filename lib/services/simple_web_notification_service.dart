@@ -265,18 +265,26 @@ class SimpleWebNotificationService {
   /// Récupère l'enregistrement du Service Worker actif
   Future<dynamic> _getServiceWorkerRegistration() async {
     try {
-      final navigator = js.context['navigator'];
-      if (navigator == null || !navigator.hasProperty('serviceWorker')) {
+      // Vérifier si navigator.serviceWorker existe
+      final hasServiceWorker = js.context.callMethod('eval', [
+        '!!(navigator && navigator.serviceWorker && navigator.serviceWorker.ready)'
+      ]);
+      
+      if (hasServiceWorker != true) {
+        debugPrint('⚠️ Service Worker not available');
         return null;
       }
       
-      final sw = navigator['serviceWorker'];
-      if (sw == null) return null;
+      // Récupérer la registration via eval pour éviter les problèmes de null
+      final registrationPromise = js.context.callMethod('eval', [
+        'navigator.serviceWorker.ready'
+      ]);
       
-      final registration = await js_util.promiseToFuture(
-        js_util.getProperty(sw, 'ready')
-      );
+      if (registrationPromise == null) {
+        return null;
+      }
       
+      final registration = await js_util.promiseToFuture(registrationPromise);
       return registration;
     } catch (e) {
       debugPrint('⚠️ Could not get SW registration: $e');
