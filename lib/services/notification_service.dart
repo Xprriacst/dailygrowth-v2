@@ -472,14 +472,6 @@ class NotificationService {
 
   Future<void> sendWebPushTestNotification({String? userId}) async {
     try {
-      if (!kIsWeb) {
-        await sendInstantNotification(
-          title: 'Test ChallengeMe',
-          body: 'Notification de test envoyée depuis les réglages.',
-        );
-        return;
-      }
-
       final client = await SupabaseService().client;
       final currentUser = client.auth.currentUser;
       final targetUserId = userId ?? currentUser?.id;
@@ -488,18 +480,17 @@ class NotificationService {
         throw Exception('User not authenticated');
       }
 
-      await client.functions.invoke('send-webpush-notification', body: {
+      // Utiliser send-push-notification (FCM) qui fonctionne sur toutes les plateformes
+      await client.functions.invoke('send-push-notification', body: {
         'user_id': targetUserId,
-        'title': 'Test ChallengeMe',
-        'body': 'Notification de test ChallengeMe (Web Push).',
-        'data': {
-          'type': 'test_notification',
-        },
+        'title': '🎯 Test ChallengeMe',
+        'body': 'Notification de test envoyée avec succès !',
+        'type': 'test_notification',
       });
 
-      debugPrint('✅ Web push test notification triggered for user $targetUserId');
+      debugPrint('✅ FCM test notification triggered for user $targetUserId');
     } catch (e) {
-      debugPrint('❌ Failed to send web push test notification: $e');
+      debugPrint('❌ Failed to send test notification: $e');
       rethrow;
     }
   }
