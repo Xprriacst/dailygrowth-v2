@@ -451,9 +451,13 @@ class _HomeDashboardState extends State<HomeDashboard>
         await _userService.updateStreak(_userId);
         await _gamificationService.checkAllAchievements(_userId);
 
+        // Reload the actual streak from database after update
+        final updatedStats = await _userService.getUserStats(_userId);
+        final actualStreak = updatedStats['streak_count'] as int? ?? 0;
+        
         setState(() {
           _isChallengeCompleted = true;
-          _currentStreak += 1; // Optimistic update
+          _currentStreak = actualStreak; // Use real value from database
         });
 
         // Get total completed challenges to check milestones

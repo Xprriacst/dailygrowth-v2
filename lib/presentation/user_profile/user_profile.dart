@@ -701,44 +701,54 @@ class _UserProfileState extends State<UserProfile> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Centre d\'aide'),
-        content: Text(
-            'Consultez notre FAQ et nos guides d\'utilisation sur notre site web.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Pour toute question ou assistance, contactez notre support :'),
+            SizedBox(height: 2.h),
+            SelectableText(
+              'hentzpierre888@gmail.com',
+              style: TextStyle(
+                color: AppTheme.lightTheme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Fermer')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showBeautifulSuccessMessage('Redirection vers le centre d\'aide');
-            },
-            child: Text('Visiter')),
         ]));
   }
 
   void _showFeedbackDialog() {
-    final TextEditingController feedbackController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Envoyer des commentaires'),
-        content: TextField(
-          controller: feedbackController,
-          decoration: InputDecoration(
-            labelText: 'Vos commentaires',
-            hintText: 'Partagez vos suggestions ou signalez un problème...'),
-          maxLines: 4),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Vous avez une suggestion ou souhaitez signaler un problème ?'),
+            SizedBox(height: 2.h),
+            Text('Contactez-nous par e-mail :'),
+            SizedBox(height: 1.h),
+            SelectableText(
+              'hentzpierre888@gmail.com',
+              style: TextStyle(
+                color: AppTheme.lightTheme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showBeautifulSuccessMessage('Commentaires envoyés. Merci !');
-            },
-            child: Text('Envoyer')),
+            child: Text('Fermer')),
         ]));
   }
 
