@@ -77,15 +77,8 @@ class _NotificationSettingsWidgetState extends State<NotificationSettingsWidget>
             await WebNotificationService().syncSubscriptionWithServer();
           } catch (e) {
             debugPrint('Web push subscription failed: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('❌ Impossible d\'activer les notifications web. Réessayez après avoir autorisé le navigateur.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-            return;
+            // Ne pas bloquer la sauvegarde - les notifications locales fonctionnent quand même
+            // via le Service Worker
           }
         }
         
