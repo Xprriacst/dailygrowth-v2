@@ -34,12 +34,20 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
   bool _isLoading = false;
   bool _isSaving = false;
   Map<String, dynamic>? _progressData;
+  
+  // Track original values to detect changes
+  String? _originalContent;
+  String? _originalProblematique;
 
   @override
   void initState() {
     super.initState();
     _contentController = TextEditingController(text: widget.note?.content ?? '');
     _selectedProblematique = widget.note?.problematique ?? widget.initialProblematique;
+    
+    // Store original values to detect changes
+    _originalContent = widget.note?.content ?? '';
+    _originalProblematique = _selectedProblematique;
 
     if (_selectedProblematique != null) {
       _loadProgressData();
@@ -165,7 +173,13 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
     // Trouver la problématique sélectionnée
     final problematique = ChallengeProblematique.allProblematiques.firstWhere(
       (p) => p.title == _selectedProblematique,
-      orElse: () => ChallengeProblematique.allProblematiques.first,
+      orElse: () => ChallengeProblematique(
+        id: 'custom',
+        title: _selectedProblematique ?? 'Problématique',
+        category: 'Mental & émotionnel',
+        description: _selectedProblematique ?? '',
+        emoji: '🎯',
+      ),
     );
     
     final couleur = _getProblematiqueCouleur(_selectedProblematique);
@@ -334,15 +348,12 @@ class _NoteEditScreenState extends State<NoteEditScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFF202124)),
-          onPressed: () async {
-            // Sauvegarder automatiquement avant de naviguer
-            await _saveNote();
-            if (mounted) {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Navigator.of(context).pushReplacementNamed('/notes');
-              }
+          onPressed: () {
+            // Only navigate back, don't auto-save (user must click Sauvegarder)
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed('/notes');
             }
           },
         ),
