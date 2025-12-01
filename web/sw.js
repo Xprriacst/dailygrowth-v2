@@ -199,7 +199,71 @@ self.addEventListener('message', (event) => {
         })
     );
   }
+  
+  // Planification de notification quotidienne
+  if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
+    console.log('⏰ Notification planifiée reçue:', event.data);
+    
+    const { time, title, body, userId } = event.data;
+    
+    // Stocker les paramètres de notification
+    scheduledNotifications.set(userId || 'default', {
+      time: time,
+      title: title || '🎯 Votre défi quotidien vous attend !',
+      body: body || 'Connectez-vous pour découvrir votre nouveau micro-défi personnalisé.',
+      enabled: true
+    });
+    
+    // Démarrer la vérification si pas déjà active
+    if (!notificationCheckInterval) {
+      startNotificationChecker();
+    }
+    
+    console.log('✅ Notification programmée pour', time);
+  }
 });
+
+// Stockage des notifications planifiées
+const scheduledNotifications = new Map();
+let notificationCheckInterval = null;
+let lastNotificationDate = null;
+
+// Vérifie si c'est l'heure d'envoyer une notification
+function startNotificationChecker() {
+  console.log('🕐 Démarrage du vérificateur de notifications');
+  
+  // Vérifier toutes les minutes
+  notificationCheckInterval = setInterval(() => {
+    const now = new Date();
+    const currentTime = now.toTimeString().substring(0, 5); // HH:MM
+    const today = now.toDateString();
+    
+    scheduledNotifications.forEach((config, userId) => {
+      if (!config.enabled) return;
+      
+      const scheduledTime = config.time.substring(0, 5); // HH:MM
+      
+      // Vérifier si c'est l'heure et si on n'a pas déjà envoyé aujourd'hui
+      if (currentTime === scheduledTime && lastNotificationDate !== today) {
+        console.log('🔔 Heure de notification atteinte pour', userId);
+        
+        self.registration.showNotification(config.title, {
+          body: config.body,
+          icon: '/icons/Icon-192.png',
+          badge: '/icons/Icon-192.png',
+          tag: 'daily-reminder-' + today,
+          data: { userId, type: 'daily-reminder', url: '/#/challenges' },
+          requireInteraction: !isIOS()
+        }).then(() => {
+          console.log('✅ Notification quotidienne envoyée');
+          lastNotificationDate = today;
+        }).catch(err => {
+          console.error('❌ Erreur envoi notification:', err);
+        });
+      }
+    });
+  }, 60000); // Vérifier toutes les 60 secondes
+}
 
 // Gestion des requêtes fetch (cache first)
 self.addEventListener('fetch', (event) => {
