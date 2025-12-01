@@ -11,6 +11,8 @@ import './challenge_service.dart';
 import './quote_service.dart';
 import './user_service.dart';
 import './web_notification_service.dart';
+import './simple_web_notification_service.dart';
+import './ios_push_notification_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -39,6 +41,10 @@ class NotificationService {
   final UserService _userService = UserService();
   final WebNotificationService _webNotificationService =
       WebNotificationService();
+  final SimpleWebNotificationService _simpleWebNotificationService =
+      SimpleWebNotificationService.instance;
+  final IOSPushNotificationService _iosPushNotificationService =
+      IOSPushNotificationService();
 
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -71,7 +77,25 @@ class NotificationService {
 
     // Initialize web notifications for web platforms
     if (kIsWeb) {
-      await _webNotificationService.initialize();
+      debugPrint('🌐 Initializing web notifications...');
+      try {
+        // Utiliser le service simplifié qui fonctionne sur iOS
+        await _simpleWebNotificationService.initialize();
+        debugPrint('✅ Simple web notifications initialized');
+      } catch (e) {
+        debugPrint('⚠️ Simple web notifications failed, trying legacy: $e');
+        // Fallback vers l'ancien service si nécessaire
+        await _webNotificationService.initialize();
+      }
+    }
+
+    // Initialize iOS push notifications for iOS native platform
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        await _iosPushNotificationService.initialize();
+      } catch (e) {
+        debugPrint('⚠️ iOS push notifications not available: $e');
+      }
     }
 
     // Initialize services (defer Supabase-dependent services)
@@ -352,10 +376,12 @@ class NotificationService {
     try {
       final client = await SupabaseService().client;
 
-      // Get FCM token if notifications are enabled and we're on web
+      // Get FCM token if notifications are enabled
       String? fcmToken;
       final timezoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
+      
       if (notificationsEnabled && kIsWeb) {
+        // Web platform: get FCM token from WebNotificationService
         try {
           final webNotificationService = WebNotificationService();
           fcmToken = await webNotificationService.getFCMToken();
@@ -368,7 +394,7 @@ class NotificationService {
 
           if (fcmToken != null && fcmToken.isNotEmpty) {
             debugPrint(
-                '📱 FCM Token récupéré: ${fcmToken.substring(0, 20)}...');
+                '📱 FCM Token récupéré (Web): ${fcmToken.substring(0, 20)}...');
             await webNotificationService.sendMessageToServiceWorker({
               'type': 'FCM_TOKEN',
               'token': fcmToken,
@@ -378,7 +404,32 @@ class NotificationService {
                 '⚠️ Impossible de récupérer ou générer un token FCM pour le web');
           }
         } catch (e) {
-          debugPrint('⚠️ Erreur récupération token FCM: $e');
+          debugPrint('⚠️ Erreur récupération token FCM (Web): $e');
+        }
+      } else if (notificationsEnabled && Platform.isIOS && !kIsWeb) {
+        // iOS native platform: get FCM token from IOSPushNotificationService
+        try {
+          fcmToken = await _iosPushNotificationService.getFCMToken();
+
+          if (fcmToken == null || fcmToken.isEmpty) {
+            debugPrint(
+                '🔄 Aucun token FCM iOS, tentative de récupération...');
+            // Ensure service is initialized
+            if (!_iosPushNotificationService.isInitialized) {
+              await _iosPushNotificationService.initialize();
+            }
+            fcmToken = await _iosPushNotificationService.getFCMToken();
+          }
+
+          if (fcmToken != null && fcmToken.isNotEmpty) {
+            debugPrint(
+                '📱 FCM Token récupéré (iOS): ${fcmToken.substring(0, 20)}...');
+          } else {
+            debugPrint(
+                '⚠️ Impossible de récupérer un token FCM pour iOS');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Erreur récupération token FCM (iOS): $e');
         }
       }
 
@@ -416,6 +467,43 @@ class NotificationService {
     } catch (e) {
       debugPrint('❌ Failed to update notification settings: $e');
       throw e;
+    }
+  }
+
+  Future<void> sendWebPushTestNotification({String? userId}) async {
+    try {
+      final client = await SupabaseService().client;
+      final currentUser = client.auth.currentUser;
+      final targetUserId = userId ?? currentUser?.id;
+
+      if (targetUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Sur iOS PWA, FCM ne fonctionne pas - afficher une notification locale
+      if (kIsWeb) {
+        debugPrint('📱 Showing local notification for iOS PWA...');
+        await _simpleWebNotificationService.showNotification(
+          title: '🎯 Test ChallengeMe',
+          body: 'Notification de test envoyée avec succès !',
+          tag: 'test-notification',
+        );
+        debugPrint('✅ Local notification triggered');
+        return;
+      }
+
+      // Pour les autres plateformes, utiliser FCM
+      await client.functions.invoke('send-push-notification', body: {
+        'user_id': targetUserId,
+        'title': '🎯 Test ChallengeMe',
+        'body': 'Notification de test envoyée avec succès !',
+        'type': 'test_notification',
+      });
+
+      debugPrint('✅ FCM test notification triggered for user $targetUserId');
+    } catch (e) {
+      debugPrint('❌ Failed to send test notification: $e');
+      rethrow;
     }
   }
 
@@ -545,10 +633,19 @@ class NotificationService {
 
         // Send notification about the new challenge
         if (kIsWeb) {
-          await _webNotificationService.showChallengeNotification(
-            challengeName: challengeName,
-            challengeId: newChallenge['id']?.toString(),
-          );
+          try {
+            await _simpleWebNotificationService.showChallengeNotification(
+              title: '🎯 Nouveau micro-défi disponible !',
+              body: challengeName,
+            );
+            debugPrint('✅ Simple web notification sent for new challenge');
+          } catch (e) {
+            debugPrint('⚠️ Simple web notification failed, trying legacy: $e');
+            await _webNotificationService.showChallengeNotification(
+              challengeName: challengeName,
+              challengeId: newChallenge['id']?.toString(),
+            );
+          }
         } else {
           await sendInstantNotification(
             title: '🎯 Nouveau micro-défi disponible !',
@@ -754,14 +851,7 @@ class NotificationService {
 
       // Test basic notification
       try {
-        await _webNotificationService.showNotification(
-          title: '🧪 Test ChallengeMe',
-          body: 'Notification de test réussie !',
-          data: {
-            'test': true,
-            'timestamp': DateTime.now().millisecondsSinceEpoch
-          },
-        );
+        await _simpleWebNotificationService.showTestNotification();
         diagnosticMessage += '• Notification immédiate: ✅\n';
       } catch (e) {
         diagnosticMessage += '• Notification immédiate: ❌ $e\n';
@@ -770,8 +860,9 @@ class NotificationService {
       // Test challenge notification
       try {
         await Future.delayed(const Duration(seconds: 1));
-        await _webNotificationService.showChallengeNotification(
-          challengeName: 'Test: Sourire à 3 personnes',
+        await _simpleWebNotificationService.showChallengeNotification(
+          title: 'Test: Sourire à 3 personnes',
+          body: 'Un nouveau défi vous attend !',
         );
         diagnosticMessage += '• Notification défi: ✅\n';
       } catch (e) {

@@ -40,10 +40,6 @@
   <title>ChallengeMe</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
-  </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
   
@@ -55,6 +51,8 @@
       SUPABASE_URL: 'NETLIFY_SUPABASE_URL_PLACEHOLDER', 
       SUPABASE_ANON_KEY: 'NETLIFY_SUPABASE_ANON_KEY_PLACEHOLDER'
     };
+    // Web Push VAPID key (différent de Firebase) - requis pour iOS PWA
+    window.WEB_PUSH_VAPID_PUBLIC_KEY = 'NETLIFY_WEB_PUSH_VAPID_PUBLIC_KEY_PLACEHOLDER';
   </script>
 
   <!-- Build version injection (replaced during deploy) -->
@@ -212,8 +210,9 @@
 
       _flutter.loader.loadEntrypoint({
         entrypointUrl: `main.dart.js?v=${versionToken}`,
+        // Désactiver le Service Worker par défaut de Flutter car nous utilisons sw.js personnalisé
         serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
+          serviceWorkerVersion: null,
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {

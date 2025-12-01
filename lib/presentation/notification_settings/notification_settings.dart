@@ -200,6 +200,19 @@ class _NotificationSettingsState extends State<NotificationSettings> {
         ),
       ),
       centerTitle: false,
+      actions: [
+        IconButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Navigator.pushNamed(context, '/notification-test');
+          },
+          icon: Icon(
+            Icons.bug_report,
+            color: AppTheme.lightTheme.colorScheme.primary,
+          ),
+          tooltip: 'Tester les notifications',
+        ),
+      ],
     );
   }
 
