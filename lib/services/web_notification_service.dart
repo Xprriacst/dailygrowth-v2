@@ -177,16 +177,42 @@ class WebNotificationService {
     dynamic resolved;
     try {
       resolved = await js_util.promiseToFuture(jsResult);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Promise rejected: $e');
       resolved = jsResult;
     }
 
-    final dartified = js_util.dartify(resolved);
-    if (dartified is! Map) {
-      throw Exception('Réponse invalide lors de la création de l\'abonnement Web Push');
+    // Essayer de convertir le résultat JavaScript en Map Dart
+    Map<String, dynamic> result;
+    try {
+      final dartified = js_util.dartify(resolved);
+      if (dartified is Map) {
+        result = Map<String, dynamic>.from(dartified);
+      } else {
+        // Fallback: extraire les propriétés manuellement
+        debugPrint('⚠️ dartify returned ${dartified.runtimeType}, trying manual extraction');
+        final error = js_util.getProperty(resolved, 'error');
+        final endpoint = js_util.getProperty(resolved, 'endpoint');
+        final keys = js_util.getProperty(resolved, 'keys');
+        
+        if (error != null) {
+          throw Exception('Web Push indisponible: $error');
+        }
+        
+        if (endpoint == null) {
+          throw Exception('Réponse invalide: endpoint manquant');
+        }
+        
+        result = {
+          'endpoint': endpoint.toString(),
+          'keys': keys != null ? js_util.dartify(keys) : null,
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to parse JS result: $e, resolved type: ${resolved.runtimeType}');
+      throw Exception('Réponse invalide lors de la création de l\'abonnement Web Push: $e');
     }
 
-    final result = Map<String, dynamic>.from(dartified);
     if (result.containsKey('error') && result['error'] != null) {
       throw Exception('Web Push indisponible: ${result['error']}');
     }
