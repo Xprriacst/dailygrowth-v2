@@ -96,128 +96,145 @@ class WebNotificationService {
       throw Exception('Service Worker indisponible – impossible d\'activer les notifications');
     }
 
-    final script = '''
-      (async function() {
-        try {
-          const forceResubscribe = ${forceResubscribe ? 'true' : 'false'};
+    // Utiliser une approche avec callback pour iOS Safari (promiseToFuture ne fonctionne pas)
+    
+    final callbackScript = '''
+      (function() {
+        var callback = function(result) {
+          window._webPushResult = result;
+        };
+        
+        (async function() {
+          try {
+            const forceResubscribe = ${forceResubscribe ? 'true' : 'false'};
 
-          if (!('serviceWorker' in navigator)) {
-            return { error: 'service-worker-unavailable' };
-          }
-
-          const registration = await navigator.serviceWorker.ready;
-          if (!registration.pushManager) {
-            return { error: 'push-manager-unavailable' };
-          }
-
-          // Priorité: Web Push VAPID pour iOS, sinon Firebase VAPID
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          let vapidKey = null;
-          
-          if (isIOS) {
-            // iOS PWA utilise Web Push standard, pas FCM
-            vapidKey = window.WEB_PUSH_VAPID_PUBLIC_KEY || (window.ENV && window.ENV.WEB_PUSH_VAPID_PUBLIC_KEY);
-            console.log('📱 iOS détecté - utilisation de la clé Web Push VAPID');
-          }
-          
-          // Fallback sur Firebase VAPID pour autres plateformes
-          if (!vapidKey) {
-            vapidKey = window.firebaseVapidKey || (window.ENV && window.ENV.FIREBASE_VAPID_KEY);
-          }
-          
-          if (!vapidKey) {
-            return { error: 'missing-vapid-key' };
-          }
-          
-          console.log('🔑 Utilisation VAPID:', vapidKey.substring(0, 20) + '...');
-
-          function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-              outputArray[i] = rawData.charCodeAt(i);
+            if (!('serviceWorker' in navigator)) {
+              callback({ error: 'service-worker-unavailable' });
+              return;
             }
-            return outputArray;
-          }
 
-          if (forceResubscribe) {
-            const existing = await registration.pushManager.getSubscription();
-            if (existing) {
-              try {
-                await existing.unsubscribe();
-              } catch (unsubscribeError) {
-                console.warn('⚠️ Unable to unsubscribe previous push registration', unsubscribeError);
+            const registration = await navigator.serviceWorker.ready;
+            if (!registration.pushManager) {
+              callback({ error: 'push-manager-unavailable' });
+              return;
+            }
+
+            // Priorité: Web Push VAPID pour iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            let vapidKey = null;
+            
+            if (isIOS) {
+              vapidKey = window.WEB_PUSH_VAPID_PUBLIC_KEY || (window.ENV && window.ENV.WEB_PUSH_VAPID_PUBLIC_KEY);
+              console.log('📱 iOS détecté - utilisation de la clé Web Push VAPID');
+            }
+            
+            if (!vapidKey) {
+              vapidKey = window.firebaseVapidKey || (window.ENV && window.ENV.FIREBASE_VAPID_KEY);
+            }
+            
+            if (!vapidKey) {
+              callback({ error: 'missing-vapid-key' });
+              return;
+            }
+            
+            console.log('🔑 Utilisation VAPID:', vapidKey.substring(0, 20) + '...');
+
+            function urlBase64ToUint8Array(base64String) {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4);
+              const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            }
+
+            if (forceResubscribe) {
+              const existing = await registration.pushManager.getSubscription();
+              if (existing) {
+                try {
+                  await existing.unsubscribe();
+                  console.log('🗑️ Ancienne souscription supprimée');
+                } catch (unsubscribeError) {
+                  console.warn('⚠️ Unable to unsubscribe previous push registration', unsubscribeError);
+                }
               }
             }
-          }
 
-          let subscription = await registration.pushManager.getSubscription();
-          if (!subscription) {
-            subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(vapidKey)
+            let subscription = await registration.pushManager.getSubscription();
+            console.log('📋 Souscription existante:', subscription ? 'oui' : 'non');
+            
+            if (!subscription) {
+              console.log('🔔 Création nouvelle souscription Web Push...');
+              subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
+              });
+              console.log('✅ Souscription créée!');
+            }
+
+            const json = subscription.toJSON();
+            console.log('📝 Endpoint:', subscription.endpoint.substring(0, 50) + '...');
+            
+            callback({
+              endpoint: subscription.endpoint,
+              p256dh: json && json.keys ? json.keys.p256dh : null,
+              auth: json && json.keys ? json.keys.auth : null,
+              expirationTime: subscription.expirationTime || null
             });
+          } catch (error) {
+            console.error('❌ Web Push subscription error:', error);
+            callback({ error: error?.message || error?.toString() || 'web-push-subscription-failed' });
           }
-
-          const json = subscription.toJSON();
-          return {
-            endpoint: subscription.endpoint,
-            keys: json && json.keys ? json.keys : null,
-            expirationTime: subscription.expirationTime || null
-          };
-        } catch (error) {
-          return { error: error?.message || 'web-push-subscription-failed' };
-        }
+        })();
       })()
     ''';
-
-    final jsResult = js.context.callMethod('eval', [script]);
-    dynamic resolved;
-    try {
-      resolved = await js_util.promiseToFuture(jsResult);
-    } catch (e) {
-      debugPrint('❌ Promise rejected: $e');
-      resolved = jsResult;
-    }
-
-    // Essayer de convertir le résultat JavaScript en Map Dart
-    Map<String, dynamic> result;
-    try {
-      final dartified = js_util.dartify(resolved);
-      if (dartified is Map) {
-        result = Map<String, dynamic>.from(dartified);
-      } else {
-        // Fallback: extraire les propriétés manuellement
-        debugPrint('⚠️ dartify returned ${dartified.runtimeType}, trying manual extraction');
-        final error = js_util.getProperty(resolved, 'error');
-        final endpoint = js_util.getProperty(resolved, 'endpoint');
-        final keys = js_util.getProperty(resolved, 'keys');
+    
+    // Exécuter le script
+    js.context.callMethod('eval', [callbackScript]);
+    
+    // Attendre le résultat avec polling
+    int attempts = 0;
+    const maxAttempts = 50; // 5 secondes max
+    
+    while (attempts < maxAttempts) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+      
+      final resultObj = js.context['_webPushResult'];
+      if (resultObj != null) {
+        // Nettoyer
+        js.context['_webPushResult'] = null;
         
+        // Extraire les propriétés
+        final error = js_util.getProperty(resultObj, 'error');
         if (error != null) {
+          debugPrint('❌ Web Push error: $error');
           throw Exception('Web Push indisponible: $error');
         }
+        
+        final endpoint = js_util.getProperty(resultObj, 'endpoint');
+        final p256dh = js_util.getProperty(resultObj, 'p256dh');
+        final auth = js_util.getProperty(resultObj, 'auth');
         
         if (endpoint == null) {
           throw Exception('Réponse invalide: endpoint manquant');
         }
         
-        result = {
+        debugPrint('✅ Web Push subscription obtained: ${endpoint.toString().substring(0, 50)}...');
+        
+        return {
           'endpoint': endpoint.toString(),
-          'keys': keys != null ? js_util.dartify(keys) : null,
+          'keys': {
+            'p256dh': p256dh?.toString(),
+            'auth': auth?.toString(),
+          },
         };
       }
-    } catch (e) {
-      debugPrint('❌ Failed to parse JS result: $e, resolved type: ${resolved.runtimeType}');
-      throw Exception('Réponse invalide lors de la création de l\'abonnement Web Push: $e');
     }
-
-    if (result.containsKey('error') && result['error'] != null) {
-      throw Exception('Web Push indisponible: ${result['error']}');
-    }
-
-    return result;
+    
+    throw Exception('Timeout: Web Push subscription n\'a pas répondu');
   }
 
   String _detectWebPlatformLabel() {
