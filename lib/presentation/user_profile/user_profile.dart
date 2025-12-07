@@ -849,32 +849,121 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   void _showFeedbackDialog() {
+    final TextEditingController subjectController = TextEditingController();
+    final TextEditingController messageController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Envoyer des commentaires'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Vous avez une suggestion ou souhaitez signaler un problème ?'),
-            SizedBox(height: 2.h),
-            Text('Contactez-nous par e-mail :'),
-            SizedBox(height: 1.h),
-            SelectableText(
-              'hentzpierre888@gmail.com',
-              style: TextStyle(
-                color: AppTheme.lightTheme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Envoyer des commentaires'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Une suggestion ? Un bug à signaler ? Aidez-nous à améliorer l\'app !',
+                    style: TextStyle(fontSize: 12.sp),
+                  ),
+                  SizedBox(height: 2.h),
+                  TextFormField(
+                    controller: subjectController,
+                    decoration: InputDecoration(
+                      labelText: 'Sujet',
+                      hintText: 'Ex: Suggestion d\'amélioration',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Veuillez entrer un sujet';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 2.h),
+                  TextFormField(
+                    controller: messageController,
+                    decoration: InputDecoration(
+                      labelText: 'Message',
+                      hintText: 'Décrivez votre suggestion ou le bug rencontré...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 5,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Veuillez entrer un message';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 1.h),
+                  Text(
+                    'Email de réponse : ${_userData?["email"] ?? "Non connecté"}',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: AppTheme.lightTheme.colorScheme.outline,
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+              child: Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      if (formKey.currentState!.validate()) {
+                        setDialogState(() => isSubmitting = true);
+                        
+                        final success = await _submitHelpForm(
+                          subject: '[Feedback] ${subjectController.text.trim()}',
+                          message: messageController.text.trim(),
+                          userEmail: _userData?["email"] as String? ?? 'unknown',
+                        );
+                        
+                        Navigator.pop(context);
+                        
+                        if (success) {
+                          _showBeautifulSuccessMessage(
+                            'Merci pour votre retour ! Nous l\'avons bien reçu.',
+                          );
+                        } else {
+                          _showBeautifulErrorMessage(
+                            'Erreur lors de l\'envoi. Réessayez ou contactez hentzpierre888@gmail.com',
+                          );
+                        }
+                      }
+                    },
+              child: isSubmitting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text('Envoyer'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Fermer')),
-        ]));
+      ),
+    );
   }
 
   void _showAboutDialog() {
