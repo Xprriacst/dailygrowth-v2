@@ -277,11 +277,10 @@ class _ProblematiqueProgressSelectionWidgetState extends State<ProblematiqueProg
   Widget _buildProblematiqueProgressCard(ChallengeProblematique problematique) {
     final isSelected = _selectedProblematiqueDescriptions.contains(problematique.description);
     final completedCount = _progressByProblematique[problematique.description] ?? 0;
-    final progressPercentage = (completedCount / 50 * 100).clamp(0, 100).toInt();
+    final progressPercentage = (completedCount / 30 * 100).clamp(0, 100).toInt(); // 30 défis par problématique
 
-    // Désactiver si une autre problématique est déjà sélectionnée
-    final hasOtherSelection = _selectedProblematiqueDescriptions.isNotEmpty && !isSelected;
-    final isEnabled = !hasOtherSelection;
+    // Toujours activer pour permettre le changement de problématique
+    const isEnabled = true;
 
     return GestureDetector(
       onTap: isEnabled ? () => _toggleProblematique(problematique) : null,
