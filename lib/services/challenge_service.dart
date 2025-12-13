@@ -473,19 +473,7 @@ class ChallengeService {
       
       debugPrint('✅ [CHALLENGE SERVICE] User profile loaded');
       
-      // Get number of completed challenges
-      final completedChallenges = await _client
-          .from('daily_challenges')
-          .select()
-          .eq('user_id', userId)
-          .eq('status', 'completed')
-          .count();
-      
-      final nombreDefisReleves = completedChallenges.count ?? 0;
-      
-      debugPrint('📊 [CHALLENGE SERVICE] Défis complétés: $nombreDefisReleves');
-      
-      // Get user's selected problematique (single selection)
+      // Get user's selected problematique (single selection) - AVANT le comptage
       String problematique = lifeDomain;
       if (userProfile['selected_problematiques'] != null) {
         final problematiques = List<String>.from(userProfile['selected_problematiques']);
@@ -503,6 +491,19 @@ class ChallengeService {
       }
       
       debugPrint('🎯 [CHALLENGE SERVICE] Final problematique: "$problematique"');
+      
+      // Compter les défis complétés POUR CETTE PROBLÉMATIQUE spécifiquement
+      final completedChallenges = await _client
+          .from('daily_challenges')
+          .select()
+          .eq('user_id', userId)
+          .eq('status', 'completed')
+          .ilike('problematique', '%${problematique.replaceAll("'", "''")}%')
+          .count();
+      
+      final nombreDefisReleves = completedChallenges.count ?? 0;
+      
+      debugPrint('📊 [CHALLENGE SERVICE] Défis complétés pour "$problematique": $nombreDefisReleves');
       debugPrint('🚀 [CHALLENGE SERVICE] Calling n8n webhook...');
       
       // Generate single challenge via n8n
