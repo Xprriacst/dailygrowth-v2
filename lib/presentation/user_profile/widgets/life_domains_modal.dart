@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
+import '../../../models/challenge_problematique.dart';
 
 class LifeDomainsModal extends StatefulWidget {
   final List<String> selectedDomains;
@@ -19,19 +20,16 @@ class LifeDomainsModal extends StatefulWidget {
 
 class _LifeDomainsModalState extends State<LifeDomainsModal> {
   late List<String> _selectedDomains;
+  String? _expandedCategory;
 
-  final List<Map<String, dynamic>> _availableDomains = [
-    {"name": "Santé & Bien-être", "icon": "favorite"},
-    {"name": "Relations & Famille", "icon": "people"},
-    {"name": "Carrière & Travail", "icon": "work"},
-    {"name": "Finances", "icon": "account_balance_wallet"},
-    {"name": "Développement Personnel", "icon": "psychology"},
-    {"name": "Loisirs & Hobbies", "icon": "sports_esports"},
-    {"name": "Spiritualité", "icon": "self_improvement"},
-    {"name": "Éducation & Apprentissage", "icon": "school"},
-    {"name": "Créativité & Art", "icon": "palette"},
-    {"name": "Voyage & Aventure", "icon": "flight"},
-  ];
+  // Grouper les problématiques par catégorie
+  Map<String, List<ChallengeProblematique>> get _problematiquesParCategorie {
+    final map = <String, List<ChallengeProblematique>>{};
+    for (final p in ChallengeProblematique.allProblematiques) {
+      map.putIfAbsent(p.category, () => []).add(p);
+    }
+    return map;
+  }
 
   @override
   void initState() {
@@ -96,89 +94,135 @@ class _LifeDomainsModalState extends State<LifeDomainsModal> {
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 4.h),
+          SizedBox(height: 2.h),
           Expanded(
             child: ListView.builder(
-              itemCount: _availableDomains.length,
-              itemBuilder: (context, index) {
-                final domain = _availableDomains[index];
-                final isSelected =
-                    _selectedDomains.contains(domain["name"] as String);
+              itemCount: _problematiquesParCategorie.keys.length,
+              itemBuilder: (context, categoryIndex) {
+                final category = _problematiquesParCategorie.keys.elementAt(categoryIndex);
+                final problematiques = _problematiquesParCategorie[category]!;
+                final isExpanded = _expandedCategory == category;
+                
+                // Vérifier si une problématique de cette catégorie est sélectionnée
+                final hasSelectedInCategory = problematiques.any(
+                  (p) => _selectedDomains.contains(p.description)
+                );
 
                 return Container(
-                  margin: EdgeInsets.only(bottom: 2.h),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedDomains.clear();
-                        } else {
-                          _selectedDomains.clear();
-                          _selectedDomains.add(domain["name"] as String);
-                        }
-                      });
-                    },
+                  margin: EdgeInsets.only(bottom: 1.5.h),
+                  decoration: BoxDecoration(
+                    color: hasSelectedInCategory
+                        ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.05)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: hasSelectedInCategory
+                          ? AppTheme.lightTheme.colorScheme.primary
+                          : AppTheme.lightTheme.colorScheme.outline.withOpacity(0.3),
+                      width: hasSelectedInCategory ? 2 : 1,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: EdgeInsets.all(4.w),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.lightTheme.colorScheme.primary
-                                .withOpacity(0.1)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.lightTheme.colorScheme.primary
-                              : AppTheme.lightTheme.colorScheme.outline
-                                  .withOpacity(0.3),
-                          width: isSelected ? 2 : 1,
-                        ),
+                  ),
+                  child: Column(
+                    children: [
+                      // En-tête de catégorie
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _expandedCategory = isExpanded ? null : category;
+                          });
+                        },
                         borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 12.w,
-                            height: 12.w,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.lightTheme.colorScheme.primary
-                                  : AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant
-                                      .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: CustomIconWidget(
-                              iconName: domain["icon"] as String,
-                              color: isSelected
-                                  ? AppTheme.lightTheme.colorScheme.onPrimary
-                                  : AppTheme
-                                      .lightTheme.colorScheme.onSurfaceVariant,
-                              size: 6.w,
-                            ),
+                        child: Padding(
+                          padding: EdgeInsets.all(3.w),
+                          child: Row(
+                            children: [
+                              Text(
+                                _getCategoryEmoji(category),
+                                style: TextStyle(fontSize: 20.sp),
+                              ),
+                              SizedBox(width: 3.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      category,
+                                      style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: hasSelectedInCategory
+                                            ? AppTheme.lightTheme.colorScheme.primary
+                                            : AppTheme.lightTheme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${problematiques.length} problématiques',
+                                      style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+                                        color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                isExpanded ? Icons.expand_less : Icons.expand_more,
+                                color: AppTheme.lightTheme.colorScheme.onSurfaceVariant,
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4.w),
-                          Expanded(
-                            child: Text(
-                              domain["name"] as String,
-                              style: AppTheme.lightTheme.textTheme.bodyLarge
-                                  ?.copyWith(
-                                fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      // Liste des problématiques (si expandé)
+                      if (isExpanded)
+                        ...problematiques.map((p) {
+                          final isSelected = _selectedDomains.contains(p.description);
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedDomains.clear();
+                                if (!isSelected) {
+                                  _selectedDomains.add(p.description);
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppTheme.lightTheme.colorScheme.primary
-                                    : AppTheme.lightTheme.colorScheme.onSurface,
+                                    ? AppTheme.lightTheme.colorScheme.primary.withOpacity(0.1)
+                                    : Colors.transparent,
+                                border: Border(
+                                  top: BorderSide(
+                                    color: AppTheme.lightTheme.colorScheme.outline.withOpacity(0.2),
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(p.emoji, style: TextStyle(fontSize: 16.sp)),
+                                  SizedBox(width: 3.w),
+                                  Expanded(
+                                    child: Text(
+                                      p.title,
+                                      style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        color: isSelected
+                                            ? AppTheme.lightTheme.colorScheme.primary
+                                            : AppTheme.lightTheme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: AppTheme.lightTheme.colorScheme.primary,
+                                      size: 5.w,
+                                    ),
+                                ],
                               ),
                             ),
-                          ),
-                          if (isSelected)
-                            CustomIconWidget(
-                              iconName: 'check_circle',
-                              color: AppTheme.lightTheme.colorScheme.primary,
-                              size: 6.w,
-                            ),
-                        ],
-                      ),
-                    ),
+                          );
+                        }).toList(),
+                    ],
                   ),
                 );
               },
@@ -187,5 +231,24 @@ class _LifeDomainsModalState extends State<LifeDomainsModal> {
         ],
       ),
     );
+  }
+
+  String _getCategoryEmoji(String category) {
+    switch (category) {
+      case 'Mental & émotionnel':
+        return '🧠';
+      case 'Relations & communication':
+        return '💬';
+      case 'Argent & carrière':
+        return '💼';
+      case 'Santé & habitudes de vie':
+        return '❤️';
+      case 'Productivité & concentration':
+        return '⚡';
+      case 'Confiance & identité':
+        return '🛡️';
+      default:
+        return '📌';
+    }
   }
 }
