@@ -70,10 +70,27 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       return;
     }
 
+    // Vérifier qu'une session existe
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      debugPrint('❌ Aucune session active pour la mise à jour du mot de passe');
+      Fluttertoast.showToast(
+        msg: "Session expirée. Veuillez refaire une demande de réinitialisation.",
+        toastLength: Toast.LENGTH_LONG,
+        backgroundColor: Colors.orange,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
+      debugPrint('🔐 Tentative de mise à jour du mot de passe pour: ${session.user.email}');
+      
       await _authService.updatePassword(newPassword: _passwordController.text);
+      
+      debugPrint('✅ Mot de passe mis à jour avec succès');
       
       Fluttertoast.showToast(
         msg: "Mot de passe mis à jour avec succès !",
@@ -82,18 +99,38 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         textColor: Colors.white,
       );
 
+      // Déconnecter l'utilisateur pour qu'il se reconnecte avec le nouveau mot de passe
+      await Supabase.instance.client.auth.signOut();
+      
       // Rediriger vers l'écran de connexion
-      Navigator.of(context).pushReplacementNamed(AppRoutes.loginScreen);
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.loginScreen);
+      }
       
     } catch (error) {
+      debugPrint('❌ Erreur mise à jour mot de passe: $error');
+      
+      String errorMessage = "Erreur lors de la mise à jour";
+      final errorStr = error.toString().toLowerCase();
+      
+      if (errorStr.contains('same_password') || errorStr.contains('different from the old')) {
+        errorMessage = "⚠️ Le nouveau mot de passe doit être différent de l'ancien";
+      } else if (errorStr.contains('weak_password') || errorStr.contains('too weak')) {
+        errorMessage = "Le mot de passe est trop faible (min. 8 caractères)";
+      } else if (errorStr.contains('session') || errorStr.contains('not authenticated')) {
+        errorMessage = "Session expirée. Veuillez refaire une demande.";
+      }
+      
       Fluttertoast.showToast(
-        msg: "Erreur: ${error.toString()}",
+        msg: errorMessage,
         toastLength: Toast.LENGTH_LONG,
         backgroundColor: Colors.red,
         textColor: Colors.white,
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
