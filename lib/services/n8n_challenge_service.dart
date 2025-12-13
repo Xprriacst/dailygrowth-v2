@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
@@ -8,146 +8,156 @@ class N8nChallengeService {
   factory N8nChallengeService() => _instance;
   N8nChallengeService._internal();
 
-  static const String webhookUrl = 'https://polaris-ia.app.n8n.cloud/webhook/e4b66ea3-6195-4b11-89fe-85d05d23cae9';
+  Map<String, List<Map<String, dynamic>>>? _staticChallenges;
+  bool _isLoaded = false;
 
-  Dio? _dio;
-
-  Dio get _client {
-    if (_dio == null) {
-      _dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 60),
-          sendTimeout: const Duration(seconds: 30),
-        ),
-      );
-
-      _dio!.interceptors.add(
-        LogInterceptor(
-          requestBody: kDebugMode,
-          responseBody: kDebugMode,
-          logPrint: (obj) => debugPrint(obj.toString()),
-        ),
-      );
+  /// Charge les défis statiques depuis le fichier JSON
+  Future<void> _loadStaticChallenges() async {
+    if (_isLoaded) return;
+    
+    try {
+      final String jsonString = await rootBundle.loadString('assets/data/challenges.json');
+      final Map<String, dynamic> jsonData = json.decode(jsonString);
       
-      debugPrint('✅ N8n Challenge Service initialized');
+      _staticChallenges = {};
+      jsonData.forEach((key, value) {
+        _staticChallenges![key] = List<Map<String, dynamic>>.from(
+          (value as List).map((item) => Map<String, dynamic>.from(item))
+        );
+      });
+      
+      _isLoaded = true;
+      debugPrint('✅ [StaticChallenges] Loaded ${_staticChallenges!.length} problématiques');
+    } catch (e) {
+      debugPrint('❌ [StaticChallenges] Error loading challenges: $e');
+      _staticChallenges = {};
     }
-    return _dio!;
   }
 
-  /// Génère UN SEUL micro-défi via le workflow n8n
+  /// Trouve la meilleure correspondance de problématique
+  String? _findMatchingProblematique(String userProblematique) {
+    if (_staticChallenges == null) return null;
+    
+    final normalizedInput = _normalizeString(userProblematique);
+    
+    // Recherche exacte d'abord
+    for (final key in _staticChallenges!.keys) {
+      if (_normalizeString(key) == normalizedInput) {
+        return key;
+      }
+    }
+    
+    // Recherche par mots-clés
+    for (final key in _staticChallenges!.keys) {
+      final normalizedKey = _normalizeString(key);
+      if (normalizedKey.contains(normalizedInput) || normalizedInput.contains(normalizedKey)) {
+        return key;
+      }
+    }
+    
+    // Recherche par mots communs
+    final inputWords = normalizedInput.split(' ').where((w) => w.length > 3).toSet();
+    String? bestMatch;
+    int bestScore = 0;
+    
+    for (final key in _staticChallenges!.keys) {
+      final keyWords = _normalizeString(key).split(' ').where((w) => w.length > 3).toSet();
+      final commonWords = inputWords.intersection(keyWords).length;
+      if (commonWords > bestScore) {
+        bestScore = commonWords;
+        bestMatch = key;
+      }
+    }
+    
+    return bestMatch;
+  }
+
+  String _normalizeString(String input) {
+    return input
+        .toLowerCase()
+        .replaceAll(RegExp(r'[🧠💪🌊⚡👂🤝💬😶⚖️🚀💰🎯✨🌟🚫❤️📅⏰🔥🗺️🛡️🔍🤗📵🧘🌅📊🏡💼🔎😰🕰️💕🏋️💤🦁]'), '')
+        .replaceAll(RegExp(r'[^\w\s]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  /// Génère UN SEUL micro-défi depuis les défis statiques
   Future<Map<String, dynamic>> generateSingleMicroChallenge({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
   }) async {
-    try {
-      debugPrint('🎯 Generating challenges for: $problematique (défis relevés: $nombreDefisReleves)');
-
-      // Préparer les données au format attendu par le workflow
-      final requestData = {
-        'Je veux...': 'Je veux travailler sur: $problematique',
-        'Combien de défi à tu relevé': nombreDefisReleves.toString(),
-        if (userId != null) 'user_id': userId,
-      };
-
-      final response = await _client.post(
-        webhookUrl,
-        data: requestData,
-        options: Options(
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-          },
-        ),
-      );
-
-      if (response.statusCode != 200) {
-        throw N8nException(
-          statusCode: response.statusCode ?? 500,
-          message: 'Erreur HTTP: ${response.statusCode}',
-        );
-      }
-
-      // Parser la réponse
-      Map<String, dynamic> responseData;
-      if (response.data is String) {
-        try {
-          responseData = jsonDecode(response.data);
-        } catch (e) {
-          debugPrint('❌ Erreur parsing JSON: $e');
-          debugPrint('Raw response: ${response.data}');
-          throw N8nException(
-            statusCode: 500,
-            message: 'Réponse invalide du workflow n8n',
-          );
-        }
-      } else {
-        responseData = response.data;
-      }
-
-      // Validation de la structure pour UN SEUL défi
-      if (!responseData.containsKey('defis') || 
-          responseData['defis'] is! List ||
-          (responseData['defis'] as List).length != 1) {
-        throw N8nException(
-          statusCode: 500,
-          message: 'Structure de réponse invalide: doit contenir exactement 1 défi',
-        );
-      }
-
-      final defis = responseData['defis'] as List;
-      final defi = defis[0];
-      
-      // Validation du défi unique
-      if (defi is! Map || 
-          !defi.containsKey('nom') || 
-          !defi.containsKey('mission') ||
-          !defi.containsKey('pourquoi')) {
-        throw N8nException(
-          statusCode: 500,
-          message: 'Défi incomplet: manque nom, mission ou pourquoi',
-        );
-      }
-
-      debugPrint('✅ Generated single challenge successfully: ${defi['nom']}');
-      return responseData;
-
-    } on DioException catch (e) {
-      debugPrint('❌ Dio error: ${e.message}');
-      
-      if (e.response?.statusCode == 429) {
-        throw N8nException(
-          statusCode: 429,
-          message: 'Quota API dépassé. Veuillez réessayer plus tard.',
-        );
-      } else if (e.response?.statusCode == 404) {
-        throw N8nException(
-          statusCode: 404,
-          message: 'Webhook n8n introuvable. Vérifiez l\'URL.',
-        );
-      } else {
-        throw N8nException(
-          statusCode: e.response?.statusCode ?? 500,
-          message: 'Erreur réseau: ${e.message}',
-        );
-      }
-    } catch (e) {
-      debugPrint('❌ Unexpected error: $e');
+    debugPrint('🎯 [StaticChallenges] Generating challenge for: $problematique (défis relevés: $nombreDefisReleves)');
+    
+    // Charger les défis si pas encore fait
+    await _loadStaticChallenges();
+    
+    // Trouver la problématique correspondante
+    final matchedProblematique = _findMatchingProblematique(problematique);
+    
+    if (matchedProblematique == null || _staticChallenges![matchedProblematique] == null) {
+      debugPrint('⚠️ [StaticChallenges] No matching problematique found for: $problematique');
+      debugPrint('📋 [StaticChallenges] Available: ${_staticChallenges?.keys.toList()}');
       throw N8nException(
-        statusCode: 500,
-        message: 'Erreur inattendue: $e',
+        statusCode: 404,
+        message: 'Aucune problématique correspondante trouvée',
       );
     }
+    
+    debugPrint('✅ [StaticChallenges] Matched problematique: $matchedProblematique');
+    
+    final challenges = _staticChallenges![matchedProblematique]!;
+    
+    // Calculer le numéro du défi (cyclique si > 30)
+    final challengeNumero = ((nombreDefisReleves) % challenges.length) + 1;
+    
+    // Trouver le défi correspondant
+    Map<String, dynamic>? selectedChallenge;
+    for (final challenge in challenges) {
+      if (challenge['numero'] == challengeNumero) {
+        selectedChallenge = Map<String, dynamic>.from(challenge);
+        break;
+      }
+    }
+    
+    if (selectedChallenge == null) {
+      // Fallback au premier défi si pas trouvé
+      selectedChallenge = Map<String, dynamic>.from(challenges[0]);
+    }
+    
+    // Déterminer le niveau
+    final niveau = nombreDefisReleves == 0 ? 'débutant' : 
+                   nombreDefisReleves <= 10 ? 'intermédiaire' : 'avancé';
+    
+    // Construire le défi au format attendu
+    final defi = {
+      'nom': 'Défi #$challengeNumero',
+      'mission': selectedChallenge['mission'],
+      'pourquoi': 'Ce défi fait partie de ton parcours "$matchedProblematique" et t\'aide à progresser étape par étape.',
+      'bonus': null,
+      'duree_estimee': '15',
+      'numero': challengeNumero,
+      'difficulte': selectedChallenge['difficulte'],
+    };
+    
+    debugPrint('✅ [StaticChallenges] Generated challenge #$challengeNumero: ${defi['mission']?.toString().substring(0, 50)}...');
+    
+    return {
+      'problematique': matchedProblematique,
+      'niveau_detecte': niveau,
+      'defis': [defi],
+      'source': 'static_challenges',
+    };
   }
 
-  /// Génère UN défi avec fallback en cas d'erreur
+  /// Génère UN défi (plus de fallback nécessaire car on utilise les défis statiques)
   Future<Map<String, dynamic>> generateSingleMicroChallengeWithFallback({
     required String problematique,
     required int nombreDefisReleves,
     String? userId,
   }) async {
     try {
-      // Essayer d'abord le webhook n8n
+      // Utiliser directement les défis statiques
       final result = await generateSingleMicroChallenge(
         problematique: problematique,
         nombreDefisReleves: nombreDefisReleves,
@@ -155,7 +165,6 @@ class N8nChallengeService {
       );
       
       // Ajouter des métadonnées
-      result['source'] = 'n8n_webhook';
       result['generated_at'] = DateTime.now().toIso8601String();
       result['user_id'] = userId;
       
@@ -166,9 +175,9 @@ class N8nChallengeService {
       
       return result;
     } catch (e) {
-      debugPrint('⚠️ N8n webhook failed, using local fallback: $e');
+      debugPrint('⚠️ [StaticChallenges] Static challenges failed, using hardcoded fallback: $e');
       
-      // Fallback vers la génération locale
+      // Fallback vers la génération locale hardcodée
       final fallbackResult = _generateLocalFallbackSingleChallenge(
         problematique: problematique,
         nombreDefisReleves: nombreDefisReleves,
