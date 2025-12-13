@@ -39,26 +39,47 @@ class N8nChallengeService {
     if (_staticChallenges == null) return null;
     
     final normalizedInput = _normalizeString(userProblematique);
+    debugPrint('🔍 [Matching] Input: "$userProblematique" -> normalized: "$normalizedInput"');
     
     // Recherche exacte d'abord
     for (final key in _staticChallenges!.keys) {
       if (_normalizeString(key) == normalizedInput) {
+        debugPrint('✅ [Matching] Exact match found: $key');
         return key;
       }
     }
     
-    // Recherche par mots-clés
+    // Recherche par mots-clés spécifiques (priorité aux mots distinctifs)
+    final distinctiveWords = ['conflits', 'émotions', 'échec', 'timidité', 'charisme', 
+      'empathie', 'passion', 'revenus', 'cardio', 'poids', 'sommeil', 'procrastiner',
+      'leadership', 'anxiété', 'patience', 'dépendance', 'écran', 'mindfulness'];
+    
+    for (final word in distinctiveWords) {
+      if (normalizedInput.contains(word)) {
+        for (final key in _staticChallenges!.keys) {
+          if (_normalizeString(key).contains(word)) {
+            debugPrint('✅ [Matching] Distinctive word "$word" match: $key');
+            return key;
+          }
+        }
+      }
+    }
+    
+    // Recherche par inclusion
     for (final key in _staticChallenges!.keys) {
       final normalizedKey = _normalizeString(key);
       if (normalizedKey.contains(normalizedInput) || normalizedInput.contains(normalizedKey)) {
+        debugPrint('✅ [Matching] Contains match: $key');
         return key;
       }
     }
     
-    // Recherche par mots communs
+    // Recherche par mots communs (score)
     final inputWords = normalizedInput.split(' ').where((w) => w.length > 3).toSet();
     String? bestMatch;
     int bestScore = 0;
+    
+    debugPrint('🔍 [Matching] Input words: $inputWords');
     
     for (final key in _staticChallenges!.keys) {
       final keyWords = _normalizeString(key).split(' ').where((w) => w.length > 3).toSet();
@@ -66,9 +87,11 @@ class N8nChallengeService {
       if (commonWords > bestScore) {
         bestScore = commonWords;
         bestMatch = key;
+        debugPrint('📊 [Matching] New best: $key (score: $commonWords, common: ${inputWords.intersection(keyWords)})');
       }
     }
     
+    debugPrint('✅ [Matching] Final match: $bestMatch (score: $bestScore)');
     return bestMatch;
   }
 
