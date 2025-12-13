@@ -107,9 +107,35 @@ class N8nChallengeService {
     debugPrint('✅ [StaticChallenges] Matched problematique: $matchedProblematique');
     
     final challenges = _staticChallenges![matchedProblematique]!;
+    final totalChallenges = challenges.length; // Généralement 30
     
-    // Calculer le numéro du défi (cyclique si > 30)
-    final challengeNumero = ((nombreDefisReleves) % challenges.length) + 1;
+    // Vérifier si l'utilisateur a complété tous les défis de cette problématique
+    if (nombreDefisReleves >= totalChallenges) {
+      debugPrint('🎉 [StaticChallenges] User completed all $totalChallenges challenges for: $matchedProblematique');
+      
+      // Retourner un message de félicitations
+      final completionDefi = {
+        'nom': '🎉 Félicitations !',
+        'mission': 'Bravo ! Tu as relevé les $totalChallenges défis de "$matchedProblematique" ! C\'est une vraie réussite. Tu peux maintenant choisir une nouvelle problématique pour continuer ta progression.',
+        'pourquoi': 'Tu as fait preuve de persévérance et d\'engagement. Chaque défi t\'a permis de grandir et de te rapprocher de tes objectifs.',
+        'bonus': null,
+        'duree_estimee': '0',
+        'numero': totalChallenges,
+        'difficulte': 3,
+        'is_completed': true, // Flag pour indiquer que la problématique est terminée
+      };
+      
+      return {
+        'problematique': matchedProblematique,
+        'niveau_detecte': 'expert',
+        'defis': [completionDefi],
+        'source': 'static_challenges',
+        'problematique_completed': true, // Flag pour l'UI
+      };
+    }
+    
+    // Calculer le numéro du défi (1 à 30)
+    final challengeNumero = nombreDefisReleves + 1;
     
     // Trouver le défi correspondant
     Map<String, dynamic>? selectedChallenge;
@@ -140,13 +166,14 @@ class N8nChallengeService {
       'difficulte': selectedChallenge['difficulte'],
     };
     
-    debugPrint('✅ [StaticChallenges] Generated challenge #$challengeNumero: ${defi['mission']?.toString().substring(0, 50)}...');
+    debugPrint('✅ [StaticChallenges] Generated challenge #$challengeNumero/$totalChallenges: ${defi['mission']?.toString().substring(0, 50)}...');
     
     return {
       'problematique': matchedProblematique,
       'niveau_detecte': niveau,
       'defis': [defi],
       'source': 'static_challenges',
+      'progress': '$challengeNumero/$totalChallenges', // Info de progression
     };
   }
 
