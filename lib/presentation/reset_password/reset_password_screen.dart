@@ -40,20 +40,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _handlePasswordRecovery() async {
     // Supabase gère automatiquement les hash fragments (#access_token=...)
     // On attend que la session soit établie
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 1500));
     
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
       debugPrint('✅ Session de récupération établie pour: ${session.user.email}');
-      Fluttertoast.showToast(
-        msg: "Vous pouvez maintenant définir votre nouveau mot de passe",
-        toastLength: Toast.LENGTH_LONG,
-        backgroundColor: Colors.blue,
-        textColor: Colors.white,
-      );
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: "✅ Vous pouvez définir votre nouveau mot de passe",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+      }
     } else {
-      debugPrint('⚠️ Aucune session trouvée - vérifiez le lien de réinitialisation');
-      // Ne pas afficher d'erreur ici car l'utilisateur peut arriver directement sur la page
+      debugPrint('⚠️ Aucune session trouvée - lien expiré ou invalide');
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: "⏰ Lien expiré ou invalide. Demandez un nouveau lien.",
+          toastLength: Toast.LENGTH_LONG,
+          backgroundColor: Colors.orange,
+          textColor: Colors.white,
+        );
+      }
     }
   }
 
@@ -117,8 +126,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         errorMessage = "⚠️ Le nouveau mot de passe doit être différent de l'ancien";
       } else if (errorStr.contains('weak_password') || errorStr.contains('too weak')) {
         errorMessage = "Le mot de passe est trop faible (min. 8 caractères)";
-      } else if (errorStr.contains('session') || errorStr.contains('not authenticated')) {
-        errorMessage = "Session expirée. Veuillez refaire une demande.";
+      } else if (errorStr.contains('session') || errorStr.contains('not authenticated') || errorStr.contains('missing')) {
+        errorMessage = "⏰ Lien expiré. Demandez un nouveau lien de réinitialisation.";
       }
       
       Fluttertoast.showToast(
